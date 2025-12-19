@@ -6,18 +6,19 @@ A conversational AI advisor for social entrepreneurs deployed on Cloudflare's ed
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Frontend (Cloudflare Pages)                                        │
-│  - Chat interface with useAgentChat                                 │
-│  - Canvas display with nested Impact Model                          │
-│  - Export (copy, Markdown, JSON)                                    │
-└─────────────────────────────────────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  API Worker (Cloudflare Workers + Agents SDK v0.2.24+)              │
-│  - Chat handler with RAG                                            │
-│  - Canvas CRUD                                                      │
-│  - Session routing to Durable Objects                               │
+│  Unified Worker (Cloudflare Workers Static Assets)                  │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Frontend (React + Vite + @cloudflare/vite-plugin)          │   │
+│  │  - Chat interface with useAgentChat                          │   │
+│  │  - Canvas display with nested Impact Model                   │   │
+│  │  - Export (copy, Markdown, JSON)                             │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  API Routes (/api/*)                                         │   │
+│  │  - Chat handler with RAG                                     │   │
+│  │  - Canvas CRUD                                               │   │
+│  │  - Session routing to Durable Objects                        │   │
+│  └─────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
                                   │
            ┌──────────────────────┼──────────────────────┐
@@ -29,11 +30,13 @@ A conversational AI advisor for social entrepreneurs deployed on Cloudflare's ed
 └─────────────────┘   └─────────────────┘   └─────────────────┘
 ```
 
+**Architecture Note:** Uses Workers Static Assets (not Pages) per Cloudflare's 2025 recommendation. Frontend and API deploy as a single Worker - no CORS needed.
+
 MVP simplification: Chat-primary interface. Visual canvas editor deferred to post-MVP.
 
 ## Components
 
-### Frontend (Cloudflare Pages)
+### Frontend (React + Vite)
 - **Purpose:** Provide chat interface and canvas display for users
 - **Responsibilities:**
   - Render chat messages with conversation history
@@ -42,6 +45,8 @@ MVP simplification: Chat-primary interface. Visual canvas editor deferred to pos
   - Copy button + export (Markdown, JSON)
   - Store sessionId in localStorage
 - **Interface:** React app using AI SDK v5 `useAgentChat` hook
+- **Build:** `@cloudflare/vite-plugin` for unified deployment with Worker
+- **Files:** `src/` (React app), `worker/` (API routes)
 
 ### API Worker
 - **Purpose:** Handle requests and coordinate between LLM, storage, and retrieval
@@ -256,7 +261,7 @@ function buildVectorizeFilter(profile: VentureProfile, intent: QueryIntent): obj
 
 ### Frontend ↔ API Communication
 
-- CORS headers required for Pages/Worker separation
+- No CORS needed (same origin with Workers Static Assets)
 - Session ID via localStorage, passed in requests
 - WebSocket for chat (via Agents SDK), REST for canvas CRUD
 
@@ -274,8 +279,7 @@ function buildVectorizeFilter(profile: VentureProfile, intent: QueryIntent): obj
   - Anthropic Claude API (via AI Gateway)
   - Workers AI (embeddings: @cf/baai/bge-base-en-v1.5)
 - **Services:**
-  - Cloudflare Workers
-  - Cloudflare Pages
+  - Cloudflare Workers (with Static Assets)
   - Cloudflare Durable Objects
   - Cloudflare Vectorize
   - Cloudflare AI Gateway
@@ -307,7 +311,7 @@ function buildVectorizeFilter(profile: VentureProfile, intent: QueryIntent): obj
 | Amateur coder maintenance | Clear file separation, simple patterns, comments |
 | LLM API failures | AI Gateway monitoring, graceful degradation messages |
 | Rate abuse on demo | Rate limiting (100 req/min per session) |
-| CORS issues | Standard CORS headers on API Worker |
+| ~~CORS issues~~ | ~~Not applicable - same origin with Workers Static Assets~~ |
 
 ---
 

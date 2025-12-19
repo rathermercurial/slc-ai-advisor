@@ -4,9 +4,15 @@ An AI advisor that helps social entrepreneurs complete their Social Lean Canvas 
 
 ## Project Status
 
-**Phase:** Implementation
+**Phase:** Implementation (S1 scaffolding complete)
 **Target Demo:** ~1 week after Christmas
-**Platform:** Cloudflare (Workers, Pages, Durable Objects, Vectorize)
+**Platform:** Cloudflare Workers (with Static Assets, Durable Objects, Vectorize)
+
+### Sync Point Status
+- [x] **S1** - Project scaffolding complete (A1, B1, C1 done)
+- [ ] **S2** - Vectorize indexed, DO schema ready
+- [ ] **S3** - Core features working
+- [ ] **S4** - Demo ready
 
 ## What This Does
 
@@ -29,19 +35,22 @@ The core innovation is the **Selection Matrix** - filtering examples by 7 ventur
 
 ## Architecture Overview
 
+Uses **Workers Static Assets** (not Pages) per Cloudflare's 2025 recommendation. Frontend and API deploy as a single Worker.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Frontend (Cloudflare Pages)                                        │
-│  - Chat interface with useAgentChat                                 │
-│  - Canvas display with nested Impact Model                          │
-└─────────────────────────────────────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  API Worker (Cloudflare Workers + Agents SDK)                       │
-│  - Chat handler with RAG                                            │
-│  - Selection Matrix (filter by venture dimensions)                  │
-│  - Canvas CRUD                                                      │
+│  Unified Worker (Cloudflare Workers Static Assets)                  │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Frontend (React + Vite + @cloudflare/vite-plugin)          │   │
+│  │  - Chat interface with useAgentChat                          │   │
+│  │  - Canvas display with nested Impact Model                   │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  API Routes (/api/*)                                         │   │
+│  │  - Selection Matrix (filter by venture dimensions)           │   │
+│  │  - Chat handler with RAG                                     │   │
+│  │  - Canvas CRUD                                               │   │
+│  └─────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
                                   │
            ┌──────────────────────┼──────────────────────┐
@@ -73,11 +82,11 @@ knowledge/
 
 ## Team Structure
 
-| Area | Branch | Focus |
-|------|--------|-------|
-| Knowledge Base & Indexing | `feature/knowledge-indexing` | Vectorize setup, content chunking, metadata mapping |
-| Backend / API | `feature/backend-api` | Durable Object, Selection Matrix, chat handler |
-| Frontend | `feature/frontend` | React app, chat UI, canvas display |
+| Area | Branch | PR | Status |
+|------|--------|----|--------|
+| Knowledge Base & Indexing | `feature/knowledge-indexing` | [#4](../../pull/4) | A1 ✅, A2-A5 pending |
+| Backend / API | `feature/backend-api` | [#5](../../pull/5) | B1 ✅, B2-B10 pending |
+| Frontend | `feature/frontend` | [#6](../../pull/6) | C1 ✅, C2-C9 pending |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup and workflow.
 
@@ -85,14 +94,37 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup and workflow.
 
 ```bash
 # Clone the repo
-git clone <repo-url>
-cd slc
+git clone https://github.com/rathermercurial/slc-ai-advisor.git
+cd slc-ai-advisor
+
+# Checkout your feature branch
+git checkout feature/knowledge-indexing  # or backend-api or frontend
+
+# Install dependencies
+npm install
+
+# Start dev server (frontend + API)
+npm run dev
 
 # See your assigned tasks
 cat spec/slc-ai-advisor-mvp/tasks.md
+```
 
-# Create your feature branch
-git checkout -b feature/<your-area>
+### Project Structure
+
+```
+├── src/                    # React frontend
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── components/         # (to be added in C2+)
+├── worker/                 # API Worker entry point
+│   └── index.ts
+├── scripts/                # Indexing scripts (Track A)
+├── knowledge/              # Knowledge base (362 files)
+├── spec/                   # Requirements, design, tasks
+├── vite.config.ts
+├── wrangler.toml
+└── package.json
 ```
 
 ## License

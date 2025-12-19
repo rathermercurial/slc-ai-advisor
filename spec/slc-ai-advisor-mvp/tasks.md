@@ -21,12 +21,14 @@
 
 ## Teammate A: Knowledge Base & Indexing
 
-### A1. [S] Set up Vectorize index
+### A1. [S] Set up Vectorize index ✅
 - **Description:** Create Vectorize index in Cloudflare dashboard with correct dimensions and metadata config
 - **Files:** `wrangler.toml` (add vectorize binding)
 - **Tests:** Verify index appears in dashboard
 - **Depends on:** none
-- **Status:** pending
+- **Status:** complete
+- **Branch:** `feature/knowledge-indexing`
+- **PR:** #4
 
 ### A2. [M] Create indexing script scaffold
 - **Description:** Set up Node.js script structure with gray-matter for parsing markdown frontmatter
@@ -60,12 +62,14 @@
 
 ## Teammate B: Backend / API Worker
 
-### B1. [M] Initialize Cloudflare Worker project
+### B1. [M] Initialize Cloudflare Worker project ✅
 - **Description:** Create Worker project with wrangler, configure bindings (Vectorize, Durable Objects, AI Gateway), set up TypeScript
-- **Files:** `wrangler.toml`, `src/worker/index.ts`, `tsconfig.json`, `package.json`
+- **Files:** `wrangler.toml`, `src/worker/index.ts`, `src/durable-objects/UserSession.ts`, `src/types/venture.ts`, `src/types/canvas.ts`, `tsconfig.json`, `package.json`
 - **Tests:** `wrangler dev` runs, basic health endpoint works
 - **Depends on:** none
-- **Status:** pending
+- **Status:** complete
+- **Branch:** `feature/backend-api`
+- **PR:** #5
 
 ### B2. [L] Implement Durable Object with SQLite schema
 - **Description:** Create UserSession Durable Object class, implement SQLite schema (session, venture_profile, canvas_section, impact_model, message tables)
@@ -116,10 +120,10 @@
 - **Depends on:** B7
 - **Status:** pending
 
-### B9. [S] Add CORS headers and rate limiting
-- **Description:** Add CORS headers for Pages/Worker separation, configure rate limiting (100 req/min)
-- **Files:** `src/worker/index.ts`, `wrangler.toml`
-- **Tests:** Verify CORS works from different origin, test rate limit
+### B9. [S] Add rate limiting
+- **Description:** Configure rate limiting (100 req/min per session). Note: CORS not needed with Workers Static Assets (single origin)
+- **Files:** `worker/index.ts`
+- **Tests:** Test rate limit enforcement
 - **Depends on:** B1
 - **Status:** pending
 
@@ -134,65 +138,68 @@
 
 ## Teammate C: Frontend
 
-### C1. [M] Initialize React app with Cloudflare Pages
-- **Description:** Create React app, configure for Pages deployment, install AI SDK v5
-- **Files:** `src/frontend/`, `package.json`, `pages.toml` or equivalent
-- **Tests:** App builds, deploys to Pages, loads in browser
+### C1. [M] Initialize React app with Workers Static Assets ✅
+- **Description:** Create React app with Vite, configure for Workers Static Assets deployment (not Pages - deprecated), install AI SDK v5
+- **Files:** `src/`, `worker/`, `package.json`, `vite.config.ts`, `wrangler.toml`, `index.html`, TypeScript configs
+- **Tests:** `npm run dev` runs, app loads in browser
 - **Depends on:** none
-- **Status:** pending
+- **Status:** complete
+- **Branch:** `feature/frontend`
+- **PR:** #6
+- **Note:** Uses `@cloudflare/vite-plugin` for unified frontend+backend deployment as single Worker
 
 ### C2. [M] Implement chat interface
 - **Description:** Chat UI with message list, input field, using `useAgentChat` hook from AI SDK
-- **Files:** `src/frontend/components/Chat.tsx`, `src/frontend/App.tsx`
+- **Files:** `src/components/Chat.tsx`, `src/App.tsx`
 - **Tests:** Send message, see response (mock initially)
 - **Depends on:** C1
 - **Status:** pending
 
 ### C3. [M] Connect chat to backend
 - **Description:** Connect useAgentChat to Worker API, handle session ID storage in localStorage, implement reconnection
-- **Files:** `src/frontend/components/Chat.tsx`, `src/frontend/hooks/useSession.ts`
+- **Files:** `src/components/Chat.tsx`, `src/hooks/useSession.ts`
 - **Tests:** Messages persist across refresh, session continues
 - **Depends on:** C2, B5 (needs chat endpoint)
 - **Status:** pending
 
 ### C4. [L] Implement canvas display
 - **Description:** Visual canvas layout showing 11 sections, completion status indicators, read-only for MVP
-- **Files:** `src/frontend/components/Canvas.tsx`, `src/frontend/components/CanvasSection.tsx`
+- **Files:** `src/components/Canvas.tsx`, `src/components/CanvasSection.tsx`
 - **Tests:** Canvas renders, shows correct data from API
 - **Depends on:** C1, B7 (needs canvas endpoint)
 - **Status:** pending
 
 ### C5. [M] Implement nested Impact Model display
 - **Description:** Impact Model section expandable to show full causality chain (issue → participants → activities → outputs → outcomes → impact)
-- **Files:** `src/frontend/components/ImpactModel.tsx`
+- **Files:** `src/components/ImpactModel.tsx`
 - **Tests:** Expand/collapse works, shows all 8 fields
 - **Depends on:** C4
 - **Status:** pending
 
 ### C6. [S] Implement copy button
 - **Description:** Copy button to copy canvas section content to clipboard
-- **Files:** `src/frontend/components/CanvasSection.tsx`
+- **Files:** `src/components/CanvasSection.tsx`
 - **Tests:** Click copy, verify clipboard content
 - **Depends on:** C4
 - **Status:** pending
 
 ### C7. [M] Implement export menu
 - **Description:** Export dropdown with Markdown and JSON options, triggers download
-- **Files:** `src/frontend/components/ExportMenu.tsx`
+- **Files:** `src/components/ExportMenu.tsx`
 - **Tests:** Export both formats, verify file downloads
 - **Depends on:** C4, B8 (needs export endpoint)
 - **Status:** pending
 
 ### C8. [M] Add loading states and error handling
 - **Description:** Loading spinners, error messages, connection status indicator
-- **Files:** `src/frontend/components/` (various)
+- **Files:** `src/components/` (various)
 - **Tests:** Simulate slow responses, errors, verify UI feedback
 - **Depends on:** C3, C4
 - **Status:** pending
 
 ### C9. [S] Style for demo
 - **Description:** Basic styling to make demo presentable (not production polish)
-- **Files:** `src/frontend/styles/`
+- **Files:** `src/styles/`
 - **Tests:** Visual review
 - **Depends on:** C8
 - **Status:** pending

@@ -66,7 +66,8 @@ This guide helps contributors understand the project, find their tasks, and coor
 **Focus:** Build the React chat interface and canvas display.
 
 **You'll work with:**
-- `src/frontend/` - React components
+- `src/` - React components and app code
+- `worker/` - API routes (coordinate with B for shared types)
 - AI SDK v5 `useAgentChat` hook
 
 **Your tasks:** C1-C9 in [tasks.md](spec/slc-ai-advisor-mvp/tasks.md)
@@ -80,21 +81,26 @@ This guide helps contributors understand the project, find their tasks, and coor
 - AI SDK v5 chat hooks
 - The canvas layout (11 sections + nested Impact Model)
 
+**Architecture note:** We use Workers Static Assets (not Pages). Frontend and API deploy as a single Worker via `@cloudflare/vite-plugin`. No CORS needed.
+
 ## Workflow
 
 ### 1. Set Up Your Branch
 
-```bash
-# Clone and enter repo
-git clone <repo-url>
-cd slc
+Branches are already created with S1 scaffolding complete:
 
-# Create your feature branch from main
-git checkout -b feature/<your-area>
-# Examples:
-#   feature/knowledge-indexing
-#   feature/backend-api
-#   feature/frontend
+```bash
+# Clone the repo
+git clone https://github.com/rathermercurial/slc-ai-advisor.git
+cd slc-ai-advisor
+
+# Checkout your feature branch (already exists)
+git checkout feature/knowledge-indexing  # Teammate A
+git checkout feature/backend-api         # Teammate B
+git checkout feature/frontend            # Teammate C
+
+# Install dependencies
+npm install
 ```
 
 ### 2. Find Your Tasks
@@ -137,12 +143,12 @@ Update the issue as you progress.
 
 We have 4 sync points to coordinate. **Don't skip these.**
 
-| Sync | After Tasks | What Happens |
-|------|-------------|--------------|
-| **S1** | A1, B1, C1 | Project scaffolding complete. Quick check-in: everyone can develop independently. |
-| **S2** | A3, B3 | Vectorize indexed, DO schema ready. Frontend can start testing with real data. |
-| **S3** | A4, B6, C4 | Core features working. Begin integration testing together. |
-| **S4** | All tasks | Demo ready. Final polish and prep. |
+| Sync | After Tasks | What Happens | Status |
+|------|-------------|--------------|--------|
+| **S1** | A1, B1, C1 | Project scaffolding complete. Quick check-in: everyone can develop independently. | ✅ Complete |
+| **S2** | A3, B3 | Vectorize indexed, DO schema ready. Frontend can start testing with real data. | Pending |
+| **S3** | A4, B6, C4 | Core features working. Begin integration testing together. | Pending |
+| **S4** | All tasks | Demo ready. Final polish and prep. | Pending |
 
 At each sync point:
 1. Push your current work
@@ -188,11 +194,15 @@ npm install
 # Login to Cloudflare
 wrangler login
 
-# Start local dev server
-wrangler dev
+# Start local dev server (frontend + API together)
+npm run dev
+# Opens http://localhost:5173 with Vite hot reload
 
-# For frontend (if separate)
-cd src/frontend && npm run dev
+# Build for production
+npm run build
+
+# Preview production build locally
+npm run preview
 ```
 
 ### Environment Variables

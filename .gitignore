@@ -1,9 +1,15 @@
 # Dependencies
 node_modules/
 
+# Build output
+dist/
+.wrangler/
+
 # Environment
 .env
 .env.local
+.env.*.local
+.dev.vars
 
 # OS files
 .DS_Store
@@ -13,3 +19,6 @@ Thumbs.db
 tmp/
 *.tmp
 *.log
+
+# TypeScript
+*.tsbuildinfo

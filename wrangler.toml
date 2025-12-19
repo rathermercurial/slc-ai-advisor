@@ -2,9 +2,18 @@
 # See: https://developers.cloudflare.com/workers/wrangler/configuration/
 
 name = "slc-ai-advisor"
-main = "src/worker/index.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
+
+# Worker entry point (API routes)
+main = "./worker/index.ts"
+
+# Static assets configuration (React SPA)
+# - not_found_handling: serve index.html for SPA client-side routing
+# - run_worker_first: route /api/* to worker before static assets
+[assets]
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
 
 # Observability
 [observability]

@@ -2,21 +2,30 @@
   "name": "slc-ai-advisor",
   "version": "0.1.0",
   "private": true,
-  "description": "AI advisor for social entrepreneurs using Social Lean Canvas methodology",
   "type": "module",
+  "description": "AI advisor for social entrepreneurs using Social Lean Canvas methodology",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.13.0",
     "@cloudflare/workers-types": "^4.20241205.0",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
+    "vite": "^6.0.5",
     "wrangler": "^3.95.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.33.1"
+    "@ai-sdk/anthropic": "^1.1.0",
+    "@anthropic-ai/sdk": "^0.33.1",
+    "ai": "^4.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

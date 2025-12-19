@@ -1,8 +1,18 @@
 # Cloudflare Quick Reference
 
-## Bindings
+## Contents
+- [KV (Key-Value)](#kv-key-value)
+- [D1 (SQLite)](#d1-sqlite)
+- [R2 (Object Storage)](#r2-object-storage)
+- [Durable Objects](#durable-objects)
+- [Queues](#queues)
+- [Vectorize](#vectorize)
+- [Workers AI](#workers-ai)
+- [wrangler.jsonc Bindings](#wranglerjsonc-bindings)
 
-### KV (Key-Value)
+---
+
+## KV (Key-Value)
 ```typescript
 // Read
 const value = await env.MY_KV.get("key");
@@ -19,7 +29,7 @@ await env.MY_KV.delete("key");
 const list = await env.MY_KV.list({ prefix: "user:" });
 ```
 
-### D1 (SQLite)
+## D1 (SQLite)
 ```typescript
 // Query
 const { results } = await env.MY_D1.prepare(
@@ -38,7 +48,7 @@ await env.MY_D1.batch([
 ]);
 ```
 
-### R2 (Object Storage)
+## R2 (Object Storage)
 ```typescript
 // Get
 const object = await env.MY_R2.get("file.pdf");
@@ -58,7 +68,7 @@ await env.MY_R2.delete("file.pdf");
 const list = await env.MY_R2.list({ prefix: "uploads/" });
 ```
 
-### Durable Objects
+## Durable Objects
 ```typescript
 // Get stub
 const id = env.MY_DO.idFromName("room-123");
@@ -75,7 +85,7 @@ export class MyDurableObject extends DurableObject {
 }
 ```
 
-### Queues
+## Queues
 ```typescript
 // Send message
 await env.MY_QUEUE.send({ type: "email", to: "user@example.com" });
@@ -97,7 +107,7 @@ export default {
 };
 ```
 
-### Vectorize
+## Vectorize
 ```typescript
 // Insert vectors
 await env.MY_VECTORIZE.insert([
@@ -111,7 +121,7 @@ const results = await env.MY_VECTORIZE.query(queryVector, {
 });
 ```
 
-### Workers AI
+## Workers AI
 ```typescript
 // Text generation
 const response = await env.AI.run("@cf/meta/llama-3-8b-instruct", {

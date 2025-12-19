@@ -1,30 +1,18 @@
 ---
 name: cloudflare-workers
-description: Use this skill when working with Cloudflare Workers, Pages, D1, KV, R2, Durable Objects, Queues, Vectorize, or Workers AI. Generates production-ready TypeScript code following Cloudflare best practices.
+description: Generates TypeScript code for Cloudflare Workers, Pages, D1, KV, R2, Durable Objects, Queues, Vectorize, and Workers AI. Activate when creating workers, configuring bindings, or deploying to Cloudflare.
 ---
 
 # Cloudflare Workers Development
 
-This skill provides guidance for building applications on Cloudflare's edge computing platform.
-
-## When to Use
-
-Activate this skill when:
-- Creating or modifying Cloudflare Workers
-- Working with Cloudflare bindings (D1, KV, R2, Durable Objects, Queues, Vectorize)
-- Deploying to Cloudflare Pages
-- Integrating Workers AI
-- Configuring wrangler.toml/wrangler.jsonc
-
 ## Code Standards
 
-### General
-- Use ES modules (not CommonJS)
-- Use TypeScript with strict types
+- ES modules (not CommonJS)
+- TypeScript with strict types
 - Single-file Workers by default
 - Minimal dependencies
 
-### Exports
+### Basic Structure
 ```typescript
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -33,21 +21,7 @@ export default {
 } satisfies ExportedHandler<Env>;
 ```
 
-### Environment Types
-```typescript
-interface Env {
-  MY_KV: KVNamespace;
-  MY_D1: D1Database;
-  MY_R2: R2Bucket;
-  MY_DO: DurableObjectNamespace;
-  MY_QUEUE: Queue;
-  AI: Ai;
-}
-```
-
-## Configuration
-
-### wrangler.jsonc
+### Configuration (wrangler.jsonc)
 ```jsonc
 {
   "name": "worker-name",
@@ -58,7 +32,7 @@ interface Env {
 }
 ```
 
-## See Also
+## References
 
-- `REFERENCE.md` - Quick reference for bindings
-- `EXAMPLES.md` - Common patterns
+- [REFERENCE.md](REFERENCE.md) — Binding APIs (KV, D1, R2, Durable Objects, Queues, Vectorize, Workers AI)
+- [EXAMPLES.md](EXAMPLES.md) — Full working examples (API, RAG, WebSocket, Queue consumer)

@@ -1,0 +1,43 @@
+# SLC AI Advisor - Cloudflare Worker Configuration
+# See: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "slc-ai-advisor"
+main = "src/worker/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Observability
+[observability]
+enabled = true
+
+# Vectorize Index for Knowledge Base
+# NOTE: Create this index manually in the Cloudflare dashboard first:
+# 1. Go to Workers & Pages > Vectorize
+# 2. Create index named "slc-knowledge-base"
+# 3. Dimensions: 768 (for bge-base-en-v1.5)
+# 4. Metric: cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "slc-knowledge-base"
+
+# Durable Objects for Session State
+[durable_objects]
+bindings = [
+  { name = "USER_SESSION", class_name = "UserSession" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["UserSession"]
+
+# AI Binding for embeddings
+[ai]
+binding = "AI"
+
+# Environment Variables (set via wrangler secret or dashboard)
+# ANTHROPIC_API_KEY - Set via: wrangler secret put ANTHROPIC_API_KEY
+
+# Development
+[dev]
+port = 8787
+local_protocol = "http"

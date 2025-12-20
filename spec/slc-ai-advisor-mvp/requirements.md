@@ -4,7 +4,7 @@
 
 ### The Challenge
 
-Social entrepreneurs operate under a dual mandate: achieve financial sustainability while creating measurable social or environmental impact. The Social Lean Canvas provides a one-page framework for planning these ventures, combining business model (10 sections) and impact model (1 section).
+Social entrepreneurs operate under a dual mandate: achieve financial sustainability while creating measurable social or environmental impact. The Social Lean Canvas provides a one-page framework for planning these ventures with 11 sequential sections organized into 3 conceptual models.
 
 Completing the canvas effectively requires:
 
@@ -22,6 +22,10 @@ The Social Lean Canvas learning program delivers structured instruction through 
 **Build Program (Paid):** Deeper iteration work - improving each section, running tests, refining toward product-market fit.
 
 The video drives learning, but users need just-in-time support when questions arise: "How specific should my UVP be?" or "What revenue models work for early-stage healthcare ventures?"
+
+### The AI Advisor's Role
+
+The AI Advisor sits alongside the video curriculum (in another browser tab/window) and helps users actually create their canvas as they progress through the video series. There is no deep LMS integration planned for MVP - the advisor infers or confirms the user's current progress through conversation.
 
 ### Why Current Approaches Fall Short
 
@@ -43,6 +47,64 @@ Success enables:
 - Demonstrating value to potential Build program participants
 - Generating revenue from paid enrollments
 - Validating the approach for future development
+
+## Canvas Structure
+
+### The 11 Sections
+
+The Social Lean Canvas has **11 sections** worked through sequentially. Section numbers track curriculum progress.
+
+| # | Section | Description |
+|---|---------|-------------|
+| 1 | **Purpose** | Why the venture exists |
+| 2 | **Customer Segments** | Who the venture serves |
+| 3 | **Problem** | The pain point or obstacle customers face |
+| 4 | **Unique Value Proposition** | Why customers choose this solution |
+| 5 | **Solution** | What the venture provides |
+| 6 | **Channels** | How customers are reached |
+| 7 | **Revenue** | How income is generated |
+| 8 | **Cost Structure** | Major ongoing expenses |
+| 9 | **Key Metrics** | How success is measured |
+| 10 | **Unfair Advantage** | What can't be easily copied |
+| 11 | **Impact** | The long-term social/environmental change |
+
+### The 3 Models
+
+Models are **conceptual groupings** that organize sections (and related concepts) into domains useful for the venture's daily context. Users do NOT progress sequentially through models - models help zoom out and think about multiple sections at once.
+
+#### Customer Model
+How the venture creates value for customers.
+
+**Sections:** Customer Segments (2), Problem (3), Unique Value Proposition (4), Solution (5)
+
+**Related concepts (not sections):**
+- Customer Types (including Early Adopters)
+- Jobs to be Done - the task customers need to accomplish
+- Existing Alternatives - what customers use today
+
+*Example: Alice needs to wash her car (JTBD) but lives in an apartment with no facilities (Problem). Bob's car wash (Solution) lets her accomplish this.*
+
+#### Economic Model
+How customer value translates into financial sustainability.
+
+**Sections:** Channels (6), Revenue (7), Cost Structure (8), Unfair Advantage (10)
+
+**Related concepts (not sections):**
+- Financial Model - projections and unit economics
+
+#### Impact Model
+How the venture creates measurable social/environmental change.
+
+**Section:** Impact (11)
+
+**The Impact Model is unique** - unlike Customer and Economic Models which span multiple sections, the Impact Model maps 1:1 with section 11. It contains a complete causality chain that nests entirely within the Impact section:
+
+```
+Issue → Participants → Activities → Outputs → 
+Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact
+```
+
+The final "Impact" field of this chain IS section 11's content. They are the same and stay in sync.
 
 ## Users
 
@@ -109,7 +171,16 @@ This understanding should be:
 - Stored so users don't repeat context
 - Updateable as the venture evolves
 
-### 2. Methodology Guidance
+### 2. Curriculum Progress Tracking
+
+The system must understand the user's position in the SLC program:
+- Current section (1-11) being worked on
+- Which sections are complete vs. incomplete
+- Ability to infer progress from conversation or ask directly
+
+This enables delivering relevant advice for the specific section the user is working on.
+
+### 3. Methodology Guidance
 
 The system must answer methodology questions:
 - "How do I fill in the revenue section?"
@@ -118,10 +189,10 @@ The system must answer methodology questions:
 
 Responses must:
 - Draw from the existing methodology content (video scripts, canvas section guides)
-- Adapt guidance to the user's venture stage
+- Adapt guidance to the user's venture stage and current section
 - Be clear and actionable
 
-### 3. Relevant Example Retrieval (The Selection Matrix)
+### 4. Relevant Example Retrieval (The Selection Matrix)
 
 This is the core value proposition. The system must retrieve venture examples that match the user's context - not just by keywords, but by dimensional similarity.
 
@@ -143,7 +214,7 @@ This is the core value proposition. The system must retrieve venture examples th
 
 **Why this matters:** The taxonomy represents codified domain expertise. Expert advisors mentally categorize ventures across these dimensions when providing guidance. The system makes this explicit, enabling filtering that mimics expert reasoning.
 
-### 4. Canvas Interaction
+### 5. Canvas Interaction
 
 Users must be able to:
 - View their canvas with all 11 sections visible
@@ -153,13 +224,21 @@ Users must be able to:
 - Have their work persist across sessions
 - Export their canvas for sharing or backup
 
-### 5. Conversational Continuity
+### 6. Impact Model Interaction
+
+Users must be able to:
+- View the full Impact Model (8-field causality chain) nested within section 11
+- Edit any field of the Impact Model
+- See the Impact Model's final "impact" field reflected in section 11 (and vice versa)
+- Export the Impact Model separately or as part of the full canvas
+
+### 7. Conversational Continuity
 
 The system must maintain three types of state:
 
 **Venture metadata:** 7-dimensional coordinates, inferred progressively through conversation
 
-**Canvas content:** 11 sections, each with content and completion status
+**Canvas content:** 11 sections (with Impact Model nested in section 11), each with content and completion status
 
 **Conversation context:** Recent exchanges to maintain continuity
 
@@ -169,6 +248,14 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 ## Success Criteria
 
+### Milestones
+
+**Demo (1 week):** Basic functionality - Advisor can give high-quality answers to basic questions about the Social Lean Canvas.
+
+**MVP (2 weeks):** Full requirements - Advisor understands venture dimensions, curriculum progress, models spanning sections, and retrieves perfect examples for the user's unique venture.
+
+**Integration-ready (Future):** Functions fully abstracted, ready to integrate into any frontend (like socialleancanvas.com).
+
 ### Must Demonstrate (MVP)
 
 1. **Backend operational**
@@ -177,14 +264,14 @@ With this: Natural conversation, contextual responses, canvas continuity.
    - [ ] Maintains state across sessions
 
 2. **Content retrieval working**
-   - [ ] Knowledge base (16 ventures, video scripts, templates) is indexed
+   - [ ] Knowledge base (venture examples, video scripts, templates) is indexed
    - [ ] System can search and retrieve content
    - [ ] Returns results to queries
 
 3. **Methodology guidance accurate**
    - [ ] Draws from indexed methodology content
    - [ ] Provides clear, actionable guidance
-   - [ ] Adapts to user's venture stage
+   - [ ] Adapts to user's venture stage and current section
 
 4. **Selection matrix functional**
    - [ ] Filters examples using venture dimensions
@@ -193,6 +280,7 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 5. **Canvas interaction working**
    - [ ] Canvas renders with 11 sections
+   - [ ] Impact Model renders nested within section 11
    - [ ] User can edit sections
    - [ ] State persists across sessions
    - [ ] User can export their work
@@ -201,11 +289,11 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 **Retrieval relevance:** Do retrieved examples feel relevant to user's venture characteristics? Are they dimensionally similar (same stage, similar impact area, comparable mechanism)?
 
-**Methodology clarity:** Are explanations clear and actionable? Does guidance match venture stage appropriately?
+**Methodology clarity:** Are explanations clear and actionable? Does guidance match venture stage and current section appropriately?
 
 **Conversational flow:** Can users ask follow-up questions without repeating context? Does the system maintain understanding?
 
-**Canvas usability:** Is editing smooth? Do updates reflect properly? Are exports usable?
+**Canvas usability:** Is editing smooth? Do updates reflect properly? Does Impact Model stay in sync with section 11? Are exports usable?
 
 **Developer accessibility:** Can an amateur coder navigate and understand the codebase? Can they make a simple change (add canvas section, modify tag, adjust content)?
 
@@ -216,7 +304,7 @@ Prepare these scenarios for demo:
 1. **New user, general question:** System guides dimensional understanding through conversation
 2. **Established context, specific query:** System retrieves dimensionally-relevant examples
 3. **Canvas editing through conversation:** Updates reflect in canvas
-4. **Direct canvas editing:** State persists
+4. **Impact Model editing:** Changes to Impact section sync with Impact Model
 5. **Export and import:** Canvas can be saved and resumed
 
 ## Scope
@@ -224,11 +312,13 @@ Prepare these scenarios for demo:
 ### In Scope
 
 - Conversational AI advisor (user-driven, responds to queries)
-- Knowledge base access (methodology content, 16 venture examples)
+- Knowledge base access (methodology content, venture examples)
 - Multi-dimensional content filtering (138-tag taxonomy across 7 dimensions)
 - Canvas viewing, editing, persistence, export (11 sections)
+- Impact Model as nested component within section 11
 - Basic demo interface for testing and demonstration
 - State management for venture context, canvas content, conversation
+- Single program support (SLC) with architecture supporting future programs
 
 ### Out of Scope (MVP)
 
@@ -236,8 +326,9 @@ Prepare these scenarios for demo:
 - Multi-user collaboration
 - Content authoring/editing tools
 - Mobile-optimized interface
-- Integration with content player (future phase)
+- Deep integration with video curriculum website
 - User authentication beyond basic session management
+- Multiple program support (architecture only)
 
 ## Constraints
 
@@ -264,18 +355,23 @@ Implications:
 ### Content State
 
 **Current knowledge base:** Ready for use
-- 16 example ventures with tags
+- Venture examples with tags
 - Video scripts in modular "slugs"
 - Canvas templates
 - 138-tag taxonomy defined across 7 dimensions
-- 349 markdown files total
+
+### Future Considerations
+
+- Multiple programs may be added (P2P Canvas, etc.)
+- Design should accommodate additional curricula without major refactoring
+- Program-specific content and examples should be filterable
 
 ## Open Questions
 
-1. How should the canvas be displayed to users in the demo interface?
+1. ~~How should the canvas be displayed to users in the demo interface?~~ Chat-primary, visual canvas read-only for MVP
 2. How should dimensional matching work when no exact match exists? (Is 5/7 dimensions better than 3/7? How much better?)
-3. What's the minimum viable demo interface needed?
+3. ~~What's the minimum viable demo interface needed?~~ Basic chat + canvas display
 
 ---
 
-*Source: tmp/agent-discovery.md, tmp/discovery-meeting-transcript.md*
+*Source: tmp/agent-discovery.md, tmp/discovery-meeting-transcript.md, tmp/section-issues.md*

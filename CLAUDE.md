@@ -1,110 +1,94 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
-
-## Project Status
-
-**Phase:** Implementation (spec complete, ready to build)
-**Target Platform:** Cloudflare (Workers, Pages, Durable Objects, Vectorize)
-**Timeline:** Demo needed ~1 week after Christmas
+Instructions for Claude Code when working with this repository.
 
 ## Project Overview
 
-An AI advisor for social entrepreneurs using the Social Lean Canvas methodology. The system provides intelligent, contextual support by filtering a knowledge base using multi-dimensional venture analysis.
+AI advisor for social entrepreneurs using the Social Lean Canvas methodology. Filters a knowledge base using multi-dimensional venture analysis (the Selection Matrix).
 
-**Core Innovation:** The Selection Matrix - filtering examples by 7 venture dimensions (stage, impact area, mechanism, legal structure, revenue source, funding source, industry) before semantic search. This ensures dimensionally-relevant results, not just keyword matches.
+**Core Innovation:** Filter examples by 7 venture dimensions before semantic search. Early-stage healthcare ventures get healthcare examples at similar stages, not keyword matches from unrelated contexts.
 
-**Key Concepts:**
-- **Social Lean Canvas**: One-page framework with 11 sections + separate Impact Model
-- **138-tag taxonomy**: Encoding domain expertise for categorizing social enterprises
-- **7 venture dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
+## Key Concepts
 
-## Specification Documents
-
-The project follows a spec-driven workflow. All implementation should reference these documents:
-
-| Document | Purpose |
-|----------|---------|
-| `spec/slc-ai-advisor-mvp/requirements.md` | What we're building, success criteria, constraints |
-| `spec/slc-ai-advisor-mvp/design.md` | Architecture, components, data models, interfaces |
-| `spec/slc-ai-advisor-mvp/tasks.md` | Implementation tasks organized by teammate |
+- **11 Canvas Sections**: Purpose, Customer Segments, Problem, UVP, Solution, Channels, Revenue, Cost Structure, Key Metrics, Unfair Advantage, Impact
+- **3 Venture Models**: Customer (sections 2-5), Economic (sections 6-8, 10), Impact (section 11)
+- **7 Dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
+- **Impact Model**: Section 11 contains 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
 
 ## Architecture
 
-```
-Frontend (Pages) → API Worker → Durable Object (state)
-                            → Vectorize (RAG)
-                            → Anthropic (LLM)
-```
-
-**Key Components:**
-- **Frontend**: React with AI SDK v5 `useAgentChat`
-- **API Worker**: Agents SDK v0.2.24+, Selection Matrix, canvas CRUD
-- **Durable Object**: SQLite for session, venture profile, canvas, messages
-- **Vectorize**: 768-dim embeddings with metadata filtering
-
-## Team Areas
-
-| Area | Branch | Tasks |
-|------|--------|-------|
-| Knowledge Base & Indexing | `feature/knowledge-indexing` | A1-A5 |
-| Backend / API | `feature/backend-api` | B1-B10 |
-| Frontend | `feature/frontend` | C1-C9 |
-
-## Knowledge Base Structure
+Single Cloudflare Worker (Workers Static Assets). No CORS needed.
 
 ```
-knowledge/
-├── agent-content/
-│   ├── canvas-sections/       # Content for each canvas section
-│   ├── program-content/       # Video program scripts
-│   └── venture-example-libraries/
-│       ├── core-venture-example-library/   # 9 main examples
-│       └── p2p-venture-example-library/    # 7 P2P examples
-├── tags/                      # 138-tag taxonomy definitions
-├── lexicon-entry/             # Terminology definitions
-└── brief-for-agent-design/    # Project briefs
+Worker → Durable Object (SQLite state)
+      → Vectorize (768-dim embeddings)
+      → Anthropic (Claude)
+```
+
+**Stack:**
+- Frontend: React 19 + Vite + Agents SDK (`useAgentChat`)
+- Backend: Cloudflare Workers + Durable Objects (SQLite)
+- Search: Vectorize with metadata filtering
+
+## Spec Documents
+
+| Document | Purpose |
+|----------|---------|
+| `spec/slc-ai-advisor-mvp/requirements.md` | What we're building |
+| `spec/slc-ai-advisor-mvp/design.md` | Architecture, data models, interfaces |
+| `spec/slc-ai-advisor-mvp/tasks.md` | Tasks by milestone (Demo vs MVP) |
+
+## File Structure
+
+```
+src/types/          # TypeScript interfaces (canvas.ts, venture.ts, message.ts)
+worker/             # API entry point
+  index.ts          # Request handler
+  env.d.ts          # Env type extensions
+knowledge/          # 362 markdown files
+  agent-content/    # Venture examples, video scripts, section guides
+  tags/             # 138-tag taxonomy
+spec/               # Specification documents
+scripts/            # Indexing scripts (Track A)
 ```
 
 ## Key Reference Files
 
-When implementing, reference these files:
-
-- `knowledge/agent-content/venture-example-libraries/core-venture-example-library/patagonia/patagonia-slc.md` - Venture example format with frontmatter
+- `knowledge/agent-content/venture-example-libraries/core-venture-example-library/patagonia/patagonia-slc.md` - Venture example with frontmatter
 - `knowledge/tags/tags.md` - 138-tag taxonomy overview
-- `knowledge/agent-content/canvas-sections/canvas-sections.md` - Canvas section definitions
-
-## Data Models
-
-See `spec/slc-ai-advisor-mvp/design.md` for full TypeScript interfaces. Key types:
-
-- `VentureDimensions` - 7 dimensions for filtering
-- `VentureProfile` - User's venture with confidence tracking
-- `CanvasState` - 11 sections + ImpactModel
-- `ConversationState` - Messages + summary
+- `src/types/canvas.ts` - Canvas and Impact Model types
 
 ## Implementation Notes
 
-- Use parameterized SQL queries (prevent injection)
 - Session ID: `crypto.randomUUID()`
 - Confidence threshold for dimension inference: 0.7
-- CORS headers needed for Pages/Worker separation
 - Rate limiting: 100 req/min per session
-
-## Skills Available
-
-- **spec-driven** - Guides Requirements → Design → Tasks → Implementation workflow
-- **cloudflare** - Cloudflare Workers development patterns
+- Impact Model's `impact` field syncs with section 11 content
+- Use parameterized SQL queries (prevent injection)
 
 ## Commands
 
 ```bash
-# View tasks
-cat spec/slc-ai-advisor-mvp/tasks.md
-
-# Start development
-wrangler dev
-
-# Deploy
-wrangler deploy
+npm run dev          # Start dev server
+npm run build        # Build for production
+npm run typecheck    # TypeScript check
+npx wrangler types   # Regenerate worker types
+wrangler deploy      # Deploy to Cloudflare
 ```
+
+## GitHub Issues
+
+| Issue | Description |
+|-------|-------------|
+| #7 | Track A: Knowledge Base |
+| #8 | A2: KB Restructure (blocker) |
+| #9 | A3-A6: Indexing to Demo |
+| #10 | Track B: Backend |
+| #11 | B1-B5: Backend to Demo |
+| #12 | Track C: Frontend |
+| #13 | C1-C3: Frontend to Demo |
+
+## Skills Available
+
+- **spec-driven** - Requirements → Design → Tasks → Implementation workflow
+- **cloudflare** - Cloudflare Workers patterns and documentation

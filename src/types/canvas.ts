@@ -4,9 +4,9 @@
  * The Social Lean Canvas has 11 sections worked through sequentially.
  * Sections are grouped into 3 conceptual Models for organization.
  *
- * Structure:
- * - Sections 1-10: Simple string content
- * - Section 11 (Impact): Contains the full Impact Model (8-field causality chain)
+ * Storage:
+ * - Sections 1-10: Stored in canvas_section table (simple string content)
+ * - Section 11 (Impact): Stored in impact_model table (8-field causality chain)
  *
  * The Impact Model's final 'impact' field IS section 11's content - they stay in sync.
  */
@@ -28,12 +28,6 @@ export type CanvasSectionId =
   | 'impact';              // 11 - Impact Model (nested)
 
 /**
- * Sections 1-10 only (stored in canvas_section table)
- * Section 11 is stored in impact_model table
- */
-export type SimpleSectionId = Exclude<CanvasSectionId, 'impact'>;
-
-/**
  * Section order for curriculum progression (1-11)
  */
 export const CANVAS_SECTION_ORDER: CanvasSectionId[] = [
@@ -48,22 +42,6 @@ export const CANVAS_SECTION_ORDER: CanvasSectionId[] = [
   'keyMetrics',
   'unfairAdvantage',
   'impact',
-];
-
-/**
- * Simple sections only (1-10), excludes impact
- */
-export const SIMPLE_SECTION_IDS: SimpleSectionId[] = [
-  'purpose',
-  'customerSegments',
-  'problem',
-  'uniqueValueProposition',
-  'solution',
-  'channels',
-  'revenue',
-  'costStructure',
-  'keyMetrics',
-  'unfairAdvantage',
 ];
 
 /**
@@ -101,16 +79,16 @@ export const CANVAS_SECTION_LABELS: Record<CanvasSectionId, string> = {
 };
 
 /**
- * Venture Model groupings (for retrieval/filtering, not storage)
+ * Model groupings (for retrieval/filtering, not storage)
  *
  * Models are conceptual lenses that group related sections:
  * - Customer Model: How the venture creates value for customers
  * - Economic Model: How value translates to financial sustainability
  * - Impact Model: How the venture creates social/environmental change
  */
-export type VentureModel = 'customer' | 'economic' | 'impact';
+export type Model = 'customer' | 'economic' | 'impact';
 
-export const SECTION_TO_MODEL: Record<CanvasSectionId, VentureModel | null> = {
+export const SECTION_TO_MODEL: Record<CanvasSectionId, Model | null> = {
   purpose: null,           // Standalone
   customerSegments: 'customer',
   problem: 'customer',
@@ -124,7 +102,7 @@ export const SECTION_TO_MODEL: Record<CanvasSectionId, VentureModel | null> = {
   impact: 'impact',
 };
 
-export const MODEL_SECTIONS: Record<VentureModel, CanvasSectionId[]> = {
+export const MODEL_SECTIONS: Record<Model, CanvasSectionId[]> = {
   customer: ['customerSegments', 'problem', 'uniqueValueProposition', 'solution'],
   economic: ['channels', 'revenue', 'costStructure', 'unfairAdvantage'],
   impact: ['impact'],
@@ -133,11 +111,12 @@ export const MODEL_SECTIONS: Record<VentureModel, CanvasSectionId[]> = {
 /**
  * A single canvas section (sections 1-10)
  *
- * Note: Section 11 (impact) is stored as ImpactModel, not CanvasSection
+ * Note: Section 11 (impact) is stored as ImpactModel, not CanvasSection.
+ * Code that writes to DB should route 'impact' to the impact_model table.
  */
 export interface CanvasSection {
   sessionId: string;
-  sectionKey: SimpleSectionId;
+  sectionKey: CanvasSectionId;
   content: string;
   isComplete: boolean;
   updatedAt: string;
@@ -241,17 +220,19 @@ export interface CanvasState {
 }
 
 /**
- * Create empty sections for a new session (sections 1-10)
+ * Create empty sections for a new session (sections 1-10, excludes impact)
  */
 export function createEmptySections(sessionId: string): CanvasSection[] {
   const now = new Date().toISOString();
-  return SIMPLE_SECTION_IDS.map((sectionKey) => ({
-    sessionId,
-    sectionKey,
-    content: '',
-    isComplete: false,
-    updatedAt: now,
-  }));
+  return CANVAS_SECTION_ORDER
+    .filter((id) => id !== 'impact')
+    .map((sectionKey) => ({
+      sessionId,
+      sectionKey,
+      content: '',
+      isComplete: false,
+      updatedAt: now,
+    }));
 }
 
 /**
@@ -307,6 +288,6 @@ export function getSectionKey(sectionNumber: number): CanvasSectionId | null {
 /**
  * Check if a section belongs to a specific model
  */
-export function isInModel(sectionKey: CanvasSectionId, model: VentureModel): boolean {
+export function isInModel(sectionKey: CanvasSectionId, model: Model): boolean {
   return SECTION_TO_MODEL[sectionKey] === model;
 }

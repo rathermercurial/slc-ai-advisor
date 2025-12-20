@@ -8,7 +8,7 @@ This directory contains specifications for features developed using the spec-dri
 
 A conversational AI advisor for social entrepreneurs using the Social Lean Canvas methodology. The system provides methodology guidance and contextual example retrieval using a Selection Matrix - multi-dimensional filtering by venture characteristics before semantic search.
 
-**Core Concept:** The Social Lean Canvas has **11 sections** worked through sequentially, organized into **3 venture models**:
+**Core Concept:** The Social Lean Canvas has **11 sections** worked through sequentially, organized into **3 models**:
 
 | # | Section | Model |
 |---|---------|-------|

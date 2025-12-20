@@ -62,8 +62,8 @@ MVP simplification: Chat-primary interface. Visual canvas editor deferred to pos
   ```
   POST /api/chat           - Send message, receive AI response
   GET  /api/canvas         - Get current canvas state (includes Impact Model)
-  PUT  /api/canvas/:section - Update specific section (1-10)
-  PUT  /api/canvas/impact-model - Update Impact Model (syncs section 11)
+  PUT  /api/canvas/:section - Update specific section (1-10, or 'impact')
+  PUT  /api/canvas/impact-model - Update Impact Model fields (syncs section 11)
   GET  /api/session        - Get session metadata
   POST /api/export         - Export canvas (format: md|json)
   POST /api/import         - Import canvas data
@@ -73,7 +73,7 @@ MVP simplification: Chat-primary interface. Visual canvas editor deferred to pos
 - **Purpose:** Persist all user state with strong consistency
 - **Responsibilities:**
   - Store venture profile (7 dimensions with confidence scores)
-  - Store canvas content (10 simple sections + Impact Model)
+  - Store canvas content (sections 1-10 in canvas_section, section 11 in impact_model)
   - Store conversation history
   - Keep Impact Model's `impact` field synced with section 11
 - **Interface:** SQLite database within Durable Object
@@ -118,7 +118,7 @@ type CanvasSectionId =
   | 'impact';              // 11 - Impact Model (contains nested ImpactModel)
 
 // Section numbers for curriculum tracking
-const SECTION_NUMBERS: Record<CanvasSectionId, number> = {
+const CANVAS_SECTION_NUMBER: Record<CanvasSectionId, number> = {
   purpose: 1,
   customerSegments: 2,
   problem: 3,
@@ -132,10 +132,10 @@ const SECTION_NUMBERS: Record<CanvasSectionId, number> = {
   impact: 11,
 };
 
-// Venture Model groupings (for retrieval/filtering, not storage)
-type VentureModel = 'customer' | 'economic' | 'impact';
+// Model groupings (for retrieval/filtering, not storage)
+type Model = 'customer' | 'economic' | 'impact';
 
-const SECTION_TO_MODEL: Record<CanvasSectionId, VentureModel | null> = {
+const SECTION_TO_MODEL: Record<CanvasSectionId, Model | null> = {
   purpose: null,
   customerSegments: 'customer',
   problem: 'customer',
@@ -178,8 +178,11 @@ interface VentureProfile {
 ### Canvas State
 
 ```typescript
-// A single canvas section (sections 1-10)
+// A single canvas section
+// Note: Section 11 (impact) is stored in impact_model table, not canvas_section.
+// Code that writes to DB should route 'impact' to the impact_model table.
 interface CanvasSection {
+  sessionId: string;
   sectionKey: CanvasSectionId;
   content: string;
   isComplete: boolean;
@@ -189,6 +192,7 @@ interface CanvasSection {
 // Impact Model - causality chain nested within section 11
 // The 'impact' field IS section 11's content - they stay in sync
 interface ImpactModel {
+  sessionId: string;
   issue: string;
   participants: string;
   activities: string;
@@ -207,12 +211,13 @@ interface CanvasState {
   sections: CanvasSection[];  // Sections 1-10 (simple content)
   impactModel: ImpactModel;   // Section 11 (nested causality chain)
   currentSection: number | null;  // User's curriculum progress (1-11)
+  completionPercentage: number;
   createdAt: string;
   updatedAt: string;
 }
 ```
 
-**Key design decision:** Sections 1-10 store simple string content. Section 11 (Impact) contains the full ImpactModel structure. The ImpactModel's `impact` field is the summary that appears as section 11's "content" when viewing the canvas linearly.
+**Storage:** Sections 1-10 are stored in `canvas_section` table. Section 11 is stored in `impact_model` table. The `impact` field in ImpactModel IS section 11's content.
 
 ### Conversation State
 
@@ -252,10 +257,11 @@ CREATE TABLE venture_profile (
   updated_at TEXT NOT NULL
 );
 
--- Canvas sections (sections 1-10 only; section 11 is in impact_model table)
+-- Canvas sections (sections 1-10 only)
+-- Section 11 (impact) is stored in impact_model table
 CREATE TABLE canvas_section (
   session_id TEXT NOT NULL,
-  section_key TEXT NOT NULL,    -- One of 10 CanvasSectionIds (not 'impact')
+  section_key TEXT NOT NULL,    -- One of: purpose, customerSegments, problem, etc. (NOT 'impact')
   content TEXT NOT NULL DEFAULT '',
   is_complete INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL,
@@ -263,7 +269,7 @@ CREATE TABLE canvas_section (
 );
 
 -- Impact Model (section 11 - full causality chain)
--- The 'impact' column mirrors what would be section 11's content
+-- The 'impact' column IS section 11's content
 CREATE TABLE impact_model (
   session_id TEXT PRIMARY KEY,
   issue TEXT NOT NULL DEFAULT '',
@@ -417,4 +423,4 @@ async updateImpactModel(sessionId: string, field: string, content: string): Prom
 
 ---
 
-*Source: spec/slc-ai-advisor-mvp/requirements.md, tmp/section-issues.md*
+*Source: spec/slc-ai-advisor-mvp/requirements.md*

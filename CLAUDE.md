@@ -11,7 +11,7 @@ AI advisor for social entrepreneurs using the Social Lean Canvas methodology. Fi
 ## Key Concepts
 
 - **11 Canvas Sections**: Purpose, Customer Segments, Problem, UVP, Solution, Channels, Revenue, Cost Structure, Key Metrics, Unfair Advantage, Impact
-- **3 Venture Models**: Customer (sections 2-5), Economic (sections 6-8, 10), Impact (section 11)
+- **3 Models**: Customer (sections 2-5), Economic (sections 6-8, 10), Impact (section 11)
 - **7 Dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
 - **Impact Model**: Section 11 contains 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
 

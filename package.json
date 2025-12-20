@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.0",
-    "@anthropic-ai/sdk": "^0.33.1",
+    "agents": "^0.2.32",
     "ai": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

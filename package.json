@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:ui": "VITE_FRONTEND_ONLY=true vite",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",

@@ -2,12 +2,17 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
+// Use VITE_FRONTEND_ONLY=true to run without Cloudflare (for UI testing)
+const frontendOnly = process.env.VITE_FRONTEND_ONLY === 'true';
+
 export default defineConfig({
-  plugins: [
-    react(),
-    cloudflare({
-      viteEnvironment: { name: 'ssr' },
-      persistState: false,
-    }),
-  ],
+  plugins: frontendOnly
+    ? [react()]
+    : [
+        react(),
+        cloudflare({
+          viteEnvironment: { name: 'ssr' },
+          persistState: false,
+        }),
+      ],
 });

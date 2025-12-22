@@ -156,15 +156,34 @@ body {
 }
 
 .slc-row-middle {
-  min-height: 140px;
-}
-
-.slc-row-metrics {
-  min-height: 100px;
+  min-height: 240px;
 }
 
 .slc-row-bottom {
   min-height: 80px;
+}
+
+/* Column layouts for middle section */
+.slc-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.slc-col-double .canvas-section {
+  flex: 1;
+}
+
+.slc-col-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slc-col-stacked .canvas-section {
+  flex: 1;
 }
 
 /* Canvas sections */
@@ -260,24 +279,6 @@ body {
 
 .canvas-section-actions button:hover {
   opacity: 0.9;
-}
-
-/* Specific section sizing */
-.slc-row-top .canvas-section {
-  flex: 1;
-}
-
-.slc-row-middle .canvas-section {
-  flex: 1;
-  min-width: 0;
-}
-
-.slc-row-metrics .canvas-section {
-  flex: 1;
-}
-
-.slc-row-bottom .canvas-section {
-  flex: 1;
 }
 
 /* ============================================

@@ -83,10 +83,9 @@ export function Canvas({ sessionId }: CanvasProps) {
             content={sections.purpose || ''}
             onSave={(content) => handleSectionSave('purpose', content)}
             helperText={SECTION_HELPER_TEXT.purpose}
-            className="slc-purpose"
           />
           <div
-            className="canvas-section slc-impact"
+            className="canvas-section"
             onClick={() => setShowImpactPanel(true)}
           >
             <div className="canvas-section-header">
@@ -100,56 +99,71 @@ export function Canvas({ sessionId }: CanvasProps) {
           </div>
         </div>
 
-        {/* Middle Section: 5-column row */}
+        {/* Middle Section: 5-column layout with varying heights */}
         <div className="slc-row slc-row-middle">
-          <CanvasSection
-            sectionKey="problem"
-            content={sections.problem || ''}
-            onSave={(content) => handleSectionSave('problem', content)}
-            helperText={SECTION_HELPER_TEXT.problem}
-          />
-          <CanvasSection
-            sectionKey="solution"
-            content={sections.solution || ''}
-            onSave={(content) => handleSectionSave('solution', content)}
-            helperText={SECTION_HELPER_TEXT.solution}
-          />
-          <CanvasSection
-            sectionKey="uniqueValueProposition"
-            content={sections.uniqueValueProposition || ''}
-            onSave={(content) =>
-              handleSectionSave('uniqueValueProposition', content)
-            }
-            helperText={SECTION_HELPER_TEXT.uniqueValueProposition}
-          />
-          <CanvasSection
-            sectionKey="unfairAdvantage"
-            content={sections.unfairAdvantage || ''}
-            onSave={(content) => handleSectionSave('unfairAdvantage', content)}
-            helperText={SECTION_HELPER_TEXT.unfairAdvantage}
-          />
-          <CanvasSection
-            sectionKey="customerSegments"
-            content={sections.customerSegments || ''}
-            onSave={(content) => handleSectionSave('customerSegments', content)}
-            helperText={SECTION_HELPER_TEXT.customerSegments}
-          />
-        </div>
+          {/* Column 1: Problem (double height) */}
+          <div className="slc-col slc-col-double">
+            <CanvasSection
+              sectionKey="problem"
+              content={sections.problem || ''}
+              onSave={(content) => handleSectionSave('problem', content)}
+              helperText={SECTION_HELPER_TEXT.problem}
+            />
+          </div>
 
-        {/* Key Metrics & Channels row */}
-        <div className="slc-row slc-row-metrics">
-          <CanvasSection
-            sectionKey="keyMetrics"
-            content={sections.keyMetrics || ''}
-            onSave={(content) => handleSectionSave('keyMetrics', content)}
-            helperText={SECTION_HELPER_TEXT.keyMetrics}
-          />
-          <CanvasSection
-            sectionKey="channels"
-            content={sections.channels || ''}
-            onSave={(content) => handleSectionSave('channels', content)}
-            helperText={SECTION_HELPER_TEXT.channels}
-          />
+          {/* Column 2: Solution + Key Metrics (stacked) */}
+          <div className="slc-col slc-col-stacked">
+            <CanvasSection
+              sectionKey="solution"
+              content={sections.solution || ''}
+              onSave={(content) => handleSectionSave('solution', content)}
+              helperText={SECTION_HELPER_TEXT.solution}
+            />
+            <CanvasSection
+              sectionKey="keyMetrics"
+              content={sections.keyMetrics || ''}
+              onSave={(content) => handleSectionSave('keyMetrics', content)}
+              helperText={SECTION_HELPER_TEXT.keyMetrics}
+            />
+          </div>
+
+          {/* Column 3: Unique Value Proposition (double height) */}
+          <div className="slc-col slc-col-double">
+            <CanvasSection
+              sectionKey="uniqueValueProposition"
+              content={sections.uniqueValueProposition || ''}
+              onSave={(content) =>
+                handleSectionSave('uniqueValueProposition', content)
+              }
+              helperText={SECTION_HELPER_TEXT.uniqueValueProposition}
+            />
+          </div>
+
+          {/* Column 4: Unfair Advantage + Channels (stacked) */}
+          <div className="slc-col slc-col-stacked">
+            <CanvasSection
+              sectionKey="unfairAdvantage"
+              content={sections.unfairAdvantage || ''}
+              onSave={(content) => handleSectionSave('unfairAdvantage', content)}
+              helperText={SECTION_HELPER_TEXT.unfairAdvantage}
+            />
+            <CanvasSection
+              sectionKey="channels"
+              content={sections.channels || ''}
+              onSave={(content) => handleSectionSave('channels', content)}
+              helperText={SECTION_HELPER_TEXT.channels}
+            />
+          </div>
+
+          {/* Column 5: Customer Segments (double height) */}
+          <div className="slc-col slc-col-double">
+            <CanvasSection
+              sectionKey="customerSegments"
+              content={sections.customerSegments || ''}
+              onSave={(content) => handleSectionSave('customerSegments', content)}
+              helperText={SECTION_HELPER_TEXT.customerSegments}
+            />
+          </div>
         </div>
 
         {/* Bottom Row: Cost Structure & Revenue */}

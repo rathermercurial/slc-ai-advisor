@@ -1,32 +1,64 @@
+import { useState, useEffect } from 'react';
+import { Canvas, Chat } from './components';
+
 /**
  * SLC AI Advisor - Main Application
  *
- * Chat-first interface for the Social Lean Canvas AI Advisor.
- * Canvas display will be added in task C4.
+ * Two-column layout: Canvas on left (60%), Chat on right (40%).
+ * Dark mode toggle in header.
  */
-
 function App() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    // Check localStorage or system preference
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  });
+
+  const [sessionId] = useState(() => {
+    // Get or create session ID
+    const saved = localStorage.getItem('sessionId');
+    if (saved) return saved;
+    const newId = crypto.randomUUID();
+    localStorage.setItem('sessionId', newId);
+    return newId;
+  });
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   return (
     <div className="app">
       <header className="app-header">
         <h1>SLC AI Advisor</h1>
-        <p>AI-powered guidance for social entrepreneurs</p>
+        <div className="app-header-actions">
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
-        {/* Chat component will be added in task C2 */}
-        <div className="placeholder">
-          <p>Chat interface coming soon...</p>
-          <p>
-            This advisor helps you build your Social Lean Canvas using a
-            138-tag taxonomy and curated knowledge base.
-          </p>
+        <div className="layout-canvas">
+          <Canvas sessionId={sessionId} />
+        </div>
+        <div className="layout-chat">
+          <Chat sessionId={sessionId} />
         </div>
       </main>
-
-      <footer className="app-footer">
-        <p>Powered by Social Lean Canvas methodology</p>
-      </footer>
     </div>
   );
 }

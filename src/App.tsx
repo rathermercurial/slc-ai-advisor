@@ -56,7 +56,10 @@ function App() {
           <Canvas sessionId={sessionId} />
         </div>
         <div className="layout-chat">
-          <Chat sessionId={sessionId} />
+          <Chat
+            sessionId={sessionId}
+            apiEndpoint={import.meta.env.VITE_CHAT_API_ENDPOINT}
+          />
         </div>
       </main>
     </div>

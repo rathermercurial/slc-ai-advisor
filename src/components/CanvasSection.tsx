@@ -1,41 +1,44 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   type CanvasSectionId,
-  CANVAS_SECTION_NUMBER,
   CANVAS_SECTION_LABELS,
-  SECTION_TO_MODEL,
 } from '../types/canvas';
 
 interface CanvasSectionProps {
   sectionKey: CanvasSectionId;
   content: string;
   onSave: (content: string) => void;
+  helperText?: string;
+  className?: string;
   truncateAt?: number;
 }
 
 /**
  * A single canvas section card with inline editing.
  * Click to edit, Escape to cancel, Cmd+Enter or blur to save.
+ * Shows helper text when content is empty.
  */
 export function CanvasSection({
   sectionKey,
   content,
   onSave,
-  truncateAt = 40,
+  helperText,
+  className = '',
+  truncateAt = 50,
 }: CanvasSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const sectionNumber = CANVAS_SECTION_NUMBER[sectionKey];
   const label = CANVAS_SECTION_LABELS[sectionKey];
-  const model = SECTION_TO_MODEL[sectionKey];
 
   // Focus textarea when entering edit mode
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
-      textareaRef.current.select();
+      // Move cursor to end
+      const len = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(len, len);
     }
   }, [isEditing]);
 
@@ -74,23 +77,21 @@ export function CanvasSection({
   };
 
   // Truncate content for display
-  const words = content.split(/\s+/);
+  const words = content.split(/\s+/).filter(Boolean);
   const shouldTruncate = words.length > truncateAt && !isEditing;
   const displayContent = shouldTruncate
     ? words.slice(0, truncateAt).join(' ')
     : content;
 
-  const isImpact = sectionKey === 'impact';
+  const isEmpty = !content.trim();
 
   return (
     <div
-      className={`canvas-section ${isImpact ? 'impact' : ''} ${isEditing ? 'editing' : ''}`}
+      className={`canvas-section ${className} ${isEditing ? 'editing' : ''}`}
       onClick={handleClick}
     >
       <div className="canvas-section-header">
-        <span className="canvas-section-number">{sectionNumber}</span>
-        <span className="canvas-section-title">{label}</span>
-        {model && <span className="canvas-section-model">{model}</span>}
+        <span className="canvas-section-title">{label.toUpperCase()}</span>
       </div>
 
       {isEditing ? (
@@ -102,7 +103,7 @@ export function CanvasSection({
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            placeholder={`Enter ${label.toLowerCase()}...`}
+            placeholder={helperText || `Enter ${label.toLowerCase()}...`}
           />
           <div className="canvas-section-actions">
             <button
@@ -124,9 +125,9 @@ export function CanvasSection({
         </>
       ) : (
         <div
-          className={`canvas-section-content ${!content ? 'empty' : ''} ${shouldTruncate ? 'truncated' : ''}`}
+          className={`canvas-section-content ${isEmpty ? 'helper' : ''} ${shouldTruncate ? 'truncated' : ''}`}
         >
-          {displayContent || `Click to add ${label.toLowerCase()}`}
+          {isEmpty ? helperText : displayContent}
         </div>
       )}
     </div>

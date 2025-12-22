@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -159,12 +160,20 @@ export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
       <div className="chat-messages">
         {messages.map((message) => (
           <div key={message.id} className={`chat-message ${message.role}`}>
-            {message.content}
+            {message.role === 'assistant' ? (
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            ) : (
+              message.content
+            )}
           </div>
         ))}
         {isLoading && (
           <div className="chat-message assistant">
-            {streamingContent || <span className="typing-indicator">Thinking...</span>}
+            {streamingContent ? (
+              <ReactMarkdown>{streamingContent}</ReactMarkdown>
+            ) : (
+              <span className="typing-indicator">Thinking...</span>
+            )}
           </div>
         )}
         <div ref={messagesEndRef} />

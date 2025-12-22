@@ -85,11 +85,16 @@ export function Canvas({ sessionId }: CanvasProps) {
             helperText={SECTION_HELPER_TEXT.purpose}
           />
           <div
-            className="canvas-section"
+            className={`canvas-section ${impactModel.impact ? 'completed' : ''}`}
             onClick={() => setShowImpactPanel(true)}
           >
             <div className="canvas-section-header">
+              <span className="canvas-section-number">11</span>
               <span className="canvas-section-title">IMPACT</span>
+              <span className={`canvas-section-status ${impactModel.impact ? 'complete' : ''}`}>
+                {impactModel.impact ? '✓' : '○'}
+              </span>
+              <span className="canvas-section-model model-impact">impact</span>
             </div>
             <div
               className={`canvas-section-content ${!impactModel.impact ? 'helper' : ''}`}

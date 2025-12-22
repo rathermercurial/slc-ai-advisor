@@ -6,19 +6,28 @@ interface Message {
   content: string;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface ChatProps {
   sessionId: string;
+  apiEndpoint?: string; // External API endpoint for testing (e.g., Railway)
 }
+
+// Default to local API, can override for testing with external services
+const DEFAULT_API_ENDPOINT = '/api/chat';
 
 /**
  * Chat interface for conversing with the AI advisor.
  *
- * Currently uses local state for demo purposes.
- * Will be connected to backend via useAgentChat when B5 is complete.
+ * Supports SSE streaming responses.
+ * Set apiEndpoint prop to test against external services (e.g., Railway).
  */
-export function Chat({ sessionId: _sessionId }: ChatProps) {
-  // TODO: Use sessionId when connecting to backend via useAgentChat
-  void _sessionId;
+export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
+  void _sessionId; // Will be used when we add session persistence
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -29,12 +38,16 @@ export function Chat({ sessionId: _sessionId }: ChatProps) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const endpoint = apiEndpoint || DEFAULT_API_ENDPOINT;
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, streamingContent]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,21 +59,99 @@ export function Chat({ sessionId: _sessionId }: ChatProps) {
       content: input.trim(),
     };
 
+    // Build chat history for API
+    const history: ChatMessage[] = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setStreamingContent('');
 
-    // Simulate AI response (will be replaced with actual API call)
-    // TODO: Replace with useAgentChat or fetch to /api/chat when backend is ready
-    setTimeout(() => {
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          history,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      // Handle SSE streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let fullContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                fullContent += data.content;
+                setStreamingContent(fullContent);
+              }
+              if (data.done) {
+                // Streaming complete
+                break;
+              }
+            } catch {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      // Add complete message to history
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: fullContent || 'Sorry, I received an empty response.',
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        // Request was cancelled, ignore
+        return;
+      }
+
+      console.error('Chat error:', error);
+
+      // Fall back to mock response on error
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: getMockResponse(userMessage.content),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+      setStreamingContent('');
+      abortControllerRef.current = null;
+    }
   };
 
   return (
@@ -73,7 +164,7 @@ export function Chat({ sessionId: _sessionId }: ChatProps) {
         ))}
         {isLoading && (
           <div className="chat-message assistant">
-            <span className="typing-indicator">Thinking...</span>
+            {streamingContent || <span className="typing-indicator">Thinking...</span>}
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -103,8 +194,7 @@ export function Chat({ sessionId: _sessionId }: ChatProps) {
 }
 
 /**
- * Mock responses for demo purposes.
- * Will be removed when connected to real backend.
+ * Mock responses - used as fallback when API fails.
  */
 function getMockResponse(userInput: string): string {
   const input = userInput.toLowerCase();
@@ -133,5 +223,5 @@ function getMockResponse(userInput: string): string {
     return "For your Economic Model, consider: How will customers pay you? What's your pricing strategy? Social ventures often blend revenue sources - earned income, grants, donations. What mix makes sense for your mission?";
   }
 
-  return "That's a great question! I'm here to help you work through each section of your Social Lean Canvas. You can click on any section in the canvas to start editing it directly. Would you like to focus on a specific section, or shall I guide you through the recommended order?";
+  return "[Mock response - API unavailable] I'm here to help you work through each section of your Social Lean Canvas. You can click on any section in the canvas to start editing it directly.";
 }

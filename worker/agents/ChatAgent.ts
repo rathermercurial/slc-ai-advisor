@@ -8,11 +8,9 @@
  * - Built-in message persistence via SQLite
  */
 
-import { AIChatAgent } from 'agents';
-import type { StreamTextOnFinishCallback } from 'agents';
+import { AIChatAgent } from 'agents/ai-chat-agent';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { streamText } from 'ai';
-import type { ToolSet } from 'ai';
+import { streamText, type StreamTextOnFinishCallback, type ToolSet } from 'ai';
 import {
   searchKnowledgeBase,
   buildRAGContext,

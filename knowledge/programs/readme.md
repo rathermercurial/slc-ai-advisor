@@ -66,5 +66,5 @@ tags:
 
 ## See Also
 
-- [tasks.md](../../spec/slc-ai-advisor-mvp/tasks.md) - A2 defines the program structure
+- [tasks.md](../../spec/slc-ai-advisor-mvp/tasks.md) - Track A task details
 - [Example: Patagonia](generic/examples/patagonia/patagonia-slc.md) - Complete venture example

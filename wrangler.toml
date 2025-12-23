@@ -2,7 +2,7 @@
 # See: https://developers.cloudflare.com/workers/wrangler/configuration/
 
 name = "slc-ai-advisor"
-compatibility_date = "2025-01-01"
+compatibility_date = "2025-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 # Worker entry point (API routes)

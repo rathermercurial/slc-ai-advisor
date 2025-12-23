@@ -1,27 +1,36 @@
 # Social Lean Canvas AI Advisor
 
-An AI advisor that helps social entrepreneurs complete their Social Lean Canvas through contextual guidance and relevant examples.
+An AI advisor that helps social entrepreneurs complete their Social Lean Canvas. It answers methodology questions using indexed video scripts and guides, and retrieves relevant venture examples based on the user's characteristics.
 
-## What It Does
+## How It Works
 
-1. **Methodology Guidance** - Answers questions like "How do I fill in the revenue section?" using video scripts and canvas guides
-2. **Contextual Examples** - Returns venture examples matching your characteristics (stage, impact area, industry) via the Selection Matrix
-3. **Canvas Persistence** - View, edit, and export your 11-section Social Lean Canvas
+The advisor sits alongside the Social Lean Canvas video curriculum. As users work through the program, they can ask questions like "How specific should my value proposition be?" or "What revenue models work for early-stage healthcare ventures?" The advisor retrieves relevant content from a knowledge base of methodology guides and real venture examples.
 
-The core innovation is the **Selection Matrix** - filtering examples by 7 venture dimensions before semantic search. An early-stage healthcare venture gets healthcare examples at similar stages, not scale-stage education examples that happen to mention "revenue."
+The key to useful retrieval is the **Selection Matrix**. Rather than pure semantic search (which might return a scale-stage education example when you asked about revenue for an early-stage healthcare venture), the Selection Matrix first filters by venture dimensions—stage, impact area, industry, and others—then performs semantic search within that filtered set. This ensures examples are actually relevant to the user's situation.
+
+The canvas itself has 11 sections organized into 3 conceptual models:
+
+| Model | Sections |
+|-------|----------|
+| Customer | customers, jobsToBeDone, valueProposition, solution |
+| Economic | channels, revenue, costs, advantage |
+| Impact | impact (contains 8-field causality chain) |
+| — | purpose, keyMetrics |
 
 ## Project Status
 
 | Milestone | Target | Status |
 |-----------|--------|--------|
-| Demo | ~1 week | In progress (A2 blocking) |
+| Demo | ~1 week | In progress |
 | MVP | ~2 weeks | Pending |
 
-**Demo = chat + RAG.** User asks methodology question, gets answer from indexed KB.
+The Demo milestone requires chat with RAG retrieval working—a user asks a methodology question and gets an answer drawn from the indexed knowledge base. The MVP adds full Selection Matrix filtering, canvas persistence, and dimension inference from conversation.
+
+Currently blocked on A2 (knowledge base restructure). See [tasks.md](spec/slc-ai-advisor-mvp/tasks.md) for details.
 
 ## Architecture
 
-Single Cloudflare Worker deployment (Workers Static Assets). No CORS needed.
+Everything runs on a single Cloudflare Worker. The React frontend is served as static assets from the same origin, so there's no CORS configuration needed.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -38,6 +47,8 @@ Single Cloudflare Worker deployment (Workers Static Assets). No CORS needed.
      (Claude)       (SQLite)        (1024-dim)
 ```
 
+Session state (canvas content, venture profile, chat history) lives in a Durable Object with SQLite storage. The knowledge base is indexed in Vectorize with metadata for Selection Matrix filtering.
+
 ## Quick Start
 
 ```bash
@@ -47,44 +58,38 @@ npm install
 npm run dev
 ```
 
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [Requirements](spec/slc-ai-advisor-mvp/requirements.md) | What we're building |
-| [Design](spec/slc-ai-advisor-mvp/design.md) | Architecture, data models |
-| [Tasks](spec/slc-ai-advisor-mvp/tasks.md) | Implementation tasks |
-| [Contributing](CONTRIBUTING.md) | Workflow and setup |
+You'll need to create `.dev.vars` with your Anthropic API key. See [CONTRIBUTING.md](CONTRIBUTING.md) for full setup.
 
 ## Project Structure
 
 ```
 ├── src/                    # React frontend
 │   ├── components/         # UI components
-│   └── types/              # TypeScript types
-├── worker/                 # API Worker
-│   ├── index.ts            # Entry point
-│   └── env.d.ts            # Env type extensions
-├── knowledge/              # Knowledge base
-│   ├── programs/           # Learning content (generic/, p2p/)
-│   └── tags/               # Concepts & dimensions
-├── spec/                   # Specification docs
+│   └── types/              # TypeScript interfaces
+├── worker/                 # Cloudflare Worker
+│   ├── index.ts            # API routes
+│   └── env.d.ts            # Environment types
+├── knowledge/              # Knowledge base (291 markdown files)
+│   ├── programs/           # Learning content by program
+│   └── tags/               # Concept and dimension definitions
+├── spec/                   # Feature specifications
+│   └── slc-ai-advisor-mvp/ # Requirements, design, tasks
 └── scripts/                # Indexing scripts
 ```
 
-## Key Concepts
+## Documentation
 
-- **11 Canvas Sections**: Purpose, Customers, Jobs To Be Done, Value Proposition, Solution, Channels, Revenue, Costs, Key Metrics, Advantage, Impact
-- **3 Models**: Customer, Economic, Impact (conceptual groupings, not numbered)
-- **7 Dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
-- **Impact Model**: The impact section contains an 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
+- [Requirements](spec/slc-ai-advisor-mvp/requirements.md) — Problem statement, canvas structure, success criteria
+- [Design](spec/slc-ai-advisor-mvp/design.md) — Architecture decisions, data models, API design
+- [Tasks](spec/slc-ai-advisor-mvp/tasks.md) — Implementation tasks organized by track and milestone
+- [Contributing](CONTRIBUTING.md) — Setup instructions and workflow
 
 ## Tech Stack
 
-- Cloudflare Workers + Durable Objects + Vectorize
-- React 19 + Vite
-- Agents SDK + AI SDK
-- TypeScript (strict)
+- **Runtime**: Cloudflare Workers, Durable Objects (SQLite), Vectorize
+- **Frontend**: React 19, Vite, AI SDK
+- **LLM**: Anthropic Claude via AI Gateway
+- **Language**: TypeScript (strict mode)
 
 ## License
 

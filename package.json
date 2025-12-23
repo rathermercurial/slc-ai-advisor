@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "AI advisor for social entrepreneurs using Social Lean Canvas methodology",
+  "overrides": {
+    "@modelcontextprotocol/sdk": "^1.24.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,7 +16,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.19.0",
-    "@cloudflare/workers-types": "^4.20251119.0",
+    "@cloudflare/workers-types": "^4.20251223.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
@@ -22,8 +25,8 @@
     "wrangler": "^4.56.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "agents": "^0.2.32",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "agents": "^0.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

@@ -154,17 +154,17 @@ The Social Lean Canvas has **11 sections**, mostly organized into **3 conceptual
 ```typescript
 // The 11 canvas sections
 type CanvasSectionId =
-  | 'purpose'           // - standalone (No model, first, foundational)
-  | 'customers'         // - Customer Model
-  | 'jobsToBeDone'      // - Customer Model
-  | 'valueProposition'  // - Customer Model
-  | 'solution'          // - Customer Model
-  | 'impact';           // - Impact Model (contains nested ImpactModel; display final "long-term impact model")
-  | 'channels'          // - Economic Model
-  | 'revenue'           // - Economic Model
-  | 'costs'             // - Economic Model
-  | 'advantage'         // - Economic Model
-  | 'keyMetrics'        // - standalone
+  | 'purpose'           // standalone (foundational)
+  | 'customers'         // Customer Model
+  | 'jobsToBeDone'      // Customer Model
+  | 'valueProposition'  // Customer Model
+  | 'solution'          // Customer Model
+  | 'channels'          // Economic Model
+  | 'revenue'           // Economic Model
+  | 'costs'             // Economic Model
+  | 'advantage'         // Economic Model
+  | 'keyMetrics'        // standalone
+  | 'impact';           // Impact Model (nested causality chain)
 
 // Model groupings 
 type Model = 'customer' | 'economic' | 'impact';

@@ -14,14 +14,14 @@
  * - GET /api/export/:format - Export canvas (B8)
  */
 
-// Durable Object will be imported from separate file in B2
-// import { UserSession } from './durable-objects/UserSession';
-// export { UserSession };
+// Export Durable Object for wrangler
+import { UserSession } from './durable-objects/UserSession';
+export { UserSession };
 
 // Env interface extended in worker/env.d.ts
 
 export default {
-  async fetch(request: Request, _env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // Only handle /api/* routes - static assets handled by Cloudflare
@@ -40,11 +40,95 @@ export default {
         });
       }
 
-      // API routes will be implemented in subsequent tasks
-      // B3: POST /api/session, GET /api/session/:id
-      // B5: POST /api/chat
-      // B7: GET /api/canvas, PUT /api/canvas/:section
-      // B8: GET /api/export/:format
+      // ============================================
+      // B3: Session Management
+      // ============================================
+
+      // Create new session
+      if (url.pathname === '/api/session' && request.method === 'POST') {
+        const sessionId = crypto.randomUUID();
+        const body = await request.json().catch(() => ({})) as { program?: string };
+        const program = body.program || 'generic';
+
+        // Get Durable Object stub and initialize session
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        await stub.fetch(new Request('http://internal/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, program }),
+        }));
+
+        return jsonResponse({ sessionId, program });
+      }
+
+      // Get session state
+      if (url.pathname.match(/^\/api\/session\/[^/]+$/) && request.method === 'GET') {
+        const sessionId = url.pathname.split('/')[3];
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        const response = await stub.fetch(new Request('http://internal/session'));
+        const session = await response.json();
+
+        if (!session || !session.id) {
+          return jsonResponse({ error: 'Session not found' }, 404);
+        }
+
+        return jsonResponse(session);
+      }
+
+      // Get venture profile
+      if (url.pathname.match(/^\/api\/session\/[^/]+\/venture-profile$/) && request.method === 'GET') {
+        const sessionId = url.pathname.split('/')[3];
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        const response = await stub.fetch(new Request('http://internal/venture-profile'));
+        const profile = await response.json();
+
+        return jsonResponse(profile);
+      }
+
+      // Get canvas sections
+      if (url.pathname.match(/^\/api\/session\/[^/]+\/canvas$/) && request.method === 'GET') {
+        const sessionId = url.pathname.split('/')[3];
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        const response = await stub.fetch(new Request('http://internal/canvas-sections'));
+        const sections = await response.json();
+
+        return jsonResponse(sections);
+      }
+
+      // Get model (grouped view)
+      if (url.pathname.match(/^\/api\/session\/[^/]+\/model\/[^/]+$/) && request.method === 'GET') {
+        const parts = url.pathname.split('/');
+        const sessionId = parts[3];
+        const model = parts[5];
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        const response = await stub.fetch(new Request(`http://internal/model/${model}`));
+        const data = await response.json();
+
+        return jsonResponse(data);
+      }
+
+      // B5: POST /api/chat - To be implemented
+      // B7: PUT /api/canvas/:section - To be implemented
+      // B8: GET /api/export/:format - To be implemented
 
       return jsonResponse({ error: 'Not found' }, 404);
     } catch (error) {

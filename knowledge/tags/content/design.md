@@ -1,8 +1,10 @@
 ---
-title: Design Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Design
+aliases:
+  - '#design'
+  - '#content/design'
+tags:
+  - content
 ---
 
 # design

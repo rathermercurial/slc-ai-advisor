@@ -22,3 +22,11 @@ tmp/
 
 # TypeScript
 *.tsbuildinfo
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Claude Code
+.claude/settings.local.json
+.claude/temp/

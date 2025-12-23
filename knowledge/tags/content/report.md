@@ -1,8 +1,10 @@
 ---
-title: Report Tag Definition
-last_updated: 2025-07-02
-source:
-tags: [design, admin]
+title: Report
+aliases:
+  - '#report'
+  - '#content/report'
+tags:
+  - content
 ---
 
 # report

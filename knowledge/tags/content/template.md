@@ -1,8 +1,10 @@
 ---
-title: Template Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Template
+aliases:
+  - '#template'
+  - '#content/template'
+tags:
+  - content
 ---
 
 # template

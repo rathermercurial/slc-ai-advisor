@@ -1,8 +1,10 @@
 ---
-title: Link Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Link
+aliases:
+  - '#link'
+  - '#content/link'
+tags:
+  - content
 ---
 
 # link

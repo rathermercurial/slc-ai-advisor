@@ -1,8 +1,10 @@
 ---
-title: Strategy Model Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Strategy Model
+aliases:
+  - '#strategy-model'
+  - '#content/strategy-model'
+tags:
+  - content
 ---
 
 # strategy-model

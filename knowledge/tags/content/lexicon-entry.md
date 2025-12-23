@@ -1,8 +1,10 @@
 ---
-title: Lexicon Entry Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Lexicon Entry
+aliases:
+  - '#lexicon-entry'
+  - '#content/lexicon-entry'
+tags:
+  - content
 ---
 
 # lexicon-entry

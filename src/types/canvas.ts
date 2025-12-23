@@ -62,6 +62,23 @@ export const CANVAS_SECTION_LABELS: Record<CanvasSectionId, string> = {
 };
 
 /**
+ * Section numbers for display in the canvas UI
+ */
+export const CANVAS_SECTION_NUMBER: Record<CanvasSectionId, number> = {
+  purpose: 1,
+  customers: 2,
+  jobsToBeDone: 3,
+  valueProposition: 4,
+  solution: 5,
+  channels: 6,
+  revenue: 7,
+  costs: 8,
+  keyMetrics: 9,
+  advantage: 10,
+  impact: 11,
+};
+
+/**
  * Model groupings (for retrieval/filtering, not storage)
  *
  * Models are conceptual lenses that group related sections:

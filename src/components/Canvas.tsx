@@ -21,18 +21,18 @@ const SECTION_HELPER_TEXT: Record<CanvasSectionId, string> = {
     'Your reason for doing this venture, clearly defined in terms of the social or environmental problems you want to solve.',
   impact:
     'What is the intended social or environmental impact of your venture?',
-  problem:
-    'What are the specific problems each of the different customer types face?',
+  jobsToBeDone:
+    'What are the specific problems and jobs each of the different customer types face?',
   solution: 'What is your product or service?',
-  uniqueValueProposition:
+  valueProposition:
     'What is the unique combination of benefits your product or service will offer to overcome problems the customer has?',
-  unfairAdvantage: 'Why will this venture succeed ahead of the competition?',
-  customerSegments:
+  advantage: 'Why will this venture succeed ahead of the competition?',
+  customers:
     'Who do you need to move to make your business model work?',
   keyMetrics:
     'What are the numbers that will show your business model is working?',
   channels: 'How will you reach your customers in a scalable way?',
-  costStructure:
+  costs:
     'What are the major costs associated with running this social enterprise?',
   revenue:
     'What are the ongoing flows of income that will create financial sustainability for this venture?',
@@ -106,13 +106,13 @@ export function Canvas({ sessionId }: CanvasProps) {
 
         {/* Middle Section: 5-column layout with varying heights */}
         <div className="slc-row slc-row-middle">
-          {/* Column 1: Problem (double height) */}
+          {/* Column 1: Jobs To Be Done (double height) */}
           <div className="slc-col slc-col-double">
             <CanvasSection
-              sectionKey="problem"
-              content={sections.problem || ''}
-              onSave={(content) => handleSectionSave('problem', content)}
-              helperText={SECTION_HELPER_TEXT.problem}
+              sectionKey="jobsToBeDone"
+              content={sections.jobsToBeDone || ''}
+              onSave={(content) => handleSectionSave('jobsToBeDone', content)}
+              helperText={SECTION_HELPER_TEXT.jobsToBeDone}
             />
           </div>
 
@@ -132,25 +132,25 @@ export function Canvas({ sessionId }: CanvasProps) {
             />
           </div>
 
-          {/* Column 3: Unique Value Proposition (double height) */}
+          {/* Column 3: Value Proposition (double height) */}
           <div className="slc-col slc-col-double">
             <CanvasSection
-              sectionKey="uniqueValueProposition"
-              content={sections.uniqueValueProposition || ''}
+              sectionKey="valueProposition"
+              content={sections.valueProposition || ''}
               onSave={(content) =>
-                handleSectionSave('uniqueValueProposition', content)
+                handleSectionSave('valueProposition', content)
               }
-              helperText={SECTION_HELPER_TEXT.uniqueValueProposition}
+              helperText={SECTION_HELPER_TEXT.valueProposition}
             />
           </div>
 
-          {/* Column 4: Unfair Advantage + Channels (stacked) */}
+          {/* Column 4: Advantage + Channels (stacked) */}
           <div className="slc-col slc-col-stacked">
             <CanvasSection
-              sectionKey="unfairAdvantage"
-              content={sections.unfairAdvantage || ''}
-              onSave={(content) => handleSectionSave('unfairAdvantage', content)}
-              helperText={SECTION_HELPER_TEXT.unfairAdvantage}
+              sectionKey="advantage"
+              content={sections.advantage || ''}
+              onSave={(content) => handleSectionSave('advantage', content)}
+              helperText={SECTION_HELPER_TEXT.advantage}
             />
             <CanvasSection
               sectionKey="channels"
@@ -160,24 +160,24 @@ export function Canvas({ sessionId }: CanvasProps) {
             />
           </div>
 
-          {/* Column 5: Customer Segments (double height) */}
+          {/* Column 5: Customers (double height) */}
           <div className="slc-col slc-col-double">
             <CanvasSection
-              sectionKey="customerSegments"
-              content={sections.customerSegments || ''}
-              onSave={(content) => handleSectionSave('customerSegments', content)}
-              helperText={SECTION_HELPER_TEXT.customerSegments}
+              sectionKey="customers"
+              content={sections.customers || ''}
+              onSave={(content) => handleSectionSave('customers', content)}
+              helperText={SECTION_HELPER_TEXT.customers}
             />
           </div>
         </div>
 
-        {/* Bottom Row: Cost Structure & Revenue */}
+        {/* Bottom Row: Costs & Revenue */}
         <div className="slc-row slc-row-bottom">
           <CanvasSection
-            sectionKey="costStructure"
-            content={sections.costStructure || ''}
-            onSave={(content) => handleSectionSave('costStructure', content)}
-            helperText={SECTION_HELPER_TEXT.costStructure}
+            sectionKey="costs"
+            content={sections.costs || ''}
+            onSave={(content) => handleSectionSave('costs', content)}
+            helperText={SECTION_HELPER_TEXT.costs}
           />
           <CanvasSection
             sectionKey="revenue"

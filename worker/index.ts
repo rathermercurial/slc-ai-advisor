@@ -18,6 +18,9 @@
 import { UserSession } from './durable-objects/UserSession';
 export { UserSession };
 
+// Import route handlers
+import { handleChat } from './routes/chat';
+
 // Env interface extended in worker/env.d.ts
 
 export default {
@@ -126,7 +129,14 @@ export default {
         return jsonResponse(data);
       }
 
-      // B5: POST /api/chat - To be implemented
+      // ============================================
+      // B5: Chat with RAG
+      // ============================================
+
+      if (url.pathname === '/api/chat' && request.method === 'POST') {
+        return handleChat(request, env);
+      }
+
       // B7: PUT /api/canvas/:section - To be implemented
       // B8: GET /api/export/:format - To be implemented
 

@@ -8,25 +8,25 @@ This directory contains specifications for features developed using the spec-dri
 
 A conversational AI advisor for social entrepreneurs using the Social Lean Canvas methodology. The system provides methodology guidance and contextual example retrieval using a Selection Matrix - multi-dimensional filtering by venture characteristics before semantic search.
 
-**Core Concept:** The Social Lean Canvas has **11 sections** worked through sequentially, organized into **3 models**:
+**Core Concept:** The Social Lean Canvas has **11 sections** organized into **3 conceptual models**:
 
-| # | Section | Model |
-|---|---------|-------|
-| 1 | Purpose | — |
-| 2 | Customer Segments | Customer |
-| 3 | Problem | Customer |
-| 4 | Unique Value Proposition | Customer |
-| 5 | Solution | Customer |
-| 6 | Channels | Economic |
-| 7 | Revenue | Economic |
-| 8 | Cost Structure | Economic |
-| 9 | Key Metrics | — |
-| 10 | Unfair Advantage | Economic |
-| 11 | Impact | Impact |
+| Section | Model |
+|---------|-------|
+| purpose | — |
+| customers | Customer |
+| jobsToBeDone | Customer |
+| valueProposition | Customer |
+| solution | Customer |
+| channels | Economic |
+| revenue | Economic |
+| costs | Economic |
+| keyMetrics | — |
+| advantage | Economic |
+| impact | Impact |
 
 **Key Architecture Decisions:**
-- Sections 1-10 store simple string content
-- Section 11 (Impact) contains nested Impact Model (8-field causality chain)
+- Standard sections store simple string content
+- The impact section contains nested Impact Model (8-field causality chain)
 - Models are conceptual groupings for retrieval, not storage
 - Cloudflare Workers + Durable Objects + Vectorize stack
 
@@ -41,8 +41,6 @@ A conversational AI advisor for social entrepreneurs using the Social Lean Canva
 - [`requirements.md`](slc-ai-advisor-mvp/requirements.md) - Problem statement, canvas structure, functional requirements, success criteria
 - [`design.md`](slc-ai-advisor-mvp/design.md) - Architecture, data models, SQLite schema, interfaces
 - [`tasks.md`](slc-ai-advisor-mvp/tasks.md) - Implementation tasks organized by milestone (Demo-critical vs MVP)
-- [`TRANSITION-GUIDE.md`](slc-ai-advisor-mvp/TRANSITION-GUIDE.md) - Git strategy and verification checklist for spec corrections
-- [`A2-knowledge-base-restructure.md`](slc-ai-advisor-mvp/A2-knowledge-base-restructure.md) - Detailed guide for Task A2 (critical blocker)
 
 ---
 

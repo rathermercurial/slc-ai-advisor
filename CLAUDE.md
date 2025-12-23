@@ -10,10 +10,10 @@ AI advisor for social entrepreneurs using the Social Lean Canvas methodology. Fi
 
 ## Key Concepts
 
-- **11 Canvas Sections**: Purpose, Customer Segments, Problem, UVP, Solution, Channels, Revenue, Cost Structure, Key Metrics, Unfair Advantage, Impact
-- **3 Models**: Customer (sections 2-5), Economic (sections 6-8, 10), Impact (section 11)
+- **11 Canvas Sections**: Purpose, Customers, Jobs To Be Done, Value Proposition, Solution, Channels, Revenue, Costs, Key Metrics, Advantage, Impact
+- **3 Models**: Customer (customers, jobsToBeDone, valueProposition, solution), Economic (channels, revenue, costs, advantage), Impact (impact)
 - **7 Dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
-- **Impact Model**: Section 11 contains 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
+- **Impact Model**: The impact section contains 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
 
 ## Architecture
 
@@ -21,8 +21,8 @@ Single Cloudflare Worker (Workers Static Assets). No CORS needed.
 
 ```
 Worker → Durable Object (SQLite state)
-      → Vectorize (768-dim embeddings)
-      → Anthropic (Claude)
+      → Vectorize (1024-dim embeddings, bge-m3)
+      → Anthropic (Claude via AI Gateway)
 ```
 
 **Stack:**
@@ -41,21 +41,22 @@ Worker → Durable Object (SQLite state)
 ## File Structure
 
 ```
-src/types/          # TypeScript interfaces (canvas.ts, venture.ts, message.ts)
+src/types/          # TypeScript interfaces (canvas.ts, venture.ts)
 worker/             # API entry point
   index.ts          # Request handler
   env.d.ts          # Env type extensions
-knowledge/          # 362 markdown files
-  agent-content/    # Venture examples, video scripts, section guides
-  tags/             # 138-tag taxonomy
+knowledge/          # Knowledge base
+  programs/         # Learning journeys (generic/, p2p/) → Vectorize namespaces
+  tags/             # Concepts & dimensions → Vectorize metadata
+  attachments/      # Images and assets
 spec/               # Specification documents
 scripts/            # Indexing scripts (Track A)
 ```
 
 ## Key Reference Files
 
-- `knowledge/agent-content/venture-example-libraries/core-venture-example-library/patagonia/patagonia-slc.md` - Venture example with frontmatter
-- `knowledge/tags/tags.md` - 138-tag taxonomy overview
+- `knowledge/programs/generic/examples/patagonia/patagonia-slc.md` - Venture example with frontmatter
+- `knowledge/tags/readme.md` - Tag structure overview
 - `src/types/canvas.ts` - Canvas and Impact Model types
 
 ## Implementation Notes
@@ -63,7 +64,7 @@ scripts/            # Indexing scripts (Track A)
 - Session ID: `crypto.randomUUID()`
 - Confidence threshold for dimension inference: 0.7
 - Rate limiting: 100 req/min per session
-- Impact Model's `impact` field syncs with section 11 content
+- Impact Model's `impact` field syncs with impact section content
 - Use parameterized SQL queries (prevent injection)
 
 ## Commands

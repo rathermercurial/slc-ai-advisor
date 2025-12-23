@@ -1,61 +1,98 @@
 # SLC Knowledge Base
 
-This folder contains the organized knowledge base for the Social Lean Canvas framework, structured according to the hierarchical tag system defined in the main documentation.
+This folder contains the organized knowledge base for the Social Lean Canvas AI advisor, structured to enable intelligent filtering and retrieval.
+
+**Current state:** 291 markdown files ready for indexing. Blocked on A2 (tag restructure) - see [Issue #15](https://github.com/rathermercurial/slc-ai-advisor/issues/15).
+
+## Content Overview
+
+| Directory | Files | Purpose |
+|-----------|-------|---------|
+| `programs/` | 136 | Learning content (video scripts, guides, venture examples) |
+| `tags/` | 155 | Concept definitions and dimension taxonomies |
+| `attachments/` | 7 | PNG diagrams referenced by content |
 
 ## Hierarchical Structure
 
-The knowledge base follows the exact hierarchy from `slc-knowledgebase/docs/tags/readme.md`:
+The knowledge base follows a program-centric hierarchy designed for both human navigation and LLM retrieval:
 
-### 1. Canvas Section (`/canvas-section/`)
-The core framework structure:
-- **Purpose** (`purpose.md`)
-- **Customer Model** (`/customer-model/`)
-  - Customers (`/customers/`)
-    - Early Adopters (`early-adopters.md`)
-  - Jobs to be Done (`/jobs-to-be-done/`)
-    - Existing Alternatives (`existing-alternatives.md`)
-  - Unique Value Proposition (`unique-value-proposition.md`)
-  - Solution (`solution.md`)
-  - Assumption Risk (`assumption-risk.md`)
-- **Impact Model** (`/impact-model/`)
-  - Issue, Participants, Activities, Outputs
-  - Short/Medium/Long-term Outcomes, Impact
-  - Assumption Risk (`assumption-risk.md`)
-- **Economic Model** (`/economic-model/`)
-  - Channels, Revenue, Costs, Advantage, Financial Model
-  - Assumption Risk (`assumption-risk.md`)
-- **Key Metrics** (`key-metrics.md`)
+### Programs (`/programs/`)
 
-### 2. Supporting Categories
-- **Canvas Example** (`/canvas-example/`) - Real venture examples
-- **Case Study** (`/case-study/`) - Detailed studies
-- **Venture Stage Model** (`/venture-stage-model/`) - Idea/Early/Growth/Scale stages
-- **Strategy Model** (`/strategy-model/`) - Business/Organizational/Capital strategies
-- **Concept** (`/concept/`) - Core concepts including Leverage with Network Effects
-- **Template** (`/template/`) - Reusable templates
-- **Lexicon Entry** (`/lexicon-entry/`) - Definitions and terminology
-- **Resource** (`/resource/`) - Additional materials
-- **Design** (`/design/`) - Design notes, prompts, admin
-- **Experiment Test** (`/experiment-test/`) - Testing methodologies
-- **Link** (`/link/`) - External references
+Learning journeys that become Vectorize namespaces:
 
-## File Structure Benefits
+- **generic/** - Core SLC methodology (default for all users)
+  - `content/` - Video scripts organized by module (0.0 through 5.0)
+  - `examples/` - Venture examples (Patagonia, Toast Ale, Too Good To Go, etc.)
+- **p2p/** - Person-to-Person program (extends generic)
+  - `content/` - P2P-specific learning modules
+  - `examples/` - P2P venture examples (Ridwell, Ness Labs, Plausible, etc.)
+
+### Tags (`/tags/`)
+
+Concept definitions that become Vectorize metadata:
+
+- **canvas/** - Section concepts (purpose, customers, jobsToBeDone, valueProposition, solution, channels, revenue, costs, keyMetrics, advantage, impact)
+- **model/** - Model groupings (customer, economic, impact)
+- **venture/** - Dimension taxonomies for the Selection Matrix
+  - `stage/` - Venture stages (idea, early, growth, scale)
+  - `impact-area/` - SDG alignment and IRIS+ themes
+  - `industry/` - Sector classification
+  - `impact-mechanism/`, `legal-structure/`, `revenue-source/`, `funding-source/`
+
+### Attachments (`/attachments/`)
+
+Images and diagrams referenced by content files.
+
+## Content Format
+
+Every content file has YAML frontmatter for Vectorize indexing:
+
+```yaml
+---
+title: "Patagonia - Social Lean Canvas"
+last_updated: 2025-07-02
+tags:
+  canvas-sections: [customer-model, economic-model, impact-model]
+  content: [canvas-example, case-study]
+  venture-stage: [scale-stage]
+  venture-type: [industry/apparel, legal-structure/trust, ...]
+---
+```
+
+See [programs/generic/examples/patagonia/patagonia-slc.md](programs/generic/examples/patagonia/patagonia-slc.md) for a complete example.
+
+## Design Benefits
 
 ### For Human Navigation
-- **Logical Hierarchy**: Easy to browse and understand relationships
-- **Clear Organization**: Related concepts are grouped together
-- **Consistent Naming**: Predictable file locations
 
-### For LLM Processing
-- **Structured Tags**: Every file has hierarchical tags for filtering
-- **Path-based Logic**: File paths reflect conceptual relationships
-- **Scalable Architecture**: Easy to add new content in appropriate locations
+- **Logical Hierarchy**: Programs group related content by learning journey
+- **Clear Organization**: Examples live with their program context
+- **Consistent Naming**: Predictable file locations based on content type
+
+### For LLM/RAG Processing
+
+- **Namespace Filtering**: Programs enable coarse filtering before semantic search
+- **Dimensional Metadata**: Tags enable fine-grained Selection Matrix filtering
+- **Structured Frontmatter**: Every file has machine-readable metadata
 
 ## Usage Guidelines
 
-1. **Adding Content**: Place new files in the appropriate hierarchical location
-2. **Tagging**: Include all relevant hierarchical tags in front matter
-3. **Linking**: Use relative paths that respect the folder structure
-4. **Consistency**: Follow the established naming conventions
+1. **Adding Content**: Place new files in the appropriate program and directory
+2. **Tagging**: Include all relevant tags in frontmatter (see [tags/readme.md](tags/readme.md))
+3. **Linking**: Use relative paths within the knowledge base
+4. **Consistency**: Follow established naming conventions (kebab-case, lowercase)
 
-This hierarchical structure enables powerful navigation, filtering, and analysis while maintaining clear conceptual relationships throughout the knowledge base.
+## Critical Path
+
+```
+A1 ✅ → A2 🔴 → A3 → A4 → A5 → A6 = INDEXED KB
+```
+
+A2 (tag restructure) blocks all indexing work.
+
+## See Also
+
+- [tasks.md](../spec/slc-ai-advisor-mvp/tasks.md) - A1-A7 task details
+- [design.md](../spec/slc-ai-advisor-mvp/design.md) - Vectorize metadata mapping
+- [tags/readme.md](tags/readme.md) - Tag system documentation
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Track A workflow

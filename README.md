@@ -35,7 +35,7 @@ Single Cloudflare Worker deployment (Workers Static Assets). No CORS needed.
          │              │              │
          ▼              ▼              ▼
    Anthropic API   Durable Object   Vectorize
-     (Claude)       (SQLite)        (768-dim)
+     (Claude)       (SQLite)        (1024-dim)
 ```
 
 ## Quick Start
@@ -65,19 +65,19 @@ npm run dev
 ├── worker/                 # API Worker
 │   ├── index.ts            # Entry point
 │   └── env.d.ts            # Env type extensions
-├── knowledge/              # Knowledge base (362 files)
-│   ├── agent-content/      # Venture examples, scripts
-│   └── tags/               # 138-tag taxonomy
+├── knowledge/              # Knowledge base
+│   ├── programs/           # Learning content (generic/, p2p/)
+│   └── tags/               # Concepts & dimensions
 ├── spec/                   # Specification docs
 └── scripts/                # Indexing scripts
 ```
 
 ## Key Concepts
 
-- **11 Canvas Sections**: Purpose, Customer Segments, Problem, UVP, Solution, Channels, Revenue, Cost Structure, Key Metrics, Unfair Advantage, Impact
-- **3 Models**: Customer (2-5), Economic (6-8, 10), Impact (11)
+- **11 Canvas Sections**: Purpose, Customers, Jobs To Be Done, Value Proposition, Solution, Channels, Revenue, Costs, Key Metrics, Advantage, Impact
+- **3 Models**: Customer, Economic, Impact (conceptual groupings, not numbered)
 - **7 Dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
-- **Impact Model**: Section 11 contains an 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
+- **Impact Model**: The impact section contains an 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
 
 ## Tech Stack
 

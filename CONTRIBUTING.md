@@ -60,13 +60,13 @@ Read these before starting:
 Get the knowledge base indexed in Vectorize with correct metadata.
 
 **Key files:**
-- `knowledge/` - 362 markdown files
+- `knowledge/programs/` - Learning content organized by program (generic/, p2p/)
+- `knowledge/tags/` - Concept definitions and dimension taxonomies
 - `scripts/` - Indexing script
-- `knowledge/tags/` - 138-tag taxonomy
 
 **References:**
-- [A2 guide](spec/slc-ai-advisor-mvp/A2-knowledge-base-restructure.md)
-- [Patagonia example](knowledge/agent-content/venture-example-libraries/core-venture-example-library/patagonia/patagonia-slc.md)
+- [Patagonia example](knowledge/programs/generic/examples/patagonia/patagonia-slc.md)
+- [Design doc](spec/slc-ai-advisor-mvp/design.md) - KB Architecture section
 
 **A2 is the critical blocker** for all indexing work.
 
@@ -97,4 +97,4 @@ Build the React chat interface.
 - Single Worker deployment (Workers Static Assets)
 - No CORS needed - frontend and API are same origin
 - Durable Objects use SQLite storage
-- Vectorize uses 768-dim embeddings (bge-base-en-v1.5)
+- Vectorize uses 1024-dim embeddings (bge-m3)

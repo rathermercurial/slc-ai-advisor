@@ -237,9 +237,9 @@ Users must be able to:
 ### 6. Impact Model Interaction
 
 Users must be able to:
-- View the full Impact Model (8-field causality chain) nested within section 11
+- View the full Impact Model (8-field causality chain) nested within the impact section
 - Edit any field of the Impact Model
-- See the Impact Model's final "impact" field reflected in section 11 (and vice versa)
+- See the Impact Model's final "impact" field reflected in the impact section (and vice versa)
 - Export the Impact Model separately or as part of the full canvas
 
 ### 7. Conversational Continuity
@@ -248,7 +248,7 @@ The system must maintain three types of state:
 
 **Venture metadata:** 7-dimensional coordinates, inferred progressively through conversation
 
-**Canvas content:** 11 sections (with Impact Model nested in section 11), each with content and completion status
+**Canvas content:** 11 sections (with Impact Model nested in the impact section), each with content and completion status
 
 **Conversation context:** Recent exchanges to maintain continuity
 
@@ -294,7 +294,7 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 5. **Canvas interaction working**
    - [ ] Canvas renders with 11 sections
-   - [ ] Impact Model renders nested within section 11
+   - [ ] Impact Model renders nested within the impact section
    - [ ] User can edit sections
    - [ ] State persists across sessions
    - [ ] User can export their work
@@ -307,7 +307,7 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 **Conversational flow:** Can users ask follow-up questions without repeating context? Does the system maintain understanding?
 
-**Canvas usability:** Is editing smooth? Do updates reflect properly? Does Impact Model stay in sync with section 11? Are exports usable?
+**Canvas usability:** Is editing smooth? Do updates reflect properly? Does Impact Model stay in sync with the impact section? Are exports usable?
 
 **Developer accessibility:** Can an amateur coder navigate and understand the codebase? Can they make a simple change (add canvas section, modify tag, adjust content)?
 
@@ -329,7 +329,7 @@ Prepare these scenarios for demo:
 - Knowledge base access (methodology content, venture examples)
 - Multi-dimensional content filtering (138-tag taxonomy across 7 dimensions)
 - Canvas viewing, editing, persistence, export (11 sections)
-- Impact Model as nested component within section 11
+- Impact Model as nested component within the impact section
 - Basic demo interface for testing and demonstration
 - State management for venture context, canvas content, conversation
 - Single program support (SLC) with architecture supporting future programs

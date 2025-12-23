@@ -4,7 +4,7 @@
 
 ### The Challenge
 
-Social entrepreneurs operate under a dual mandate: achieve financial sustainability while creating measurable social or environmental impact. The Social Lean Canvas provides a one-page framework for planning these ventures with 11 sequential sections organized into 3 conceptual models.
+Social entrepreneurs operate under a dual mandate: achieve financial sustainability while creating measurable social or environmental impact. The Social Lean Canvas provides a one-page framework for planning these ventures with 11 sections organized into 3 conceptual models. Users progress through these sections via **learning programs** that define the journey.
 
 Completing the canvas effectively requires:
 
@@ -50,44 +50,53 @@ Success enables:
 
 ## Canvas Structure
 
+### Conceptual Hierarchy
+
+The Social Lean Canvas framework has three levels of organization:
+
+1. **Programs** define the learning journey. Different programs may emphasize different sections in different sequences. Examples: "Generic SLC Program", "Peer-to-Peer Canvas Program".
+
+2. **Models** are the business assets being built. A "customer model" or "economic model" represents real developmental assets that any venture needs. Models group related sections.
+
+3. **Sections** are the deliverables that compose models. Each section captures specific venture decisions.
+
 ### The 11 Sections
 
-The Social Lean Canvas has **11 sections** worked through sequentially. Section numbers track curriculum progress.
-
-| # | Section | Description |
-|---|---------|-------------|
-| 1 | **Purpose** | Why the venture exists |
-| 2 | **Customer Segments** | Who the venture serves |
-| 3 | **Problem** | The pain point or obstacle customers face |
-| 4 | **Unique Value Proposition** | Why customers choose this solution |
-| 5 | **Solution** | What the venture provides |
-| 6 | **Channels** | How customers are reached |
-| 7 | **Revenue** | How income is generated |
-| 8 | **Cost Structure** | Major ongoing expenses |
-| 9 | **Key Metrics** | How success is measured |
-| 10 | **Unfair Advantage** | What can't be easily copied |
-| 11 | **Impact** | The long-term social/environmental change |
+| Section | Description |
+|---------|-------------|
+| **purpose** | Why the venture exists |
+| **customers** | Who the venture serves |
+| **jobsToBeDone** | The task/problem customers need to accomplish |
+| **valueProposition** | Why customers choose this solution |
+| **solution** | What the venture provides |
+| **channels** | How customers are reached |
+| **revenue** | How income is generated |
+| **costs** | Major ongoing expenses |
+| **keyMetrics** | How success is measured |
+| **advantage** | What can't be easily copied |
+| **impact** | The long-term social/environmental change |
 
 ### The 3 Models
 
-Models are **conceptual groupings** that organize sections (and related concepts) into domains useful for the venture's daily context. Users do NOT progress sequentially through models - models help zoom out and think about multiple sections at once.
+Models are **conceptual groupings** that organize sections into domains representing real business assets. Models help users think about multiple sections at once in a way that aligns with practical venture outputs—a "customer model" or "economic model" are assets every venture needs.
+
+The program determines how users progress through models. A typical flow: purpose → Impact Model → Customer Model → Economic Model → keyMetrics. Different programs may vary this sequence.
 
 #### Customer Model
 How the venture creates value for customers.
 
-**Sections:** Customer Segments (2), Problem (3), Unique Value Proposition (4), Solution (5)
+**Sections:** customers, jobsToBeDone, valueProposition, solution
 
 **Related concepts (not sections):**
 - Customer Types (including Early Adopters)
-- Jobs to be Done - the task customers need to accomplish
 - Existing Alternatives - what customers use today
 
-*Example: Alice needs to wash her car (JTBD) but lives in an apartment with no facilities (Problem). Bob's car wash (Solution) lets her accomplish this.*
+*Example: Alice needs to wash her car (jobsToBeDone) but has no facilities. Bob's car wash (solution) lets her accomplish this.*
 
 #### Economic Model
 How customer value translates into financial sustainability.
 
-**Sections:** Channels (6), Revenue (7), Cost Structure (8), Unfair Advantage (10)
+**Sections:** channels, revenue, costs, advantage
 
 **Related concepts (not sections):**
 - Financial Model - projections and unit economics
@@ -95,16 +104,16 @@ How customer value translates into financial sustainability.
 #### Impact Model
 How the venture creates measurable social/environmental change.
 
-**Section:** Impact (11)
+**Section:** impact
 
-**The Impact Model is unique** - unlike Customer and Economic Models which span multiple sections, the Impact Model maps 1:1 with section 11. It contains a complete causality chain that nests entirely within the Impact section:
+**The Impact Model is unique** - unlike Customer and Economic Models which span multiple sections, the Impact Model maps 1:1 with the "impact" section. It contains a complete causality chain that nests entirely within the impact section:
 
 ```
-Issue → Participants → Activities → Outputs → 
+Issue → Participants → Activities → Outputs →
 Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact
 ```
 
-The final "Impact" field of this chain IS section 11's content. They are the same and stay in sync.
+The final "impact" field of this chain IS the impact section's content. They stay in sync.
 
 ## Users
 
@@ -118,7 +127,7 @@ The final "Impact" field of this chain IS section 11's content. They are the sam
 
 **Growth stage:** Scaling channels, optimizing revenue model, tracking outcomes and metrics. Needs guidance on when to iterate vs. when to pivot.
 
-**Scale stage:** Leveraging unfair advantage, demonstrating long-term impact, refining financial sustainability. Needs advanced examples and cross-section integration advice.
+**Scale stage:** Leveraging advantage, demonstrating long-term impact, refining financial sustainability. Needs advanced examples and cross-section integration advice.
 
 ### User Behavior
 
@@ -173,19 +182,20 @@ This understanding should be:
 
 ### 2. Curriculum Progress Tracking
 
-The system must understand the user's position in the SLC program:
-- Current section (1-11) being worked on
+The system must understand the user's position in their learning program:
+- Which program they're following
+- Current model and section being worked on
 - Which sections are complete vs. incomplete
 - Ability to infer progress from conversation or ask directly
 
-This enables delivering relevant advice for the specific section the user is working on.
+This enables delivering relevant advice for the specific context the user is working in.
 
 ### 3. Methodology Guidance
 
 The system must answer methodology questions:
 - "How do I fill in the revenue section?"
-- "What makes a good UVP?"
-- "Should I focus on purpose or problem first?"
+- "What makes a good value proposition?"
+- "Should I focus on purpose or jobs-to-be-done first?"
 
 Responses must:
 - Draw from the existing methodology content (video scripts, canvas section guides)
@@ -250,9 +260,13 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 ### Milestones
 
-**Demo (1 week):** Basic functionality - Advisor can give high-quality answers to basic questions about the Social Lean Canvas.
+**Prepare Repo:** Specification complete, repository structured for collaborative development. Unblocks all implementation tracks.
 
-**MVP (2 weeks):** Full requirements - Advisor understands venture dimensions, curriculum progress, models spanning sections, and retrieves perfect examples for the user's unique venture.
+**Proof of Concept (PoC):** Basic advisor functionality. Chat works with indexed knowledge base. RAG retrieval operational.
+
+**Demo:** Basic semantic search with rudimentary filtering (namespace + tags/aliases metadata). Canvas state persists across sessions. Advisor answers methodology questions using indexed KB.
+
+**MVP:** Full Selection Matrix (progressive relaxation, dimensional similarity scoring). Venture dimensions inferred from conversation. Curriculum progress tracked. Impact Model synced. Ready for user testing.
 
 **Integration-ready (Future):** Functions fully abstracted, ready to integrate into any frontend (like socialleancanvas.com).
 

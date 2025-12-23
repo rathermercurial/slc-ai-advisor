@@ -1,80 +1,63 @@
 /**
  * Canvas-related type definitions
  *
- * The Social Lean Canvas has 11 sections worked through sequentially.
- * Sections are grouped into 3 conceptual Models for organization.
+ * The Social Lean Canvas has 11 sections organized into 3 conceptual models.
+ * Programs define how users progress through sections - order is program-dependent.
  *
  * Storage:
- * - Sections 1-10: Stored in canvas_section table (simple string content)
- * - Section 11 (Impact): Stored in impact_model table (8-field causality chain)
+ * - Standard sections: Stored in canvas_section table (simple string content)
+ * - Impact section: Stored in impact_model table (8-field causality chain)
  *
- * The Impact Model's final 'impact' field IS section 11's content - they stay in sync.
+ * The Impact Model's final 'impact' field IS the impact section's content - they stay in sync.
  */
 
 /**
- * The 11 canvas sections in curriculum order
+ * The 11 canvas sections (semantic names, not numbered)
  */
 export type CanvasSectionId =
-  | 'purpose'              // 1 - standalone
-  | 'customerSegments'     // 2 - Customer Model
-  | 'problem'              // 3 - Customer Model
-  | 'uniqueValueProposition' // 4 - Customer Model
-  | 'solution'             // 5 - Customer Model
-  | 'channels'             // 6 - Economic Model
-  | 'revenue'              // 7 - Economic Model
-  | 'costStructure'        // 8 - Economic Model
-  | 'keyMetrics'           // 9 - standalone
-  | 'unfairAdvantage'      // 10 - Economic Model
-  | 'impact';              // 11 - Impact Model (nested)
+  | 'purpose'           // standalone
+  | 'customers'         // Customer Model
+  | 'jobsToBeDone'      // Customer Model
+  | 'valueProposition'  // Customer Model
+  | 'solution'          // Customer Model
+  | 'channels'          // Economic Model
+  | 'revenue'           // Economic Model
+  | 'costs'             // Economic Model
+  | 'keyMetrics'        // standalone
+  | 'advantage'         // Economic Model
+  | 'impact';           // Impact Model (nested)
 
 /**
- * Section order for curriculum progression (1-11)
+ * All section keys for iteration
  */
-export const CANVAS_SECTION_ORDER: CanvasSectionId[] = [
+export const CANVAS_SECTIONS: CanvasSectionId[] = [
   'purpose',
-  'customerSegments',
-  'problem',
-  'uniqueValueProposition',
+  'customers',
+  'jobsToBeDone',
+  'valueProposition',
   'solution',
   'channels',
   'revenue',
-  'costStructure',
+  'costs',
   'keyMetrics',
-  'unfairAdvantage',
+  'advantage',
   'impact',
 ];
-
-/**
- * Section number (1-11) for curriculum tracking
- */
-export const CANVAS_SECTION_NUMBER: Record<CanvasSectionId, number> = {
-  purpose: 1,
-  customerSegments: 2,
-  problem: 3,
-  uniqueValueProposition: 4,
-  solution: 5,
-  channels: 6,
-  revenue: 7,
-  costStructure: 8,
-  keyMetrics: 9,
-  unfairAdvantage: 10,
-  impact: 11,
-};
 
 /**
  * Human-readable labels for canvas sections
  */
 export const CANVAS_SECTION_LABELS: Record<CanvasSectionId, string> = {
   purpose: 'Purpose',
-  customerSegments: 'Customer Segments',
-  problem: 'Problem',
-  uniqueValueProposition: 'Unique Value Proposition',
+  customers: 'Customers',
+  jobsToBeDone: 'Jobs To Be Done',
+  valueProposition: 'Value Proposition',
   solution: 'Solution',
   channels: 'Channels',
   revenue: 'Revenue',
-  costStructure: 'Cost Structure',
+  costs: 'Costs',
   keyMetrics: 'Key Metrics',
-  unfairAdvantage: 'Unfair Advantage',
+  advantage: 'Advantage',
   impact: 'Impact',
 };
 
@@ -90,28 +73,28 @@ export type Model = 'customer' | 'economic' | 'impact';
 
 export const SECTION_TO_MODEL: Record<CanvasSectionId, Model | null> = {
   purpose: null,           // Standalone
-  customerSegments: 'customer',
-  problem: 'customer',
-  uniqueValueProposition: 'customer',
+  customers: 'customer',
+  jobsToBeDone: 'customer',
+  valueProposition: 'customer',
   solution: 'customer',
   channels: 'economic',
   revenue: 'economic',
-  costStructure: 'economic',
+  costs: 'economic',
   keyMetrics: null,        // Standalone (cross-model metrics)
-  unfairAdvantage: 'economic',
+  advantage: 'economic',
   impact: 'impact',
 };
 
 export const MODEL_SECTIONS: Record<Model, CanvasSectionId[]> = {
-  customer: ['customerSegments', 'problem', 'uniqueValueProposition', 'solution'],
-  economic: ['channels', 'revenue', 'costStructure', 'unfairAdvantage'],
+  customer: ['customers', 'jobsToBeDone', 'valueProposition', 'solution'],
+  economic: ['channels', 'revenue', 'costs', 'advantage'],
   impact: ['impact'],
 };
 
 /**
- * A single canvas section (sections 1-10)
+ * A single canvas section (all except impact)
  *
- * Note: Section 11 (impact) is stored as ImpactModel, not CanvasSection.
+ * Note: Impact section is stored as ImpactModel, not CanvasSection.
  * Code that writes to DB should route 'impact' to the impact_model table.
  */
 export interface CanvasSection {
@@ -123,14 +106,14 @@ export interface CanvasSection {
 }
 
 /**
- * Impact Model - causality chain that IS section 11
+ * Impact Model - causality chain that IS the impact section
  *
  * The Impact Model is unique among the 3 models because:
  * 1. It contains only aspects of impact which compose a complete whole
- * 2. It does not span multiple sections - it maps 1:1 with section 11
+ * 2. It does not span multiple sections - it maps 1:1 with the impact section
  * 3. It nests entirely within the canvas's impact section
  *
- * The 'impact' field (final field) IS section 11's content.
+ * The 'impact' field (final field) IS the impact section's content.
  * They are the same data and stay in sync.
  */
 export interface ImpactModel {
@@ -159,7 +142,7 @@ export interface ImpactModel {
 
   /**
    * Ultimate social/environmental change
-   * THIS IS SECTION 11's CONTENT - they stay in sync
+   * THIS IS THE IMPACT SECTION'S CONTENT - they stay in sync
    */
   impact: string;
 
@@ -203,14 +186,14 @@ export const IMPACT_MODEL_LABELS: Record<ImpactModelField, string> = {
 export interface CanvasState {
   sessionId: string;
 
-  /** Sections 1-10 (simple string content) */
+  /** All sections except impact (simple string content) */
   sections: CanvasSection[];
 
-  /** Section 11 (full causality chain) */
+  /** Impact section (full causality chain) */
   impactModel: ImpactModel;
 
-  /** User's curriculum progress (1-11), null if not started */
-  currentSection: number | null;
+  /** User's current section (by key), null if not started */
+  currentSection: CanvasSectionId | null;
 
   /** Percentage of sections marked complete */
   completionPercentage: number;
@@ -220,11 +203,11 @@ export interface CanvasState {
 }
 
 /**
- * Create empty sections for a new session (sections 1-10, excludes impact)
+ * Create empty sections for a new session (excludes impact)
  */
 export function createEmptySections(sessionId: string): CanvasSection[] {
   const now = new Date().toISOString();
-  return CANVAS_SECTION_ORDER
+  return CANVAS_SECTIONS
     .filter((id) => id !== 'impact')
     .map((sectionKey) => ({
       sessionId,
@@ -236,7 +219,7 @@ export function createEmptySections(sessionId: string): CanvasSection[] {
 }
 
 /**
- * Create empty Impact Model for a new session (section 11)
+ * Create empty Impact Model for a new session
  */
 export function createEmptyImpactModel(sessionId: string): ImpactModel {
   const now = new Date().toISOString();
@@ -266,23 +249,6 @@ export function calculateCompletion(
   const impactComplete = impactModel.isComplete ? 1 : 0;
   const total = sections.length + 1; // 10 sections + 1 impact model = 11
   return Math.round(((sectionComplete + impactComplete) / total) * 100);
-}
-
-/**
- * Get section number from section key
- */
-export function getSectionNumber(sectionKey: CanvasSectionId): number {
-  return CANVAS_SECTION_NUMBER[sectionKey];
-}
-
-/**
- * Get section key from section number
- */
-export function getSectionKey(sectionNumber: number): CanvasSectionId | null {
-  const entry = Object.entries(CANVAS_SECTION_NUMBER).find(
-    ([, num]) => num === sectionNumber
-  );
-  return entry ? (entry[0] as CanvasSectionId) : null;
 }
 
 /**

@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.13.0",
-    "@cloudflare/workers-types": "^4.20241205.0",
+    "@cloudflare/vite-plugin": "^1.19.0",
+    "@cloudflare/workers-types": "^4.20251119.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
@@ -22,9 +22,8 @@
     "wrangler": "^4.56.0"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.1.0",
+    "@anthropic-ai/sdk": "^0.39.0",
     "agents": "^0.2.32",
-    "ai": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

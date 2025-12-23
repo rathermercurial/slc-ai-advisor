@@ -12,8 +12,10 @@
 
 | Milestone | Target | Success Criteria |
 |-----------|--------|------------------|
-| **Demo** | ~1 week | Advisor answers methodology questions using indexed KB. Basic chat + RAG works. |
-| **MVP** | ~2 weeks | Full Selection Matrix, canvas persistence, dimension inference, Impact Model sync. |
+| **Prepare Repo** | Before PoC | Specification complete. Repository structured for collaborative development. |
+| **PoC** | Day 1 | Basic advisor. Chat works with indexed KB. RAG retrieval operational. |
+| **Demo** | Day 2-3 | Basic semantic search with rudimentary filtering (namespace + tags). Canvas persists. |
+| **MVP** | Week 2 | Full Selection Matrix (progressive relaxation, dimensional scoring). Dimensions inferred, curriculum tracked, Impact Model synced. |
 | **Integration** | Future | Functions abstracted for embedding in any frontend (like socialleancanvas.com). |
 
 ## Sync Points
@@ -118,7 +120,8 @@ C1 ✅ → C2 → C3 ───────────────────�
 ### Teammate A: Knowledge Base & Indexing
 
 #### A1. [S] Set up Vectorize index ✅
-- **Description:** Create Vectorize index in Cloudflare dashboard with correct dimensions and metadata config
+- **Description:** Create Vectorize index with 1024 dimensions (for bge-m3)
+- **Command:** `wrangler vectorize create slc-knowledge-base --dimensions 1024 --metric cosine`
 - **Files:** `wrangler.toml` (add vectorize binding)
 - **Tests:** Verify index appears in dashboard
 - **Depends on:** none
@@ -126,70 +129,69 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Branch:** `feature/knowledge-indexing`
 - **PR:** #4
 
-#### A2. [L] Restructure knowledge base tags 🔴 DEMO-CRITICAL
-- **Description:** Restructure `knowledge/tags/` to clearly separate sections from models. This prevents confusion and aids retrieval filtering.
-- **Changes:**
-  1. Rename `canvas-sections/` to contain ONLY the 11 canonical sections (numbered)
-  2. Create new `venture-models/` directory for conceptual groupings
-  3. Move sub-concepts (JTBD, Early Adopters, etc.) under models, not sections
-  4. Create new Problem section (03) - doesn't exist currently
-  5. Flatten deep nesting where possible
-  6. Update all tag definition files to reference correct structure
-- **Files:** 
-  - `knowledge/tags/canvas-sections/` (restructure)
-  - `knowledge/tags/venture-models/` (new)
-  - All tag definition `.md` files
-- **New Structure:**
+#### A1b. [S] Create Vectorize metadata indexes (DEMO-CRITICAL)
+- **Description:** Create metadata indexes for filtering properties before indexing script runs
+- **Commands:** See `spec/slc-ai-advisor-mvp/design.md` Vectorize Setup section
+- **Required indexes:** content_type, venture_stage, canvas_section, primary_impact_area, primary_industry
+- **Depends on:** A1
+- **Status:** pending
+
+#### A2. [L] Restructure knowledge base 🔴 DEMO-CRITICAL
+- **Description:** Organize the knowledge base into programs (learning journeys) and tags (concepts/dimensions). This enables the Selection Matrix's Program → Dimension → Semantic filtering.
+- **Outcome:** KB structured to support:
+  - Program-based namespace filtering (user selects program at session start)
+  - Tag-based dimensional filtering (venture stage, impact area, etc.)
+  - Semantic search within filtered results
+- **Files:**
+  - `knowledge/programs/` - Learning content by program
+  - `knowledge/tags/` - Concept definitions and dimension taxonomies
+- **KB Structure:**
   ```
-  tags/
-  ├── canvas-sections/           # 11 numbered sections only
-  │   ├── 01-purpose/
-  │   ├── 02-customer-segments/
-  │   ├── 03-problem/            # NEW
-  │   ├── 04-unique-value-proposition/
-  │   ├── 05-solution/
-  │   ├── 06-channels/
-  │   ├── 07-revenue/
-  │   ├── 08-cost-structure/
-  │   ├── 09-key-metrics/
-  │   ├── 10-unfair-advantage/
-  │   └── 11-impact/
+  knowledge/
+  ├── programs/                   # Learning journeys → Vectorize namespaces
+  │   ├── default/               # General knowledge
+  │   └── generic/               # Base SLC program
   │
-  ├── venture-models/             # Conceptual groupings
-  │   ├── customer-model/        # References sections 2-5
-  │   │   ├── jobs-to-be-done/   # Sub-concept
-  │   │   ├── existing-alternatives/
-  │   │   └── customer-types/
-  │   │       └── early-adopters/
-  │   ├── economic-model/        # References sections 6-8, 10
-  │   │   └── financial-model/
-  │   └── impact-model/          # = section 11 expanded
-  │       ├── issue/
-  │       ├── participants/
-  │       ├── activities/
-  │       ├── outputs/
-  │       ├── short-term-outcomes/
-  │       ├── medium-term-outcomes/
-  │       ├── long-term-outcomes/
-  │       └── impact/            # Same as section 11
+  └── tags/                       # Concepts → Vectorize metadata
+      ├── canvas/                # Section concepts (semantic names)
+      │   ├── purpose.md
+      │   ├── customers.md
+      │   ├── jobsToBeDone.md
+      │   ├── valueProposition.md
+      │   ├── solution.md
+      │   ├── channels.md
+      │   ├── revenue.md
+      │   ├── costs.md
+      │   ├── keyMetrics.md
+      │   ├── advantage.md
+      │   └── impact.md
+      │
+      ├── model/                 # Model groupings
+      │   ├── customer.md
+      │   ├── economic.md
+      │   └── impact.md
+      │
+      └── venture/               # Dimension taxonomies
+          ├── stage/             # idea, early, growth, scale
+          ├── impact-area/       # SDG + IRIS+ themes
+          ├── industry/          # Sector classification
+          └── ...
   ```
-- **Tests:** 
+- **Tests:**
   - All markdown files parse without errors
-  - Tag references resolve correctly
-  - Venture examples still have valid tags
+  - Frontmatter has valid structure
+  - Programs map to Vectorize namespaces
 - **Depends on:** none (blocks A3-A6)
 - **Status:** pending
-- **Guide:** See [A2-knowledge-base-restructure.md](A2-knowledge-base-restructure.md)
 
 #### A3. [M] Update venture example frontmatter (DEMO-CRITICAL)
-- **Description:** Update venture example files to use canonical section names and new tag structure
+- **Description:** Update venture example files to use canonical section names and tag structure
 - **Changes:**
-  - "Customers" → reference `02-customer-segments`
-  - "Costs" → reference `08-cost-structure`  
-  - "Advantage" → reference `10-unfair-advantage`
-  - Update tag paths to new structure
-- **Files:** `knowledge/agent-content/venture-example-libraries/**/*-slc.md`
-- **Tests:** Frontmatter validates against new tag structure
+  - Use semantic section names: customers, jobsToBeDone, valueProposition, costs, advantage
+  - Add program namespace metadata
+  - Add venture dimension tags (stage, impact-area, industry)
+- **Files:** `knowledge/programs/*/venture-examples/**/*-slc.md`
+- **Tests:** Frontmatter validates, all examples have required fields
 - **Depends on:** A2
 - **Status:** pending
 
@@ -200,23 +202,24 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Depends on:** A1, A2
 - **Status:** pending
 
-#### A5. [L] Implement content parsing and chunking (DEMO-CRITICAL)
-- **Description:** Parse knowledge base files, extract tags from frontmatter, chunk content (500-800 tokens). Map frontmatter tags to Vectorize metadata format (10 indexed properties).
+#### A5. [L] Implement content parsing (DEMO-CRITICAL)
+- **Description:** Parse knowledge base files, extract tags from frontmatter, map to Vectorize metadata format (10 indexed properties).
+- **Note:** With bge-m3's 60K token context, most content can be embedded whole without chunking. Only chunk if content exceeds ~45K words.
 - **Metadata mapping must include:**
-  - `canvas_section`: section ID (01-11)
-  - `venture_model`: model ID (customer, economic, impact, null)
-  - `section_number`: integer 1-11 for ordering
-  - Venture dimensions (stage, impact area, etc.)
-- **Files:** `scripts/index-knowledge-base.ts`, `scripts/chunking.ts`
-- **Tests:** Verify chunks have correct metadata, test on venture examples
+  - `namespace`: program name (default, generic, p2p)
+  - `canvas_section`: section key (purpose, customers, jobsToBeDone, etc.)
+  - `venture_model`: model key (customer, economic, impact, null)
+  - Venture dimensions (stage, impact area, industry, etc.)
+- **Files:** `scripts/index-knowledge-base.ts`
+- **Tests:** Verify content has correct metadata, test on venture examples
 - **Depends on:** A3, A4
 - **Status:** pending
 
 #### A6. [L] Generate embeddings and upload to Vectorize (DEMO-CRITICAL)
-- **Description:** Use Workers AI REST API to generate embeddings (@cf/baai/bge-base-en-v1.5), upload vectors with metadata to Vectorize index
+- **Description:** Use Workers AI REST API to generate embeddings (@cf/baai/bge-m3, 1024 dimensions), upload vectors with metadata to Vectorize index
 - **Files:** `scripts/index-knowledge-base.ts`
 - **Tests:** Query Vectorize with sample filter, verify results
-- **Depends on:** A5
+- **Depends on:** A1b, A5
 - **Status:** pending
 
 #### A7. [S] Document metadata mapping
@@ -242,20 +245,20 @@ C1 ✅ → C2 → C3 ───────────────────�
 #### B2. [L] Implement Durable Object with SQLite schema (DEMO-CRITICAL)
 - **Description:** Create UserSession Durable Object with SQLite schema for all state.
 - **Schema tables:**
-  - `session`: id, current_section (1-11), timestamps
+  - `session`: id, current_section (section key), program, timestamps
   - `venture_profile`: 7 dimensions with confidence/confirmed JSON
-  - `canvas_section`: 10 rows (sections 1-10, simple content)
-  - `impact_model`: 8 fields (section 11's nested structure)
+  - `canvas_section`: rows for each standard section (simple content)
+  - `impact_model`: 8 fields (impact section's nested structure)
   - `message`: chat history
-- **Key design:** 
-  - Sections 1-10 stored in `canvas_section` table (simple strings)
-  - Section 11 stored in `impact_model` table (8-field causality chain)
-  - `impact_model.impact` field IS section 11's display content
+- **Key design:**
+  - Standard sections stored in `canvas_section` table (simple strings)
+  - Impact section stored in `impact_model` table (8-field causality chain)
+  - `impact_model.impact` field IS the impact section's display content
 - **CRUD methods:**
   - Session: create, get, updateCurrentSection
   - VentureProfile: get, update, updateDimensionConfidence
   - CanvasSections: get (all), get (one), update, initialize
-  - ImpactModel: get, update (syncs with section 11)
+  - ImpactModel: get, update (syncs with impact section)
   - Messages: add, getRecent
 - **Files:** `src/durable-objects/UserSession.ts`, `src/types/canvas.ts`
 - **Tests:** Create session, write/read each table, verify Impact sync
@@ -269,15 +272,25 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Depends on:** B2
 - **Status:** pending
 
-#### B4. [L] Implement Selection Matrix filter building (DEMO-CRITICAL)
-- **Description:** Build Vectorize metadata filters from venture profile. Support filtering by:
-  - `canvas_section` (numbered 01-11)
-  - `venture_model` (customer, economic, impact)
-  - Venture dimensions (stage, impact area, industry, etc.)
-- **Implement progressive relaxation:** strict → remove industry → remove impact area → model-only → pure semantic
-- **Files:** `src/retrieval/selection-matrix.ts`, `src/retrieval/vector-search.ts`
-- **Tests:** Test filter building with sample profiles, test relaxation when no results
+#### B4. [M] Implement basic Vectorize filtering (DEMO-CRITICAL)
+- **Description:** Build basic Vectorize queries with rudimentary filtering:
+  - Program namespace (from session)
+  - Tags/aliases metadata (canvas_section, venture_model)
+  - Semantic search within filtered results
+- **Demo scope:** Basic filtering works. Advanced Selection Matrix (progressive relaxation, dimensional scoring) is MVP.
+- **Files:** `src/retrieval/vector-search.ts`
+- **Tests:** Query with namespace + tag filter, verify results
 - **Depends on:** B3, A6 (needs indexed data)
+- **Status:** pending
+
+#### B4b. [L] Implement full Selection Matrix (MVP)
+- **Description:** Advanced filtering with progressive relaxation and dimensional similarity:
+  - Full 7-dimension filtering from venture profile
+  - Progressive relaxation: strict → remove industry → remove impact area → model-only → pure semantic
+  - Dimensional similarity scoring when exact matches don't exist
+- **Files:** `src/retrieval/selection-matrix.ts`
+- **Tests:** Test relaxation when no results, test dimensional scoring
+- **Depends on:** B4, B6 (needs dimension inference)
 - **Status:** pending
 
 #### B5. [L] Implement chat handler with RAG (DEMO-CRITICAL)
@@ -295,10 +308,10 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Status:** pending
 
 #### B7. [M] Implement canvas CRUD endpoints
-- **Description:** 
-  - `GET /api/canvas` - Returns full CanvasState (10 sections + ImpactModel)
-  - `PUT /api/canvas/:section` - Update sections 1-10 by number or ID
-  - `PUT /api/canvas/impact-model` - Update Impact Model fields (auto-syncs section 11)
+- **Description:**
+  - `GET /api/canvas` - Returns full CanvasState (all sections + ImpactModel)
+  - `PUT /api/canvas/:section` - Update section by key (e.g., 'purpose', 'customers')
+  - `PUT /api/canvas/impact-model` - Update Impact Model fields (auto-syncs impact section)
   - `PUT /api/canvas/impact-model/impact` - Update just the impact summary (syncs both places)
 - **Files:** `src/worker/canvas.ts`
 - **Tests:** Update section, verify persistence, update Impact Model, verify sync
@@ -306,7 +319,7 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Status:** pending
 
 #### B8. [S] Implement export endpoint
-- **Description:** Export canvas as Markdown or JSON format. Impact Model exports nested within section 11.
+- **Description:** Export canvas as Markdown or JSON format. Impact Model exports nested within impact section.
 - **Files:** `src/worker/canvas.ts`
 - **Tests:** Export both formats, verify Impact Model included correctly
 - **Depends on:** B7
@@ -354,9 +367,8 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Status:** pending
 
 #### C4. [L] Implement canvas display
-- **Description:** Visual canvas layout showing 11 numbered sections with completion status. Sections 1-10 display simple content. Section 11 (Impact) shows summary with expand option.
+- **Description:** Visual canvas layout showing all 11 sections with completion status. Standard sections display simple content. Impact section shows summary with expand option.
 - **Must show:**
-  - Section numbers (1-11) for curriculum tracking
   - Section names from `CANVAS_SECTION_LABELS`
   - Completion indicators
   - Model groupings as visual hints (not navigation)
@@ -366,9 +378,9 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Status:** pending
 
 #### C5. [M] Implement nested Impact Model display
-- **Description:** Section 11 (Impact) expands to show full causality chain. The 8 Impact Model fields display as a flow: Issue → Participants → Activities → Outputs → Outcomes (3 levels) → Impact.
-- **Key behavior:** 
-  - Collapsed: Shows `impactModel.impact` as section 11 content
+- **Description:** Impact section expands to show full causality chain. The 8 Impact Model fields display as a flow: Issue → Participants → Activities → Outputs → Outcomes (3 levels) → Impact.
+- **Key behavior:**
+  - Collapsed: Shows `impactModel.impact` as impact section content
   - Expanded: Shows all 8 fields with causality arrows
   - Editing any field (including `impact`) syncs automatically
 - **Files:** `src/components/ImpactModel.tsx`
@@ -441,7 +453,8 @@ C1 ✅ → C2 → C3 ───────────────────�
 ## Notes
 
 - **A2 is the critical blocker** - KB restructure must happen before any indexing. Start here.
-- **Demo = chat + RAG** - That's it. Canvas display, dimension inference, and polish come after.
-- **Impact Model nests in section 11** - The `impact` field IS section 11's content. They stay in sync.
-- **Section numbers matter** - Frontend should show 1-11 for curriculum tracking.
-- **Models are just conceptual** - Not navigation or storage, just grouping for understanding.
+- **PoC = chat + RAG** - That's the first milestone. Canvas display, dimension inference, and polish come after.
+- **Impact Model nests in impact section** - The `impact` field IS the impact section's content. They stay in sync.
+- **Programs are primary** - Users select a program at session start; this determines the Vectorize namespace filter.
+- **Sections use semantic names** - purpose, customers, jobsToBeDone, valueProposition, solution, channels, revenue, costs, keyMetrics, advantage, impact.
+- **Models are conceptual** - Not navigation or storage, just grouping for understanding.

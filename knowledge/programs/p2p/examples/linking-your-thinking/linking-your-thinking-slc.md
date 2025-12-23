@@ -1,13 +1,30 @@
 ---
 title: Linking Your Thinking - Social Lean Canvas
-description: Social Lean Canvas analysis for Linking Your Thinking (LYT), a premium knowledge management education enterprise founded by Nick Milo
-last_updated: 2025-01-14
-source: https://www.linkingyourthinking.com/
+description: >-
+  Social Lean Canvas analysis for Linking Your Thinking (LYT), a premium
+  knowledge management education enterprise founded by Nick Milo
 tags:
-  canvas-sections: [purpose, customer-model, customers, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-04-quality-education, legal-structure/standard-limited-company, revenue-source/service-fees, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/education]
+  - purpose
+  - customer-model
+  - customers
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - canvas-example
+  - growth-stage
+  - sdg-04-quality-education
+  - standard-limited-company
+  - service-fees
+  - bootstrapped
+  - product-service-impact
+  - education
 ---
 
 # Linking Your Thinking - Social Lean Canvas

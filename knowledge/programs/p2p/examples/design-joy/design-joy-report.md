@@ -1,13 +1,20 @@
 ---
 title: Design Joy Research Report
-description: Comprehensive research report analyzing Design Joy's business model using the Social Lean Canvas framework
-last_updated: 2025-09-14
-source: https://www.designjoy.co/
+description: >-
+  Comprehensive research report analyzing Design Joy's business model using the
+  Social Lean Canvas framework
 tags:
-  canvas-sections: [purpose, customer-model, economic-model]
-  content: [case-study]
-  venture-stage: [scale-stage]
-  venture-type: [legal-structure/standard-limited-company, revenue-source/service-fees, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/consulting]
+  - purpose
+  - customer-model
+  - economic-model
+  - case-study
+  - scale-stage
+  - standard-limited-company
+  - service-fees
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - consulting
 ---
 
 # Design Joy Research Report

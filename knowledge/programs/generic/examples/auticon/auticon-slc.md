@@ -1,12 +1,36 @@
 ---
 title: Auticon - Social Lean Canvas
-last_updated: 2025-07-04
-source: "Auticon Report (auticon-report.md)"
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, advantage, impact-model, impact, economic-model, channels, costs, revenue, key-metrics]
-  content: [canvas-example, case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/employment, impact-area/diversity-and-inclusion, impact-area/sdg-08-decent-work-and-economic-growth, impact-area/sdg-10-reduced-inequalities, impact-mechanism/employment-model, impact-mechanism/direct-service, legal-structure/standard-limited-company, revenue-source/service-fees, funding-source/impact-equity, industry/ict, industry/consulting]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - advantage
+  - impact-model
+  - impact
+  - economic-model
+  - channels
+  - costs
+  - revenue
+  - key-metrics
+  - canvas-example
+  - case-study
+  - scale-stage
+  - employment
+  - diversity-and-inclusion
+  - sdg-08-decent-work-and-economic-growth
+  - sdg-10-reduced-inequalities
+  - employment-model
+  - direct-service
+  - standard-limited-company
+  - service-fees
+  - impact-equity
+  - ict
+  - consulting
 ---
 
 # Auticon - Social Lean Canvas

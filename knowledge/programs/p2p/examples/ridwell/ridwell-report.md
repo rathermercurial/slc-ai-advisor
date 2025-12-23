@@ -1,13 +1,24 @@
 ---
 title: Ridwell Research Report
-description: Comprehensive research analysis of Ridwell's business model and impact approach using the Social Lean Canvas framework
-last_updated: 2025-09-12
-source: https://www.ridwell.com/
+description: >-
+  Comprehensive research analysis of Ridwell's business model and impact
+  approach using the Social Lean Canvas framework
 tags:
-  canvas-sections: [purpose, customer-model, impact-model, economic-model, key-metrics]
-  content: [case-study]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/waste, legal-structure/standard-limited-company, revenue-source/subscriptions, funding-source/traditional-investment, impact-mechanism/product-service-impact, industry/clean-energy]
+  - purpose
+  - customer-model
+  - impact-model
+  - economic-model
+  - key-metrics
+  - case-study
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - waste
+  - standard-limited-company
+  - subscriptions
+  - traditional-investment
+  - product-service-impact
+  - clean-energy
 ---
 
 # Ridwell Research Report

@@ -1,13 +1,47 @@
 ---
 title: OpenSource Ecology Research Report
-description: Comprehensive research report analyzing OpenSource Ecology's business model and impact approach using the Social Lean Canvas framework for open source industrial machinery development
-last_updated: 2025-09-03
-source: https://www.opensourceecology.org/
+description: >-
+  Comprehensive research report analyzing OpenSource Ecology's business model
+  and impact approach using the Social Lean Canvas framework for open source
+  industrial machinery development
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [case-study, resource]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-04-quality-education, impact-area/sdg-09-industry-innovation-and-infrastructure, legal-structure/nonprofit-inc, revenue-source/philanthropy-grants, revenue-source/service-fees, revenue-source/product-sales, funding-source/grants, funding-source/donations, impact-mechanism/product-service-impact, impact-mechanism/education-awareness, industry/education, industry/manufacturing]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - case-study
+  - resource
+  - scale-stage
+  - sdg-04-quality-education
+  - sdg-09-industry-innovation-and-infrastructure
+  - nonprofit-inc
+  - philanthropy-grants
+  - service-fees
+  - product-sales
+  - grants
+  - donations
+  - product-service-impact
+  - education-awareness
+  - education
+  - manufacturing
 ---
 
 # Research Report on OpenSource Ecology

@@ -1,13 +1,25 @@
 ---
 title: Linking Your Thinking - Impact Model
-description: Impact Model for Linking Your Thinking (LYT), mapping how their knowledge management education drives societal transformation
-last_updated: 2025-01-14
-source: https://www.linkingyourthinking.com/
+description: >-
+  Impact Model for Linking Your Thinking (LYT), mapping how their knowledge
+  management education drives societal transformation
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-04-quality-education, legal-structure/standard-limited-company, revenue-source/service-fees, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/education]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - sdg-04-quality-education
+  - standard-limited-company
+  - service-fees
+  - bootstrapped
+  - product-service-impact
+  - education
 ---
 
 # Linking Your Thinking - Impact Model Canvas

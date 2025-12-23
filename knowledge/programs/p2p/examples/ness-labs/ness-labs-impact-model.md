@@ -1,13 +1,26 @@
 ---
 title: Ness Labs - Impact Model Canvas
-description: Impact model showing how Ness Labs creates sustainable productivity and lifelong learning through science-backed education and community
-last_updated: 2025-09-12
-source: nesslabs.com
+description: >-
+  Impact model showing how Ness Labs creates sustainable productivity and
+  lifelong learning through science-backed education and community
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-04-quality-education, legal-structure/standard-limited-company, revenue-source/membership-dues, revenue-source/advertising-sponsorship, funding-source/bootstrapped, impact-mechanism/education-awareness, industry/education]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - sdg-04-quality-education
+  - standard-limited-company
+  - membership-dues
+  - advertising-sponsorship
+  - bootstrapped
+  - education-awareness
+  - education
 ---
 
 # Ness Labs - Impact Model Canvas

@@ -1,12 +1,27 @@
 ---
 title: Age Co UK - Impact Model Canvas
-last_updated: 2025-07-02
-source:
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example, case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/employment, impact-area/health, impact-area/sdg-03-good-health-and-well-being, impact-area/sdg-08-decent-work-and-economic-growth, impact-mechanism/direct-service, impact-mechanism/reinvest-surplus, legal-structure/standard-limited-company, revenue-source/product-sales, revenue-source/service-fees, industry/financial-services]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - case-study
+  - scale-stage
+  - employment
+  - health
+  - sdg-03-good-health-and-well-being
+  - sdg-08-decent-work-and-economic-growth
+  - direct-service
+  - reinvest-surplus
+  - standard-limited-company
+  - product-sales
+  - service-fees
+  - financial-services
 ---
 
 # Age Co UK - Impact Model Canvas

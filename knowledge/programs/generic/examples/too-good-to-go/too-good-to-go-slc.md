@@ -1,13 +1,38 @@
 ---
 title: Too Good To Go - Social Lean Canvas
-description: Social Lean Canvas for Too Good To Go, the world's largest marketplace for surplus food fighting food waste and climate change
-last_updated: 2025-07-09
-source: https://www.toogoodtogo.com/
+description: >-
+  Social Lean Canvas for Too Good To Go, the world's largest marketplace for
+  surplus food fighting food waste and climate change
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, economic-model, channels, revenue, costs, advantage, key-metrics, impact-model, impact]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/climate, impact-area/waste, legal-structure/benefit-corporation, revenue-source/platform-commission, revenue-source/subscriptions, funding-source/traditional-investment, impact-mechanism/marketplace-platform, industry/food-beverage, industry/ict]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - impact-model
+  - impact
+  - canvas-example
+  - scale-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - climate
+  - waste
+  - benefit-corporation
+  - platform-commission
+  - subscriptions
+  - traditional-investment
+  - marketplace-platform
+  - food-beverage
+  - ict
 ---
 
 # Too Good To Go - Social Lean Canvas

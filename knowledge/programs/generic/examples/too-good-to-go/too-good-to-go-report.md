@@ -1,13 +1,27 @@
 ---
 title: Too Good To Go Research Report
-description: Comprehensive research report analyzing Too Good To Go's business model and impact approach using the Social Lean Canvas framework
-last_updated: 2025-07-09
-source: https://www.toogoodtogo.com/
+description: >-
+  Comprehensive research report analyzing Too Good To Go's business model and
+  impact approach using the Social Lean Canvas framework
 tags:
-  canvas-sections: [purpose, customer-model, impact-model, economic-model, key-metrics]
-  content: [case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/climate, impact-area/waste, legal-structure/benefit-corporation, revenue-source/platform-commission, revenue-source/subscriptions, funding-source/traditional-investment, impact-mechanism/marketplace-platform, industry/food-beverage, industry/ict]
+  - purpose
+  - customer-model
+  - impact-model
+  - economic-model
+  - key-metrics
+  - case-study
+  - scale-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - climate
+  - waste
+  - benefit-corporation
+  - platform-commission
+  - subscriptions
+  - traditional-investment
+  - marketplace-platform
+  - food-beverage
+  - ict
 ---
 
 # Research Report: Too Good To Go - Social Lean Canvas Analysis

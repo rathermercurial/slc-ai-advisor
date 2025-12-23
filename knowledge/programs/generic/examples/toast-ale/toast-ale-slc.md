@@ -1,13 +1,35 @@
 ---
 title: Toast Ale - Social Lean Canvas
-description: Social Lean Canvas for Toast Ale - brewing beer from surplus bread to fund environmental charities
-last_updated: 2025-07-09
-source: https://www.toastbrewing.com/about-us
+description: >-
+  Social Lean Canvas for Toast Ale - brewing beer from surplus bread to fund
+  environmental charities
 tags:
-  canvas-sections: [purpose, customer-model, customers, unique-value-proposition, solution, impact-model, issue, participants, activities, impact, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/waste, legal-structure/benefit-corporation, revenue-source/product-sales, funding-source/impact-equity, impact-mechanism/product-service-impact, industry/food-beverage]
+  - purpose
+  - customer-model
+  - customers
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - canvas-example
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - waste
+  - benefit-corporation
+  - product-sales
+  - impact-equity
+  - product-service-impact
+  - food-beverage
 ---
 
 # Toast Ale - Social Lean Canvas

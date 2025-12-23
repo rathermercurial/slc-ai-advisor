@@ -1,3 +1,6 @@
+---
+title: Ness Labs
+---
 ## **Origin story (3–5 lines)**
 
 - Founded by [**Anne-Laure Le Cunff**](https://anne-laure.net/), ex-Google, who started [**Ness Labs**](https://nesslabs.com/) as a way to learn and share neuroscience-backed tools for mindful productivity while studying at King’s College London. 

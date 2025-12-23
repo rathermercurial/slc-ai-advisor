@@ -1,13 +1,27 @@
 ---
 title: Ridwell - Impact Model Canvas
-description: Impact model analysis showing how Ridwell creates systematic change in household waste management
-last_updated: 2025-09-12
-source: https://www.ridwell.com/
+description: >-
+  Impact model analysis showing how Ridwell creates systematic change in
+  household waste management
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/waste, legal-structure/standard-limited-company, revenue-source/subscriptions, funding-source/traditional-investment, impact-mechanism/product-service-impact, industry/clean-energy]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - waste
+  - standard-limited-company
+  - subscriptions
+  - traditional-investment
+  - product-service-impact
+  - clean-energy
 ---
 
 # Ridwell - Impact Model Canvas

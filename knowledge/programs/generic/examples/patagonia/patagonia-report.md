@@ -1,3 +1,6 @@
+---
+title: Patagonia Report
+---
 
 ---
 title: patagonia-report

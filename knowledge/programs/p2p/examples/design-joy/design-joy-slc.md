@@ -1,13 +1,31 @@
 ---
 title: Design Joy - Social Lean Canvas
-description: Social Lean Canvas analysis of Design Joy's subscription-based design agency business model
-last_updated: 2025-09-14
-source: https://www.designjoy.co/
+description: >-
+  Social Lean Canvas analysis of Design Joy's subscription-based design agency
+  business model
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [legal-structure/standard-limited-company, revenue-source/service-fees, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/consulting]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - canvas-example
+  - scale-stage
+  - standard-limited-company
+  - service-fees
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - consulting
 ---
 
 # Design Joy - Social Lean Canvas

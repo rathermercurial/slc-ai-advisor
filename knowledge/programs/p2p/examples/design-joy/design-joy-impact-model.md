@@ -1,13 +1,18 @@
 ---
 title: Design Joy - Impact Model Canvas
-description: Impact model analysis for Design Joy - noting the absence of a defined social/environmental impact strategy
-last_updated: 2025-09-14
-source: https://www.designjoy.co/
+description: >-
+  Impact model analysis for Design Joy - noting the absence of a defined
+  social/environmental impact strategy
 tags:
-  canvas-sections: [impact-model]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [legal-structure/standard-limited-company, revenue-source/service-fees, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/consulting]
+  - impact-model
+  - canvas-example
+  - scale-stage
+  - standard-limited-company
+  - service-fees
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - consulting
 ---
 
 # Design Joy - Impact Model Canvas

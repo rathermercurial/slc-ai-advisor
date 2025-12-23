@@ -1,13 +1,39 @@
 ---
 title: Buy Me Once Research Report
-description: Comprehensive research analysis of Buy Me Once business model and impact approach using Social Lean Canvas framework
-last_updated: 2025-09-12
-source: https://www.buymeonce.co.uk/
+description: >-
+  Comprehensive research analysis of Buy Me Once business model and impact
+  approach using Social Lean Canvas framework
 tags:
-  canvas-sections: [customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact, economic-model, channels, revenue, costs, advantage, purpose, key-metrics]
-  content: [case-study]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, legal-structure/standard-limited-company, revenue-source/product-sales, funding-source/impact-equity, impact-mechanism/product-service-impact, industry/retail]
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - purpose
+  - key-metrics
+  - case-study
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - standard-limited-company
+  - product-sales
+  - impact-equity
+  - product-service-impact
+  - retail
 ---
 
 # Buy Me Once Research Report

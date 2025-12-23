@@ -1,13 +1,27 @@
 ---
 title: Tony's Chocolonely - Research Report
-description: Comprehensive research report on Tony's Chocolonely's business model and impact approach for Social Lean Canvas development
-last_updated: 2025-07-19
-source: https://tonyschocolonely.com/
+description: >-
+  Comprehensive research report on Tony's Chocolonely's business model and
+  impact approach for Social Lean Canvas development
 tags:
-  canvas-sections: [customer-model, impact-model, economic-model, purpose, key-metrics]
-  content: [case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-01-no-poverty, impact-area/sdg-08-decent-work-and-economic-growth, impact-area/sdg-10-reduced-inequalities, legal-structure/benefit-corporation, revenue-source/product-sales, revenue-source/licensing-royalty, funding-source/traditional-investment, impact-mechanism/product-service-impact, impact-mechanism/direct-service, impact-mechanism/systems-change, industry/food-beverage]
+  - customer-model
+  - impact-model
+  - economic-model
+  - purpose
+  - key-metrics
+  - case-study
+  - scale-stage
+  - sdg-01-no-poverty
+  - sdg-08-decent-work-and-economic-growth
+  - sdg-10-reduced-inequalities
+  - benefit-corporation
+  - product-sales
+  - licensing-royalty
+  - traditional-investment
+  - product-service-impact
+  - direct-service
+  - systems-change
+  - food-beverage
 ---
 
 # Research Report on Tony's Chocolonely

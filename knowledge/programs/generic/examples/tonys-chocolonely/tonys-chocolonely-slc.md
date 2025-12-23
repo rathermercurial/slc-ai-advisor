@@ -1,13 +1,27 @@
 ---
 title: Tony's Chocolonely - Social Lean Canvas
-description: Social Lean Canvas for Tony's Chocolonely, the Dutch impact company making slave-free chocolate
-last_updated: 2025-07-19
-source: https://tonyschocolonely.com/
+description: >-
+  Social Lean Canvas for Tony's Chocolonely, the Dutch impact company making
+  slave-free chocolate
 tags:
-  canvas-sections: [customer-model, impact-model, economic-model, purpose, key-metrics]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-01-no-poverty, impact-area/sdg-08-decent-work-and-economic-growth, impact-area/sdg-10-reduced-inequalities, legal-structure/benefit-corporation, revenue-source/product-sales, revenue-source/licensing-royalty, funding-source/traditional-investment, impact-mechanism/product-service-impact, impact-mechanism/direct-service, impact-mechanism/systems-change, industry/food-beverage]
+  - customer-model
+  - impact-model
+  - economic-model
+  - purpose
+  - key-metrics
+  - canvas-example
+  - scale-stage
+  - sdg-01-no-poverty
+  - sdg-08-decent-work-and-economic-growth
+  - sdg-10-reduced-inequalities
+  - benefit-corporation
+  - product-sales
+  - licensing-royalty
+  - traditional-investment
+  - product-service-impact
+  - direct-service
+  - systems-change
+  - food-beverage
 ---
 
 # Tony's Chocolonely - Social Lean Canvas

@@ -1,12 +1,38 @@
 ---
 title: Age Co UK - Social Lean Canvas Analysis Report
-last_updated: 2025-07-02
-source:
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact, economic-model, channels, costs, revenue, financial-model, advantage]
-  content: [canvas-example, case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/health, impact-area/sdg-03-good-health-and-well-being, impact-mechanism/direct-service, impact-mechanism/reinvest-surplus, legal-structure/standard-limited-company, revenue-source/service-fees, industry/financial-services]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - economic-model
+  - channels
+  - costs
+  - revenue
+  - financial-model
+  - advantage
+  - canvas-example
+  - case-study
+  - scale-stage
+  - health
+  - sdg-03-good-health-and-well-being
+  - direct-service
+  - reinvest-surplus
+  - standard-limited-company
+  - service-fees
+  - financial-services
 ---
 
 

@@ -1,13 +1,44 @@
 ---
 title: The Pathless Path - Research Report
-description: Comprehensive research report analyzing Paul Millerd's The Pathless Path enterprise using the Social Lean Canvas framework, examining business model and impact approach
-last_updated: 2025-01-16
-source: https://pathlesspath.com/
+description: >-
+  Comprehensive research report analyzing Paul Millerd's The Pathless Path
+  enterprise using the Social Lean Canvas framework, examining business model
+  and impact approach
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [case-study]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-08-decent-work-and-economic-growth, legal-structure/standard-limited-company, revenue-source/product-sales, revenue-source/service-fees, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, impact-mechanism/education-awareness, industry/education, industry/consulting]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - case-study
+  - growth-stage
+  - sdg-08-decent-work-and-economic-growth
+  - standard-limited-company
+  - product-sales
+  - service-fees
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - education-awareness
+  - education
+  - consulting
 ---
 
 # Research Report: The Pathless Path

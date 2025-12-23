@@ -1,3 +1,6 @@
+---
+title: Opensource Ecology
+---
 
 https://beiner.substack.com/p/the-future-builders-academy?utm_source=podcast-email&publication_id=559390&post_id=172577322&utm_campaign=email-play-on-substack&utm_content=watch_now_button&r=1c6v7&triedRedirect=true&utm_medium=email
 

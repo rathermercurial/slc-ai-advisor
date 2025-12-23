@@ -1,13 +1,22 @@
 ---
 title: Linking Your Thinking - Research Report
-description: Comprehensive research report analyzing Linking Your Thinking's business model and impact approach using the Social Lean Canvas framework
-last_updated: 2025-01-14
-source: https://www.linkingyourthinking.com/
+description: >-
+  Comprehensive research report analyzing Linking Your Thinking's business model
+  and impact approach using the Social Lean Canvas framework
 tags:
-  canvas-sections: [purpose, customer-model, impact-model, economic-model, key-metrics]
-  content: [case-study]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-04-quality-education, legal-structure/standard-limited-company, revenue-source/service-fees, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/education]
+  - purpose
+  - customer-model
+  - impact-model
+  - economic-model
+  - key-metrics
+  - case-study
+  - growth-stage
+  - sdg-04-quality-education
+  - standard-limited-company
+  - service-fees
+  - bootstrapped
+  - product-service-impact
+  - education
 ---
 
 # Linking Your Thinking (LYT): Premium Knowledge Management Education Business Model Analysis

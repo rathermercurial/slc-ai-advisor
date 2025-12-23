@@ -1,13 +1,24 @@
 ---
 title: Toast Ale Research Report
-description: Comprehensive research report analyzing Toast Ale's business model and impact approach using the Social Lean Canvas framework
-last_updated: 2025-07-09
-source: https://www.toastbrewing.com/about-us
+description: >-
+  Comprehensive research report analyzing Toast Ale's business model and impact
+  approach using the Social Lean Canvas framework
 tags:
-  canvas-sections: [purpose, customer-model, impact-model, economic-model, key-metrics]
-  content: [case-study]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/waste, legal-structure/benefit-corporation, revenue-source/product-sales, funding-source/impact-equity, impact-mechanism/product-service-impact, industry/food-beverage]
+  - purpose
+  - customer-model
+  - impact-model
+  - economic-model
+  - key-metrics
+  - case-study
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - waste
+  - benefit-corporation
+  - product-sales
+  - impact-equity
+  - product-service-impact
+  - food-beverage
 ---
 
 # Toast Ale Research Report: Social Lean Canvas Analysis

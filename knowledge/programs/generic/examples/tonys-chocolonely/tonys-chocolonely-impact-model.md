@@ -1,13 +1,30 @@
 ---
 title: Tony's Chocolonely - Impact Model Canvas
-description: Impact Model for Tony's Chocolonely showing theory of change from cocoa exploitation to industry transformation
-last_updated: 2025-07-19
-source: https://tonyschocolonely.com/
+description: >-
+  Impact Model for Tony's Chocolonely showing theory of change from cocoa
+  exploitation to industry transformation
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-01-no-poverty, impact-area/sdg-08-decent-work-and-economic-growth, impact-area/sdg-10-reduced-inequalities, legal-structure/benefit-corporation, revenue-source/product-sales, revenue-source/licensing-royalty, funding-source/traditional-investment, impact-mechanism/product-service-impact, impact-mechanism/direct-service, impact-mechanism/systems-change, industry/food-beverage]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - scale-stage
+  - sdg-01-no-poverty
+  - sdg-08-decent-work-and-economic-growth
+  - sdg-10-reduced-inequalities
+  - benefit-corporation
+  - product-sales
+  - licensing-royalty
+  - traditional-investment
+  - product-service-impact
+  - direct-service
+  - systems-change
+  - food-beverage
 ---
 
 # Tony's Chocolonely - Impact Model Canvas

@@ -1,3 +1,6 @@
+---
+title: The Generalist
+---
 
 
 

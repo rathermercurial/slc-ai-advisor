@@ -1,13 +1,27 @@
 ---
 title: Toast Ale - Impact Model Canvas
-description: Impact Model for Toast Ale showing the chain from food waste issue to transformed food systems
-last_updated: 2025-07-09
-source: https://www.toastbrewing.com/sustainability
+description: >-
+  Impact Model for Toast Ale showing the chain from food waste issue to
+  transformed food systems
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/waste, legal-structure/benefit-corporation, revenue-source/product-sales, funding-source/impact-equity, impact-mechanism/product-service-impact, industry/food-beverage]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - waste
+  - benefit-corporation
+  - product-sales
+  - impact-equity
+  - product-service-impact
+  - food-beverage
 ---
 
 # Toast Ale - Impact Model Canvas

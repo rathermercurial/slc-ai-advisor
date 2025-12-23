@@ -1,13 +1,40 @@
 ---
 title: Plausible Analytics - Social Lean Canvas
-description: Privacy-first web analytics platform demonstrating ethical alternatives to surveillance capitalism through subscription-based SaaS model
-last_updated: 2025-01-17
-source: https://plausible.io
+description: >-
+  Privacy-first web analytics platform demonstrating ethical alternatives to
+  surveillance capitalism through subscription-based SaaS model
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [canvas-example]
-  venture-stage: [growth-stage, scale-stage]
-  venture-type: [impact-area/sdg-16-peace-justice-and-strong-institutions, legal-structure/standard-limited-company, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/ict]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - canvas-example
+  - growth-stage
+  - scale-stage
+  - sdg-16-peace-justice-and-strong-institutions
+  - standard-limited-company
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - ict
 ---
 
 # Plausible Analytics - Social Lean Canvas

@@ -1,3 +1,6 @@
+---
+title: Buy Me Once
+---
 
 - **Founder & start:** Founded by **Tara Button** in **2016** after a “buy-for-life” epiphany; she later wrote [_A Life Less Throwaway_](https://buymeonce.com/pages/a-life-less-throwaway). See the company’s [About](https://buymeonce.com/pages/about-us) and a concise timeline on Tara’s site. 
     

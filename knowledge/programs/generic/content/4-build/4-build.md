@@ -1,3 +1,8 @@
+---
+title: Build
+tags:
+  - video-content
+---
 This slug introduces the build program and then wraps the 4.0 improving your business model module and 5.0 strategy module
 
 core 4-build-intro.webm.02.mp4.webm

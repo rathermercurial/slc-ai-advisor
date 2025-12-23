@@ -1,13 +1,31 @@
 ---
 title: Buy Me Once - Social Lean Canvas
-description: Social Lean Canvas analysis for Buy Me Once, the durable goods e-commerce platform founded by Tara Button
-last_updated: 2025-09-12
-source: https://www.buymeonce.co.uk/
+description: >-
+  Social Lean Canvas analysis for Buy Me Once, the durable goods e-commerce
+  platform founded by Tara Button
 tags:
-  canvas-sections: [customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, economic-model, channels, revenue, costs, advantage, purpose, key-metrics]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, legal-structure/standard-limited-company, revenue-source/product-sales, funding-source/impact-equity, impact-mechanism/product-service-impact, industry/retail]
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - purpose
+  - key-metrics
+  - canvas-example
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - standard-limited-company
+  - product-sales
+  - impact-equity
+  - product-service-impact
+  - retail
 ---
 
 # Buy Me Once - Social Lean Canvas

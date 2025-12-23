@@ -1,3 +1,6 @@
+---
+title: Linking Your Thinking
+---
 
 
 Here’s a concise breakdown of how **Linking Your Thinking (LYT)** runs its model so you can borrow the pieces that matter.

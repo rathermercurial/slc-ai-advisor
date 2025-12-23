@@ -1,13 +1,27 @@
 ---
 title: Too Good To Go - Impact Model Canvas
-description: Impact Model for Too Good To Go showing the chain from food waste crisis to global environmental sustainability through marketplace solution
-last_updated: 2025-07-09
-source: https://www.toogoodtogo.com/
+description: >-
+  Impact Model for Too Good To Go showing the chain from food waste crisis to
+  global environmental sustainability through marketplace solution
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/climate, impact-area/waste, legal-structure/benefit-corporation, revenue-source/platform-commission, impact-mechanism/marketplace-platform, industry/food-beverage]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - scale-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - climate
+  - waste
+  - benefit-corporation
+  - platform-commission
+  - marketplace-platform
+  - food-beverage
 ---
 
 # Too Good To Go - Impact Model Canvas

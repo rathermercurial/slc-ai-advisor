@@ -1,13 +1,29 @@
 ---
 title: The Pathless Path - Impact Model
-description: Impact Model for Paul Millerd's The Pathless Path enterprise showing the theory of change for helping professionals transition to fulfilling work
-last_updated: 2025-01-16
-source: https://pathlesspath.com/
+description: >-
+  Impact Model for Paul Millerd's The Pathless Path enterprise showing the
+  theory of change for helping professionals transition to fulfilling work
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-08-decent-work-and-economic-growth, legal-structure/standard-limited-company, revenue-source/product-sales, revenue-source/service-fees, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, impact-mechanism/education-awareness, industry/education, industry/consulting]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - sdg-08-decent-work-and-economic-growth
+  - standard-limited-company
+  - product-sales
+  - service-fees
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - education-awareness
+  - education
+  - consulting
 ---
 
 # The Pathless Path - Impact Model Canvas

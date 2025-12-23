@@ -1,13 +1,25 @@
 ---
 title: Buy Me Once - Impact Model Canvas
-description: Impact Model analysis for Buy Me Once showing the pathway from throwaway culture to sustainable consumption
-last_updated: 2025-09-12
-source: https://www.buymeonce.co.uk/
+description: >-
+  Impact Model analysis for Buy Me Once showing the pathway from throwaway
+  culture to sustainable consumption
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, legal-structure/standard-limited-company, revenue-source/product-sales, funding-source/impact-equity, impact-mechanism/product-service-impact, industry/retail]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - standard-limited-company
+  - product-sales
+  - impact-equity
+  - product-service-impact
+  - retail
 ---
 
 # Buy Me Once - Impact Model Canvas

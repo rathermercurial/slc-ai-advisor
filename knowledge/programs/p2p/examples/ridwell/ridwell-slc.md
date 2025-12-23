@@ -1,13 +1,33 @@
 ---
 title: Ridwell - Social Lean Canvas
-description: Social Lean Canvas analysis of Ridwell's subscription doorstep pickup service for hard-to-recycle household items
-last_updated: 2025-09-12
-source: https://www.ridwell.com/
+description: >-
+  Social Lean Canvas analysis of Ridwell's subscription doorstep pickup service
+  for hard-to-recycle household items
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/waste, legal-structure/standard-limited-company, revenue-source/subscriptions, funding-source/traditional-investment, impact-mechanism/product-service-impact, industry/clean-energy]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - canvas-example
+  - growth-stage
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - waste
+  - standard-limited-company
+  - subscriptions
+  - traditional-investment
+  - product-service-impact
+  - clean-energy
 ---
 
 # Ridwell - Social Lean Canvas

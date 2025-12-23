@@ -1,13 +1,32 @@
 ---
 title: OpenSource Ecology - Impact Model Canvas
-description: Detailed impact model showing the theory of change for OpenSource Ecology's approach to creating technological sovereignty through open source industrial machinery development
-last_updated: 2025-09-03
-source: https://www.opensourceecology.org/
+description: >-
+  Detailed impact model showing the theory of change for OpenSource Ecology's
+  approach to creating technological sovereignty through open source industrial
+  machinery development
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/sdg-04-quality-education, impact-area/sdg-09-industry-innovation-and-infrastructure, legal-structure/nonprofit-inc, revenue-source/philanthropy-grants, revenue-source/service-fees, revenue-source/product-sales, funding-source/grants, funding-source/donations, impact-mechanism/product-service-impact, impact-mechanism/education-awareness, industry/education, industry/manufacturing]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - scale-stage
+  - sdg-04-quality-education
+  - sdg-09-industry-innovation-and-infrastructure
+  - nonprofit-inc
+  - philanthropy-grants
+  - service-fees
+  - product-sales
+  - grants
+  - donations
+  - product-service-impact
+  - education-awareness
+  - education
+  - manufacturing
 ---
 
 # OpenSource Ecology - Impact Model Canvas

@@ -1,13 +1,37 @@
 ---
 title: The Pathless Path - Social Lean Canvas
-description: Social Lean Canvas for Paul Millerd's The Pathless Path enterprise, helping professionals transition from conventional career paths to fulfilling work
-last_updated: 2025-01-16
-source: https://pathlesspath.com/
+description: >-
+  Social Lean Canvas for Paul Millerd's The Pathless Path enterprise, helping
+  professionals transition from conventional career paths to fulfilling work
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, impact, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [canvas-example]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-08-decent-work-and-economic-growth, legal-structure/standard-limited-company, revenue-source/product-sales, revenue-source/service-fees, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, impact-mechanism/education-awareness, industry/education, industry/consulting]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - canvas-example
+  - growth-stage
+  - sdg-08-decent-work-and-economic-growth
+  - standard-limited-company
+  - product-sales
+  - service-fees
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - education-awareness
+  - education
+  - consulting
 ---
 
 # The Pathless Path - Social Lean Canvas

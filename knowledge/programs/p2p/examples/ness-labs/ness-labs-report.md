@@ -1,13 +1,40 @@
 ---
 title: Ness Labs Research Report
-description: Comprehensive research report analyzing Ness Labs business model and impact approach using the Social Lean Canvas framework
-last_updated: 2025-09-12
-source: nesslabs.com
+description: >-
+  Comprehensive research report analyzing Ness Labs business model and impact
+  approach using the Social Lean Canvas framework
 tags:
-  canvas-sections: [purpose, customer-model, customers, early-adopters, jobs-to-be-done, existing-alternatives, unique-value-proposition, solution, impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact, economic-model, channels, revenue, costs, advantage, key-metrics]
-  content: [case-study]
-  venture-stage: [growth-stage]
-  venture-type: [impact-area/sdg-04-quality-education, legal-structure/standard-limited-company, revenue-source/membership-dues, revenue-source/advertising-sponsorship, funding-source/bootstrapped, impact-mechanism/education-awareness, industry/education]
+  - purpose
+  - customer-model
+  - customers
+  - early-adopters
+  - jobs-to-be-done
+  - existing-alternatives
+  - unique-value-proposition
+  - solution
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - economic-model
+  - channels
+  - revenue
+  - costs
+  - advantage
+  - key-metrics
+  - case-study
+  - growth-stage
+  - sdg-04-quality-education
+  - standard-limited-company
+  - membership-dues
+  - advertising-sponsorship
+  - bootstrapped
+  - education-awareness
+  - education
 ---
 
 # Ness Labs Research Report

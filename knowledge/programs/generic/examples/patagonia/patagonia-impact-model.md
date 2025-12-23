@@ -1,12 +1,31 @@
 ---
 title: Patagonia - Impact Model Canvas
-last_updated: 2025-07-05
-source:
 tags:
-  canvas-sections: [customer-model, economic-model, impact-model, key-metrics, purpose]
-  content: [canvas-example, case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/biodiversity-and-ecosystems, impact-area/climate, impact-area/oceans-and-coastal-zones, impact-area/pollution, impact-area/sdg-06-clean-water-and-sanitation, impact-area/sdg-12-responsible-consumption-and-production, impact-area/sdg-13-climate-action, impact-area/sdg-14-life-below-water, impact-area/sdg-15-life-on-land, impact-mechanism/education-awareness, impact-mechanism/policy-advocacy, impact-mechanism/product-service-impact, impact-mechanism/reinvest-surplus, impact-mechanism/research-development, industry/apparel, legal-structure/trust, revenue-source/product-sales]
+  - customer-model
+  - economic-model
+  - impact-model
+  - key-metrics
+  - purpose
+  - canvas-example
+  - case-study
+  - scale-stage
+  - biodiversity-and-ecosystems
+  - climate
+  - oceans-and-coastal-zones
+  - pollution
+  - sdg-06-clean-water-and-sanitation
+  - sdg-12-responsible-consumption-and-production
+  - sdg-13-climate-action
+  - sdg-14-life-below-water
+  - sdg-15-life-on-land
+  - education-awareness
+  - policy-advocacy
+  - product-service-impact
+  - reinvest-surplus
+  - research-development
+  - apparel
+  - trust
+  - product-sales
 ---
 
 # Patagonia - Impact Model Canvas

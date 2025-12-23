@@ -1,12 +1,28 @@
 ---
 title: Auticon - Impact Model Canvas
-last_updated: 2025-07-04
-source: Auticon Impact Report and Company Analysis
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example, case-study]
-  venture-stage: [scale-stage]
-  venture-type: [impact-area/employment, impact-area/diversity-and-inclusion, impact-area/sdg-08-decent-work-and-economic-growth, impact-area/sdg-10-reduced-inequalities, impact-mechanism/employment-model, impact-mechanism/direct-service, legal-structure/standard-limited-company, revenue-source/service-fees, funding-source/impact-equity, industry/ict, industry/consulting]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - case-study
+  - scale-stage
+  - employment
+  - diversity-and-inclusion
+  - sdg-08-decent-work-and-economic-growth
+  - sdg-10-reduced-inequalities
+  - employment-model
+  - direct-service
+  - standard-limited-company
+  - service-fees
+  - impact-equity
+  - ict
+  - consulting
 ---
 
 # Auticon - Impact Model Canvas

@@ -1,13 +1,26 @@
 ---
 title: Plausible Analytics - Impact Model Canvas
-description: Impact model showing how Plausible Analytics transforms digital analytics from surveillance capitalism to ethical, privacy-respecting business intelligence
-last_updated: 2025-01-17
-source: https://plausible.io
+description: >-
+  Impact model showing how Plausible Analytics transforms digital analytics from
+  surveillance capitalism to ethical, privacy-respecting business intelligence
 tags:
-  canvas-sections: [impact-model, issue, participants, activities, short-term-outcomes, medium-term-outcomes, long-term-outcomes, impact]
-  content: [canvas-example]
-  venture-stage: [growth-stage, scale-stage]
-  venture-type: [impact-area/sdg-16-peace-justice-and-strong-institutions, legal-structure/standard-limited-company, revenue-source/subscriptions, funding-source/bootstrapped, impact-mechanism/product-service-impact, industry/ict]
+  - impact-model
+  - issue
+  - participants
+  - activities
+  - short-term-outcomes
+  - medium-term-outcomes
+  - long-term-outcomes
+  - impact
+  - canvas-example
+  - growth-stage
+  - scale-stage
+  - sdg-16-peace-justice-and-strong-institutions
+  - standard-limited-company
+  - subscriptions
+  - bootstrapped
+  - product-service-impact
+  - ict
 ---
 
 # Plausible Analytics - Impact Model Canvas

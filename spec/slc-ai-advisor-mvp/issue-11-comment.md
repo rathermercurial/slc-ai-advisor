@@ -7,13 +7,31 @@ I've analyzed the codebase and created a comprehensive implementation plan.
 
 ---
 
-### Current State
+### Conceptual Architecture
 
-**B1 (Worker Setup) is complete:**
-- Worker project initialized with `wrangler.toml`
-- Bindings configured: Vectorize, Durable Objects, Workers AI
-- Type definitions in `src/types/`
-- Basic health endpoint working
+The system has three distinct concepts that must be kept separate:
+
+| Concept | Count | Purpose | Storage |
+|---------|-------|---------|---------|
+| **Canvas Sections** | 11 | Content users fill in | `canvas_section` + `impact_model` tables |
+| **Models** | 3 | Conceptual groupings for retrieval/display | Views over sections (not stored) |
+| **Venture Dimensions** | 7 | Selection Matrix filtering | `venture_profile` table |
+
+**Models as Views:**
+- `getCustomerModel()` → Returns {customers, jobsToBeDone, valueProposition, solution}
+- `getEconomicModel()` → Returns {channels, revenue, costs, advantage}
+- `getImpactModel()` → Returns 8-field causality chain
+
+**Data Flow:**
+```
+User Message → Venture Dimensions (filtering) → KB Retrieval (by model/section)
+                                                        ↓
+User fills canvas ← AI Guidance ← RAG Context (model-specific examples)
+        ↓
+Canvas Sections (storage) ← Models (grouped view for display)
+```
+
+---
 
 ### Tasks to Implement
 
@@ -45,25 +63,31 @@ worker/
 
 **SQLite Schema (5 tables):**
 - `session` - Session metadata and program
-- `venture_profile` - 7 dimensions with confidence scores
-- `canvas_section` - Standard sections (all except impact)
-- `impact_model` - 8-field causality chain
+- `venture_profile` - 7 dimensions with confidence scores (for filtering)
+- `canvas_section` - 10 standard sections (content storage)
+- `impact_model` - 8-field causality chain (impact section storage)
 - `message` - Chat history
 
-**API Endpoints:**
-```
-POST /api/session         → Create session
-GET  /api/session/:id     → Get session state
-POST /api/chat            → Chat with RAG
-```
+**CRUD Methods by Category:**
+
+*Canvas Sections (content):*
+- `getAllCanvasSections()`, `getCanvasSection(key)`, `updateCanvasSection(key, content)`
+
+*Models (grouped views):*
+- `getCustomerModel()`, `getEconomicModel()`, `getImpactModel()`
+- `updateImpactModelField(field, content)` - syncs with impact section
+
+*Venture Dimensions (filtering):*
+- `getVentureProfile()`, `updateVentureDimension(dimension, value, confidence)`
+- `getDimensionsForFiltering()` - for KB queries
 
 **RAG Pipeline:**
 1. Parse user intent (methodology vs examples)
-2. Generate embedding via Workers AI (@cf/baai/bge-m3)
-3. Query Vectorize with namespace + metadata filters
-4. Build system prompt with retrieved context
-5. Call Claude via AI Gateway
-6. Store messages in session
+2. Get venture dimensions from profile (for filtering)
+3. Determine target model/section from context
+4. Query Vectorize with dimension + model/section filters
+5. Build system prompt with retrieved context
+6. Call Claude via AI Gateway
 
 ### Environment Setup Required
 
@@ -76,12 +100,6 @@ Before implementation, set up:
    wrangler secret put CF_GATEWAY_ID
    ```
 
-### Dependencies
-
-- B4 can be tested without indexed KB (A6), but will return empty results
-- B5 requires AI Gateway configuration for Claude calls
-- All tasks depend on B2 (Durable Object) being complete first
-
 ---
 
-Ready to begin implementation on this branch. The plan includes acceptance criteria for each task.
+Ready to begin implementation. The plan includes acceptance criteria for each task.

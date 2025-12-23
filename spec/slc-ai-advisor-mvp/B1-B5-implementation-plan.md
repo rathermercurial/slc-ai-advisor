@@ -101,22 +101,65 @@ CREATE TABLE message (
 CREATE INDEX idx_message_session ON message(session_id, timestamp);
 ```
 
-**CRUD Methods:**
+**Conceptual Architecture:**
+
+The system has three distinct concepts that must be kept separate:
+
+1. **Canvas Sections** (11 total) - The actual content users fill in
+   - 10 standard sections stored in `canvas_section` table
+   - 1 impact section stored in `impact_model` table (with 8 fields)
+
+2. **Models** (3 total) - Conceptual groupings for retrieval and display
+   - Customer Model = {customers, jobsToBeDone, valueProposition, solution}
+   - Economic Model = {channels, revenue, costs, advantage}
+   - Impact Model = {impact} (nested 8-field causality chain)
+   - Models are **views** over sections, not separate storage
+
+3. **Venture Dimensions** (7 total) - Properties for Selection Matrix filtering
+   - Used to filter KB content, not to store canvas data
+   - Inferred from conversation or explicitly set
+
+**CRUD Methods - Session:**
 - `initSession(id: string, program: string)` - Create session with empty canvas
-- `getSession()` - Get session metadata
-- `getVentureProfile()` - Get venture dimensions
+- `getSession()` - Get session metadata (program, currentSection, timestamps)
+
+**CRUD Methods - Venture Dimensions (for Selection Matrix):**
+- `getVentureProfile()` - Get all 7 dimensions with confidence scores
 - `updateVentureDimension(dimension, value, confidence)` - Update single dimension
-- `getCanvasState()` - Get all sections + impact model
-- `updateCanvasSection(key, content)` - Update standard section
-- `updateImpactModel(field, content)` - Update impact model field
+- `getDimensionsForFiltering()` - Get confirmed/high-confidence dimensions for KB queries
+
+**CRUD Methods - Canvas Sections (individual content):**
+- `getAllCanvasSections()` - Get all 11 sections (10 standard + impact summary)
+- `getCanvasSection(key)` - Get single section by key
+- `updateCanvasSection(key, content)` - Update standard section (routes 'impact' to impact_model.impact)
+- `markSectionComplete(key, isComplete)` - Toggle completion status
+
+**CRUD Methods - Models (grouped views):**
+- `getCustomerModel()` - Returns {customers, jobsToBeDone, valueProposition, solution} sections
+- `getEconomicModel()` - Returns {channels, revenue, costs, advantage} sections
+- `getImpactModel()` - Returns full 8-field causality chain
+- `updateImpactModelField(field, content)` - Update specific impact field (syncs 'impact' field with impact section)
+
+**CRUD Methods - Messages:**
 - `addMessage(role, content)` - Add chat message
 - `getRecentMessages(limit)` - Get last N messages
+
+**Data Flow:**
+```
+User Message → Venture Dimensions (filtering) → KB Retrieval (by model/section)
+                                                        ↓
+User fills canvas ← AI Guidance ← RAG Context (model-specific examples)
+        ↓
+Canvas Sections (storage) ← Models (grouped view for display)
+```
 
 **Acceptance Criteria:**
 - [ ] DO class extends `DurableObject<Env>`
 - [ ] Schema created on first request
 - [ ] All CRUD methods work with parameterized queries
+- [ ] Models return grouped sections (views, not copies)
 - [ ] Impact section syncs with `impact_model.impact` field
+- [ ] Venture dimensions separate from canvas content
 
 ---
 
@@ -164,36 +207,61 @@ if (url.pathname === '/api/session' && request.method === 'POST') {
 
 **File:** `worker/retrieval/vector-search.ts`
 
-**Demo Filtering Strategy:**
-For Demo milestone, implement basic filtering:
-1. **Namespace filter** (program) - Strict filter on user's program
-2. **Tag metadata** - Filter by canvas section or venture model
-3. **Semantic search** - Natural language similarity
+**How Models and Sections Guide Retrieval:**
+
+The Selection Matrix uses venture dimensions AND model/section context:
+- **Venture Dimensions** (from profile) → Filter by stage, impact area, industry
+- **Target Model** (from query intent) → Filter examples by model grouping
+- **Target Section** (from query intent) → Filter methodology by section
+
+Example: User working on "revenue" section with "early-stage healthcare" venture:
+1. Dimension filter: `venture_stage=early`, `impact_area=health`
+2. Model filter: `venture_model=economic` (revenue belongs to Economic Model)
+3. Section filter: `canvas_section=revenue`
+4. Semantic search within filtered results
+
+**Demo Filtering Strategy (3 stages):**
+1. **Program Filter** (namespace) - Strict filter on user's program
+2. **Model/Section Filter** (metadata) - Filter by conceptual grouping OR specific section
+3. **Semantic Search** - Natural language similarity within filtered results
 
 **Filter Building:**
 ```typescript
 interface QueryIntent {
   type: 'methodology' | 'examples' | 'general';
-  targetSection?: CanvasSectionId;
-  targetModel?: Model;
+  targetSection?: CanvasSectionId;  // Specific section user is working on
+  targetModel?: Model;               // Conceptual grouping for broader context
 }
 
 function buildVectorizeQuery(
   program: string,
+  dimensions: VentureDimensions,  // From venture profile
   intent: QueryIntent
 ): VectorizeQueryOptions {
   const filter: Record<string, any> = {};
 
+  // Content type filter
   if (intent.type === 'examples') {
     filter.content_type = 'canvas-example';
+  } else if (intent.type === 'methodology') {
+    filter.content_type = 'methodology';
   }
 
+  // Section-specific filter (most specific)
   if (intent.targetSection) {
     filter.canvas_section = intent.targetSection;
   }
-
-  if (intent.targetModel) {
+  // Model grouping filter (broader context)
+  else if (intent.targetModel) {
     filter.venture_model = intent.targetModel;
+  }
+
+  // Venture dimension filters (from profile, not canvas content)
+  if (dimensions.ventureStage) {
+    filter.venture_stage = dimensions.ventureStage;
+  }
+  if (dimensions.industries.length > 0) {
+    filter.primary_industry = { $in: dimensions.industries };
   }
 
   return {

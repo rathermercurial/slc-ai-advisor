@@ -6,6 +6,9 @@ import { Canvas, Chat } from './components';
  *
  * Two-column layout: Canvas on left (60%), Chat on right (40%).
  * Dark mode toggle in header.
+ *
+ * Chat uses Cloudflare Agents SDK for real-time WebSocket communication.
+ * Session management is handled automatically by the ChatAgent.
  */
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -25,32 +28,6 @@ function App() {
     localStorage.setItem('sessionId', newId);
     return newId;
   });
-
-  const [_sessionReady, setSessionReady] = useState(false);
-
-  // Initialize session with backend
-  useEffect(() => {
-    const initSession = async () => {
-      try {
-        // Check if session exists on backend
-        const response = await fetch(`/api/session/${sessionId}`);
-        if (response.status === 404) {
-          // Register new session
-          await fetch('/api/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, program: 'generic' }),
-          });
-        }
-        setSessionReady(true);
-      } catch (error) {
-        console.error('Failed to initialize session:', error);
-        // Still allow usage with mock fallback
-        setSessionReady(true);
-      }
-    };
-    initSession();
-  }, [sessionId]);
 
   // Apply theme to document
   useEffect(() => {
@@ -82,10 +59,7 @@ function App() {
           <Canvas sessionId={sessionId} />
         </div>
         <div className="layout-chat">
-          <Chat
-            sessionId={sessionId}
-            apiEndpoint={import.meta.env.VITE_CHAT_API_ENDPOINT}
-          />
+          <Chat sessionId={sessionId} />
         </div>
       </main>
     </div>

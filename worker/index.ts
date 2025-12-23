@@ -1,23 +1,27 @@
 /**
  * SLC AI Advisor - Worker Entry Point
  *
- * Handles API routes for the SLC AI Advisor.
+ * Handles API routes and agent requests for the SLC AI Advisor.
  * Static assets (React app) are served automatically by Cloudflare.
  *
  * Routes:
+ * - /agents/* - WebSocket connections for ChatAgent (Agents SDK)
  * - GET /api/health - Health check
  * - POST /api/session - Create new session (B3)
  * - GET /api/session/:id - Get session (B3)
  * - GET /api/session/:id/messages - Get chat history (C3)
- * - POST /api/chat - Send chat message (B5)
+ * - POST /api/chat - Send chat message (B5) [legacy, prefer /agents/]
  * - GET /api/canvas - Get canvas state (B7)
  * - PUT /api/canvas/:section - Update canvas section (B7)
  * - GET /api/export/:format - Export canvas (B8)
  */
 
-// Export Durable Object for wrangler
+import { routeAgentRequest } from 'agents';
+
+// Export Durable Objects for wrangler
 import { UserSession } from './durable-objects/UserSession';
-export { UserSession };
+import { ChatAgent } from './agents/ChatAgent';
+export { UserSession, ChatAgent };
 
 // Import route handlers
 import { handleChat } from './routes/chat';
@@ -25,10 +29,15 @@ import { handleChat } from './routes/chat';
 // Env interface extended in worker/env.d.ts
 
 export default {
-  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Only handle /api/* routes - static assets handled by Cloudflare
+    // Route agent requests (WebSocket + HTTP for ChatAgent)
+    if (url.pathname.startsWith('/agents/')) {
+      return routeAgentRequest(request, env);
+    }
+
+    // Handle /api/* routes
     if (!url.pathname.startsWith('/api/')) {
       // This shouldn't happen due to wrangler.toml config, but handle gracefully
       return new Response('Not found', { status: 404 });

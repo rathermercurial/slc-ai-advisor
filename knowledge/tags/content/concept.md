@@ -1,8 +1,10 @@
 ---
-title: Concept Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Concept
+aliases:
+  - '#concept'
+  - '#content/concept'
+tags:
+  - content
 ---
 
 # concept

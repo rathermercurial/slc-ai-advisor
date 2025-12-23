@@ -26,4 +26,4 @@ Referenced from markdown files via relative paths:
 
 ## Future Work
 
-File naming will be improved when the A2 restructure is complete. Current names are Obsidian export artifacts.
+File naming will be improved in a future cleanup. Current names are Obsidian export artifacts.

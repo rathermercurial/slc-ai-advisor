@@ -2,7 +2,7 @@
 
 This folder contains the organized knowledge base for the Social Lean Canvas AI advisor, structured to enable intelligent filtering and retrieval.
 
-**Current state:** 291 markdown files ready for indexing. Blocked on A2 (tag restructure) - see [Issue #15](https://github.com/rathermercurial/slc-ai-advisor/issues/15).
+**Current state:** 291 markdown files ready for indexing.
 
 ## Content Overview
 
@@ -81,14 +81,6 @@ See [programs/generic/examples/patagonia/patagonia-slc.md](programs/generic/exam
 2. **Tagging**: Include all relevant tags in frontmatter (see [tags/readme.md](tags/readme.md))
 3. **Linking**: Use relative paths within the knowledge base
 4. **Consistency**: Follow established naming conventions (kebab-case, lowercase)
-
-## Critical Path
-
-```
-A1 ✅ → A2 🔴 → A3 → A4 → A5 → A6 = INDEXED KB
-```
-
-A2 (tag restructure) blocks all indexing work.
 
 ## See Also
 

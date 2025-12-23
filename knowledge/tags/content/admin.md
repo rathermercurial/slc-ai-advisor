@@ -1,8 +1,10 @@
 ---
-title: Admin Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Admin
+aliases:
+  - '#admin'
+  - '#content/admin'
+tags:
+  - content
 ---
 
 # admin

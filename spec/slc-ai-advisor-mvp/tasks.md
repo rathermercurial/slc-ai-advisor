@@ -149,8 +149,7 @@ C1 ✅ → C2 → C3 ───────────────────�
   ```
   knowledge/
   ├── programs/                   # Learning journeys → Vectorize namespaces
-  │   ├── default/               # General knowledge
-  │   └── generic/               # Base SLC program
+  │   └── generic/               # Core SLC methodology (default)
   │
   └── tags/                       # Concepts → Vectorize metadata
       ├── canvas/                # Section concepts (semantic names)

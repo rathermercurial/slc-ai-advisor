@@ -20,11 +20,10 @@ run_worker_first = ["/api/*"]
 enabled = true
 
 # Vectorize Index for Knowledge Base
-# NOTE: Create this index manually in the Cloudflare dashboard first:
-# 1. Go to Workers & Pages > Vectorize
-# 2. Create index named "slc-knowledge-base"
-# 3. Dimensions: 768 (for bge-base-en-v1.5)
-# 4. Metric: cosine
+# NOTE: Create this index via CLI (see spec/slc-ai-advisor-mvp/design.md):
+#   wrangler vectorize create slc-knowledge-base --dimensions 1024 --metric cosine
+# Then create metadata indexes for filtering.
+# Model: @cf/baai/bge-m3 (1024 dimensions, 60K token context)
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "slc-knowledge-base"

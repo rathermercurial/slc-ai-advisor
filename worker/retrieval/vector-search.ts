@@ -63,8 +63,9 @@ export function buildVectorizeQuery(
   const filter: Record<string, unknown> = {};
 
   // Content type filter based on intent
+  // Note: indexed as 'example' not 'canvas-example'
   if (intent.type === 'examples') {
-    filter.content_type = 'canvas-example';
+    filter.content_type = 'example';
   } else if (intent.type === 'methodology') {
     filter.content_type = 'methodology';
   }
@@ -93,10 +94,15 @@ export function buildVectorizeQuery(
     filter.primary_industry = dimensions.industries[0];
   }
 
+  // Add program filter only for non-default programs
+  // "generic" is the default namespace and doesn't need filtering
+  if (program && program !== 'generic') {
+    filter.program = program;
+  }
+
   return {
     topK: 5,
     returnMetadata: 'all',
-    namespace: program,
     filter: Object.keys(filter).length > 0 ? filter : undefined,
   };
 }
@@ -256,7 +262,7 @@ export function buildRAGContext(documents: RetrievedDocument[]): string {
     const stage = doc.metadata.venture_stage || '';
 
     let header = `[${title}]`;
-    if (type === 'canvas-example') {
+    if (type === 'example') {
       header += ` (Example${stage ? `, ${stage} stage` : ''})`;
     } else if (type === 'methodology') {
       header += ` (Methodology${section ? `, ${section}` : ''})`;

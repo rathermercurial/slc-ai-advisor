@@ -1,8 +1,11 @@
 ---
-title: Pollution Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Pollution
+aliases:
+  - '#pollution'
+  - '#venture/impact-area/pollution'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # pollution

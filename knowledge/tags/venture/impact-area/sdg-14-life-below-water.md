@@ -1,8 +1,11 @@
 ---
-title: SDG 14 Life Below Water Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 14 Life Below Water
+aliases:
+  - '#sdg-14-life-below-water'
+  - '#venture/impact-area/sdg-14-life-below-water'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-14-life-below-water

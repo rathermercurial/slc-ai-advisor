@@ -1,8 +1,11 @@
 ---
-title: Logistics Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Logistics
+aliases:
+  - '#logistics'
+  - '#venture/industry/logistics'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # logistics

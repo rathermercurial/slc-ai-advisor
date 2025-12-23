@@ -1,8 +1,11 @@
 ---
-title: Product Service Impact Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Product Service Impact
+aliases:
+  - '#product-service-impact'
+  - '#venture/impact-mechanism/product-service-impact'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # product-service-impact

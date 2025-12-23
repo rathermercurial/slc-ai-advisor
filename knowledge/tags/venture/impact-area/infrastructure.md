@@ -1,8 +1,11 @@
 ---
-title: Infrastructure Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Infrastructure
+aliases:
+  - '#infrastructure'
+  - '#venture/impact-area/infrastructure'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # infrastructure

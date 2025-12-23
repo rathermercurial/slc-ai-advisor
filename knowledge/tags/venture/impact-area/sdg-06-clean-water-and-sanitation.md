@@ -1,8 +1,11 @@
 ---
-title: SDG 06 Clean Water and Sanitation Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 06 Clean Water and Sanitation
+aliases:
+  - '#sdg-06-clean-water-and-sanitation'
+  - '#venture/impact-area/sdg-06-clean-water-and-sanitation'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-06-clean-water-and-sanitation

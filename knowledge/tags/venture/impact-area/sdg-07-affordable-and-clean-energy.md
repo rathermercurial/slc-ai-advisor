@@ -1,8 +1,11 @@
 ---
-title: SDG 07 Affordable and Clean Energy Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 07 Affordable and Clean Energy
+aliases:
+  - '#sdg-07-affordable-and-clean-energy'
+  - '#venture/impact-area/sdg-07-affordable-and-clean-energy'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-07-affordable-and-clean-energy

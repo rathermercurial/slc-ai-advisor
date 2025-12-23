@@ -1,8 +1,10 @@
 ---
 title: Impact Mechanism Tags
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+aliases:
+  - '#impact-mechanism'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # Impact Mechanism Tags

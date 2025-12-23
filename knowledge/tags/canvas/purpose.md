@@ -1,8 +1,11 @@
 ---
 title: Purpose
-last_updated: 2025-06-29
-source:
-tags: [canvas-section, purpose]
+aliases:
+  - '#purpose'
+  - '#canvas/purpose'
+tags:
+  - canvas-section
+  - canvas
 ---
 
 Your purpose is the starting point for your canvas. It's your reason for creating this enterprise. It needs to be clearly defined in terms of the social or environmental problems that you want to solve.

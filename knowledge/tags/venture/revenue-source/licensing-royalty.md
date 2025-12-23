@@ -1,8 +1,11 @@
 ---
-title: Licensing Royalty Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Licensing Royalty
+aliases:
+  - '#licensing-royalty'
+  - '#venture/revenue-source/licensing-royalty'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # licensing-royalty

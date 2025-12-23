@@ -1,8 +1,9 @@
 ---
-title: Long Term Outcomes Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [impact-model, model/impact]
+title: Long Term Outcomes
+aliases:
+  - '#long-term-outcomes'
+tags:
+  - impact-model
 ---
 
 # long-term-outcomes

@@ -1,8 +1,11 @@
 ---
-title: Clean Energy Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Clean Energy
+aliases:
+  - '#clean-energy'
+  - '#venture/industry/clean-energy'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # clean-energy

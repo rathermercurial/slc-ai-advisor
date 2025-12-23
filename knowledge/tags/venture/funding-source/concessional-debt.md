@@ -1,8 +1,11 @@
 ---
-title: Concessional Debt Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Concessional Debt
+aliases:
+  - '#concessional-debt'
+  - '#venture/funding-source/concessional-debt'
+tags:
+  - venture/dimension
+  - venture/funding-source
 ---
 
 # concessional-debt

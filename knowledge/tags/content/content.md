@@ -1,8 +1,9 @@
 ---
 title: Content Tags Overview
-last_updated: 2025-07-03
-source:
-tags: [design, admin]
+aliases:
+  - '#content'
+tags:
+  - content
 ---
 
 # Content Tags

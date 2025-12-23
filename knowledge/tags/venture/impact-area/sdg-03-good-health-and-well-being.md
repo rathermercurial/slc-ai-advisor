@@ -1,8 +1,11 @@
 ---
-title: SDG 03 Good Health and Well-being Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 03 Good Health and Well-being
+aliases:
+  - '#sdg-03-good-health-and-well-being'
+  - '#venture/impact-area/sdg-03-good-health-and-well-being'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-03-good-health-and-well-being

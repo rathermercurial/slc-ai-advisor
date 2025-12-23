@@ -1,8 +1,10 @@
 ---
-title: Case Study Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Case Study
+aliases:
+  - '#case-study'
+  - '#content/case-study'
+tags:
+  - content
 ---
 
 # case-study

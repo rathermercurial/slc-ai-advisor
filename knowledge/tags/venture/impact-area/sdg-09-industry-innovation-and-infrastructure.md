@@ -1,8 +1,11 @@
 ---
-title: SDG 09 Industry Innovation and Infrastructure Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 09 Industry Innovation and Infrastructure
+aliases:
+  - '#sdg-09-industry-innovation-and-infrastructure'
+  - '#venture/impact-area/sdg-09-industry-innovation-and-infrastructure'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-09-industry-innovation-and-infrastructure

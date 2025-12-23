@@ -1,8 +1,9 @@
 ---
-title: Issue Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [impact-model, model/impact]
+title: Issue
+aliases:
+  - '#issue'
+tags:
+  - impact-model
 ---
 
 # issue

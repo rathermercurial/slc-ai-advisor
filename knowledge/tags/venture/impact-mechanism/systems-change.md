@@ -1,8 +1,11 @@
 ---
-title: Systems Change Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Systems Change
+aliases:
+  - '#systems-change'
+  - '#venture/impact-mechanism/systems-change'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # systems-change

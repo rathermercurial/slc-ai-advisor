@@ -1,8 +1,11 @@
 ---
-title: Service Fees Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Service Fees
+aliases:
+  - '#service-fees'
+  - '#venture/revenue-source/service-fees'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # service-fees

@@ -1,8 +1,11 @@
 ---
-title: Membership Dues Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Membership Dues
+aliases:
+  - '#membership-dues'
+  - '#venture/revenue-source/membership-dues'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # membership-dues

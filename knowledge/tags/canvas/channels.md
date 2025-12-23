@@ -1,9 +1,11 @@
 ---
 title: Channels
-last_updated: 2025-06-29
-source:
-tags: [canvas-section, economic-model, video-content]
-aliases: [#canvas/channels]
+aliases:
+  - "#channels"
+  - "#canvas/channels"
+tags:
+  - canvas-section
+  - canvas
 ---
 
 Channels are how your enterprise connects with your customers at scale. And there are two distinct components to channels. Firstly, channels through which your customer finds you and becomes your customer. These are known as customer acquisition channels or marketing channels. They could be things like online advertising, word of mouth, affiliate networks, print advertising, store frontage, things like that.

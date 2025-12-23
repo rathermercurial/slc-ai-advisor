@@ -1,9 +1,11 @@
 ---
 title: Costs
-last_updated: 2025-06-29
-source:
-tags: [canvas, economic-model, content/video]
-aliases: ["#canvas/costs", "#costs"]
+aliases:
+  - '#costs'
+  - '#canvas/costs'
+tags:
+  - canvas-section
+  - canvas
 ---
 
 ## Definition

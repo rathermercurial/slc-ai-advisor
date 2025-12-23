@@ -1,8 +1,11 @@
 ---
-title: Water Sanitation Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Water Sanitation
+aliases:
+  - '#water-sanitation'
+  - '#venture/industry/water-sanitation'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # water-sanitation

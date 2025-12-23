@@ -1,8 +1,10 @@
 ---
-title: Guide Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin]
+title: Guide
+aliases:
+  - '#guide'
+  - '#content/guide'
+tags:
+  - content
 ---
 
 # guide

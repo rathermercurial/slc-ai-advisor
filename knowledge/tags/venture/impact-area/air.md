@@ -1,8 +1,11 @@
 ---
-title: Air Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Air
+aliases:
+  - '#air'
+  - '#venture/impact-area/air'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # air

@@ -1,8 +1,9 @@
 ---
-title: Short Term Outcomes Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [impact-model, model/impact]
+title: Short Term Outcomes
+aliases:
+  - '#short-term-outcomes'
+tags:
+  - impact-model
 ---
 
 # short-term-outcomes

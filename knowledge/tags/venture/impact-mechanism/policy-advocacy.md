@@ -1,8 +1,11 @@
 ---
-title: Policy Advocacy Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Policy Advocacy
+aliases:
+  - '#policy-advocacy'
+  - '#venture/impact-mechanism/policy-advocacy'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # policy-advocacy

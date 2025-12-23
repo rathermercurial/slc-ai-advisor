@@ -1,14 +1,10 @@
 ---
 title: Venture Stage
-permalink: venture-stage
 aliases:
-  - "#venture-stage"
-  - "#venture/stage"
-  - "#stage"
+  - '#venture-stage'
 tags:
-  - content/concept
-  - content/strategy
-  - venture-properties
+  - stage
+  - venture/stage
 ---
 
 The Venture Stage Model is a comprehensive framework that maps the evolution of social ventures across four distinct development stages. This model integrates three parallel tracks - Customer Model, Impact Model, and Economic Model - alongside organizational development milestones to provide a holistic view of venture progression.

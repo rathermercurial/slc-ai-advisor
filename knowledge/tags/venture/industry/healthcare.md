@@ -1,8 +1,11 @@
 ---
-title: Healthcare Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Healthcare
+aliases:
+  - '#healthcare'
+  - '#venture/industry/healthcare'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # healthcare

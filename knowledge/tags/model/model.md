@@ -1,4 +1,8 @@
 ---
 title: Models
-aliases: ["#model"]
+aliases:
+  - '#model'
+tags:
+  - model
 ---
+

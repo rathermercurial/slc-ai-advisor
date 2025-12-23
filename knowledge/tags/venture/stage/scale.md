@@ -1,8 +1,11 @@
 ---
-title: Scale Stage Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Scale Stage
+aliases:
+  - '#scale-stage'
+  - '#venture/stage/scale'
+tags:
+  - stage
+  - venture/stage
 ---
 
 # scale-stage

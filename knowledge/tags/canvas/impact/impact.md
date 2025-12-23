@@ -1,8 +1,10 @@
 ---
 title: Impact Section
-last_updated: 2025-06-29
-tags: [canvas, impact-model]
-aliases: ["#canvas/impact"]
+aliases:
+  - '#impact'
+tags:
+  - canvas-section
+  - canvas
 ---
 
 ## Structure

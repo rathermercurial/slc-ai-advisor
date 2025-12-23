@@ -1,8 +1,10 @@
 ---
-title: purpose-pivot-program tag definition
-last_updated: 2025-08-26
-source:
-tags: [design, admin]
+title: purpose-pivot-program
+aliases:
+  - '#purpose-pivot-program'
+  - '#content/purpose-pivot-program'
+tags:
+  - content
 ---
 
 This tag connects a piece a doc to the Purpose Pivot Program

@@ -1,8 +1,11 @@
 ---
-title: Waste Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Waste
+aliases:
+  - '#waste'
+  - '#venture/impact-area/waste'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # waste

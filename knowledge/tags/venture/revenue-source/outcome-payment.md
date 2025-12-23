@@ -1,8 +1,11 @@
 ---
-title: Outcome Payment Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Outcome Payment
+aliases:
+  - '#outcome-payment'
+  - '#venture/revenue-source/outcome-payment'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # outcome-payment

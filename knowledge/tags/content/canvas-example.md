@@ -1,8 +1,10 @@
 ---
-title: Canvas Example Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Canvas Example
+aliases:
+  - '#canvas-example'
+  - '#content/canvas-example'
+tags:
+  - content
 ---
 
 # canvas-example

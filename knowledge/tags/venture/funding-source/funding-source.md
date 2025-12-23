@@ -1,8 +1,10 @@
 ---
 title: Funding Source Tags
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+aliases:
+  - '#funding-source'
+tags:
+  - venture/dimension
+  - venture/funding-source
 ---
 
 # Funding Source Tags

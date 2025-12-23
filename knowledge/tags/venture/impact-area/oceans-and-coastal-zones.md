@@ -1,8 +1,11 @@
 ---
-title: Oceans and Coastal Zones Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Oceans and Coastal Zones
+aliases:
+  - '#oceans-and-coastal-zones'
+  - '#venture/impact-area/oceans-and-coastal-zones'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # oceans-and-coastal-zones

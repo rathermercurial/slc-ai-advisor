@@ -1,8 +1,10 @@
 ---
-title: Early Adopters Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [design, admin]
+title: Early Adopters
+aliases:
+  - '#early-adopters'
+tags:
+  - concept
+  - customer-model
 ---
 
 # early-adopters

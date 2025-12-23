@@ -1,8 +1,11 @@
 ---
-title: Climate Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Climate
+aliases:
+  - '#climate'
+  - '#venture/impact-area/climate'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # climate

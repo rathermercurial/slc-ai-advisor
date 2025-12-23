@@ -1,8 +1,10 @@
 ---
-title: Prompt Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Prompt
+aliases:
+  - '#prompt'
+  - '#content/prompt'
+tags:
+  - content
 ---
 
 # prompt

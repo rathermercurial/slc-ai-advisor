@@ -1,9 +1,8 @@
 ---
 title: Growth Stage
-permalink: growth-stage
 aliases:
-  - "#growth-stage"
-  - "#venture/stage/growth"
+  - '#growth-stage'
+  - '#venture/stage/growth'
 tags:
   - stage
   - venture/stage

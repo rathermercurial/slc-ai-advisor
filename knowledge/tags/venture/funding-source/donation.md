@@ -1,8 +1,11 @@
 ---
-title: Donation Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Donation
+aliases:
+  - '#donation'
+  - '#venture/funding-source/donation'
+tags:
+  - venture/dimension
+  - venture/funding-source
 ---
 
 # donation

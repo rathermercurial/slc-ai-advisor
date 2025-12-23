@@ -1,8 +1,11 @@
 ---
-title: SDG 10 Reduced Inequalities Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 10 Reduced Inequalities
+aliases:
+  - '#sdg-10-reduced-inequalities'
+  - '#venture/impact-area/sdg-10-reduced-inequalities'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-10-reduced-inequalities

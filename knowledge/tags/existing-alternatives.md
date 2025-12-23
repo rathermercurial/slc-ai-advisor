@@ -1,8 +1,10 @@
 ---
-title: Existing Alternatives Tag Definition
-last_updated: 2025-07-03
-tags: [design, admin, canvas/jobs-to-be-done, jtbd, model/customer, customer-model]
-aliases: "#existing-alternative"
+title: Existing Alternatives
+aliases:
+  - '#existing-alternatives'
+tags:
+  - concept
+  - customer-model
 ---
 
 # existing-alternatives

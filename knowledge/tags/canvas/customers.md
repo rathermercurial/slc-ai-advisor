@@ -1,14 +1,11 @@
 ---
 title: Customers
-description: Individuals or organizations essential to the enterprise's operation, categorized by types and segments
-last_updated: 2025-07-17
-source: 
-aliases: [customers definition, customer types, customer segments, SLC customers]
+aliases:
+  - '#customers'
+  - '#canvas/customers'
 tags:
-  canvas-sections: [customer-model, customers]
-  content: [lexicon-entry, canvas-sections]
-  venture-stage: [idea-stage, early-stage, growth-stage, scale-stage]
-  venture-type: []
+  - canvas-section
+  - canvas
 ---
 
 **Customers** are the people or organizations that you need to move to make your business model work. Customers is the first section in your Customer Model. They are essential to your enterprise's operation and must be categorized in two ways: **customer types** and **customer segments**.

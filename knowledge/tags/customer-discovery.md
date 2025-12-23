@@ -1,8 +1,10 @@
 ---
-title: Customer Discovery Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin]
+title: Customer Discovery
+aliases:
+  - '#customer-discovery'
+tags:
+  - concept
+  - customer-model
 ---
 
 # customer-discovery

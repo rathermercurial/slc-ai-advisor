@@ -1,8 +1,11 @@
 ---
-title: Grant Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Grant
+aliases:
+  - '#grant'
+  - '#venture/funding-source/grant'
+tags:
+  - venture/dimension
+  - venture/funding-source
 ---
 
 # grant

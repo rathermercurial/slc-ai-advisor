@@ -1,9 +1,11 @@
 ---
 title: Advantage
-last_updated: 2025-06-29
-source:
-tags: [canvas-section, economic-model, advantage, video-content]
-aliases: [#canvas/advantage]
+aliases:
+  - "#advantage"
+  - "#canvas/advantage"
+tags:
+  - canvas-section
+  - canvas
 ---
 
 The Advantage section of your economic model is about understanding what is powerful about how your business model works. What is the leverage that is generated in your business model? That when you reach the scale you're going for, will make your business model successful. If there is no powerful advantage, you will not be able to make your revenue greater than your costs long term. That is, you won't be financially sustainable.

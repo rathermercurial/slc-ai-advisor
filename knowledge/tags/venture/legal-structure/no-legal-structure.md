@@ -1,8 +1,11 @@
 ---
-title: No Legal Structure Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: No Legal Structure
+aliases:
+  - '#no-legal-structure'
+  - '#venture/legal-structure/no-legal-structure'
+tags:
+  - venture/dimension
+  - venture/legal-structure
 ---
 
 # no-legal-structure

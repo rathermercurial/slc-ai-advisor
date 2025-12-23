@@ -1,8 +1,11 @@
 ---
-title: Crowdfunding Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Crowdfunding
+aliases:
+  - '#crowdfunding'
+  - '#venture/funding-source/crowdfunding'
+tags:
+  - venture/dimension
+  - venture/funding-source
 ---
 
 # crowdfunding

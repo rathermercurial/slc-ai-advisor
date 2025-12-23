@@ -1,8 +1,11 @@
 ---
 title: Jobs to be Done
-description: Core tasks or needs motivating customers to engage with your solution - what customers "hire" your product to do
-tags: [customer-model, canvas]
-aliases: ["#canvas/jobs-to-be-done", "#canvas/jtbd"]
+aliases:
+  - '#jobs-to-be-done'
+  - '#canvas/jobs-to-be-done'
+tags:
+  - canvas-section
+  - canvas
 ---
 
 # Jobs to be Done

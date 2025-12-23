@@ -1,8 +1,10 @@
 ---
-title: Validation and Iteration Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin]
+title: Validation and Iteration
+aliases:
+  - '#validation-and-iteration'
+  - '#content/validation-and-iteration'
+tags:
+  - content
 ---
 
 # validation-and-iteration

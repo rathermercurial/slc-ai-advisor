@@ -1,8 +1,11 @@
 ---
-title: Research Innovation Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Research Innovation
+aliases:
+  - '#research-innovation'
+  - '#venture/impact-mechanism/research-innovation'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # research-innovation

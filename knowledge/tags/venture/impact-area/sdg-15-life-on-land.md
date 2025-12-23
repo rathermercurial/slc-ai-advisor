@@ -1,8 +1,11 @@
 ---
-title: SDG 15 Life on Land Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 15 Life on Land
+aliases:
+  - '#sdg-15-life-on-land'
+  - '#venture/impact-area/sdg-15-life-on-land'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-15-life-on-land

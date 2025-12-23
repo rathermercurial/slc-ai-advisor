@@ -1,8 +1,11 @@
 ---
-title: Oceans Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Oceans
+aliases:
+  - '#oceans'
+  - '#venture/industry/oceans'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # oceans

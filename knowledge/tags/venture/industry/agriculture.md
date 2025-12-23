@@ -1,8 +1,11 @@
 ---
-title: Agriculture Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Agriculture
+aliases:
+  - '#agriculture'
+  - '#venture/industry/agriculture'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # agriculture

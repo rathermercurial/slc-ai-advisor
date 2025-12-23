@@ -1,14 +1,11 @@
 ---
 title: Solution
-description: What your enterprise actually does - your product or service that delivers customer value and creates impact
-last_updated: 2025-07-18
-source: 
-aliases: [solution definition, product, service, offering, what we do]
+aliases:
+  - '#solution'
+  - '#canvas/solution'
 tags:
-  canvas-sections: [customer-model, solution]
-  content: [lexicon-entry, canvas-sections]
-  venture-stage: []
-  venture-type: []
+  - canvas-section
+  - canvas
 ---
 
 # Solution

@@ -1,8 +1,11 @@
 ---
-title: Platform Commission Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Platform Commission
+aliases:
+  - '#platform-commission'
+  - '#venture/revenue-source/platform-commission'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # platform-commission

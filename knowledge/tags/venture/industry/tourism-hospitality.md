@@ -1,8 +1,11 @@
 ---
-title: Tourism Hospitality Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Tourism Hospitality
+aliases:
+  - '#tourism-hospitality'
+  - '#venture/industry/tourism-hospitality'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # tourism-hospitality

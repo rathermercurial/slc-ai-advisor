@@ -1,8 +1,11 @@
 ---
-title: SDG 11 Sustainable Cities and Communities Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 11 Sustainable Cities and Communities
+aliases:
+  - '#sdg-11-sustainable-cities-and-communities'
+  - '#venture/impact-area/sdg-11-sustainable-cities-and-communities'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-11-sustainable-cities-and-communities

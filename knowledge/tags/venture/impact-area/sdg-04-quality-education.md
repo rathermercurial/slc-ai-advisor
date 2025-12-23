@@ -1,8 +1,11 @@
 ---
-title: SDG 04 Quality Education Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 04 Quality Education
+aliases:
+  - '#sdg-04-quality-education'
+  - '#venture/impact-area/sdg-04-quality-education'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-04-quality-education

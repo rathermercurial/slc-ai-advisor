@@ -1,8 +1,11 @@
 ---
-title: Health Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Health
+aliases:
+  - '#health'
+  - '#venture/impact-area/health'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # health

@@ -1,8 +1,11 @@
 ---
-title: Idea Stage Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Idea Stage
+aliases:
+  - '#idea-stage'
+  - '#venture/stage/idea'
+tags:
+  - stage
+  - venture/stage
 ---
 
 # idea-stage

@@ -1,8 +1,11 @@
 ---
-title: Advertising Sponsorship Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Advertising Sponsorship
+aliases:
+  - '#advertising-sponsorship'
+  - '#venture/revenue-source/advertising-sponsorship'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # advertising-sponsorship

@@ -1,8 +1,11 @@
 ---
-title: Land Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Land
+aliases:
+  - '#land'
+  - '#venture/impact-area/land'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # land

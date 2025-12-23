@@ -1,8 +1,11 @@
 ---
-title: SDG 12 Responsible Consumption and Production Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 12 Responsible Consumption and Production
+aliases:
+  - '#sdg-12-responsible-consumption-and-production'
+  - '#venture/impact-area/sdg-12-responsible-consumption-and-production'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-12-responsible-consumption-and-production

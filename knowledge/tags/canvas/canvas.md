@@ -1,7 +1,9 @@
 ---
 title: Canvas Section
-last_updated: 2025-06-29
-aliases: [#canvas]
+aliases:
+  - "#canvas"
+tags:
+  - canvas-section
 ---
 
 # Canvas Sections

@@ -1,8 +1,9 @@
 ---
-title: Participants Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [impact-model, model/impact]
+title: Participants
+aliases:
+  - '#participants'
+tags:
+  - impact-model
 ---
 
 # participants

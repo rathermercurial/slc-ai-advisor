@@ -1,8 +1,11 @@
 ---
-title: L3C Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: L3C
+aliases:
+  - '#l3c'
+  - '#venture/legal-structure/l3c'
+tags:
+  - venture/dimension
+  - venture/legal-structure
 ---
 
 # l3c

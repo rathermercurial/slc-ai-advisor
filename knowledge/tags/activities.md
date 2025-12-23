@@ -1,8 +1,9 @@
 ---
-title: Activities Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [impact-model, model/impact]
+title: Activities
+aliases:
+  - '#activities'
+tags:
+  - impact-model
 ---
 
 # activities

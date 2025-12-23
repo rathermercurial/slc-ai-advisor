@@ -1,9 +1,10 @@
 ---
 title: Customer Model
-last_updated: 2025-07-03
-permalink: customer-model
-aliases: ["#customer-model", "#model/customer"]
-tags: [design, admin, model, canvas/customers, customers]
+aliases:
+  - '#customer-model'
+  - '#model/customer'
+tags:
+  - model
 ---
 
 The Customer Model describes how the enterprise creates value for its customers. This section helps entrepreneurs clearly define who they serve, what problems they solve, and how they deliver unique value.

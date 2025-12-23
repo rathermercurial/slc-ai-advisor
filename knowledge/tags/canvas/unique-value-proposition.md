@@ -1,14 +1,11 @@
 ---
 title: Unique Value Proposition
-description: The benefits customers get from your product or service - how you uniquely address their jobs to be done
-last_updated: 2025-07-18
-source: 
-aliases: [unique value proposition definition, UVP, value proposition, unique value prop, customer benefits]
+aliases:
+  - '#unique-value-proposition'
+  - '#canvas/unique-value-proposition'
 tags:
-  canvas-sections: [customer-model, unique-value-proposition]
-  content: [lexicon-entry, canvas-sections]
-  venture-stage: []
-  venture-type: []
+  - canvas-section
+  - canvas
 ---
 
 # Unique Value Proposition

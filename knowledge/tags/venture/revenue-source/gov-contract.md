@@ -1,8 +1,11 @@
 ---
-title: Government Contract Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Government Contract
+aliases:
+  - '#gov-contract'
+  - '#venture/revenue-source/gov-contract'
+tags:
+  - venture/dimension
+  - venture/revenue-source
 ---
 
 # gov-contract

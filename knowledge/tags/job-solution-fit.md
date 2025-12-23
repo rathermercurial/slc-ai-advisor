@@ -1,8 +1,10 @@
 ---
-title: Job-Solution Fit Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin, validation]
+title: Job-Solution Fit
+aliases:
+  - '#job-solution-fit'
+tags:
+  - concept
+  - validation
 ---
 
 # job-solution-fit
@@ -46,4 +48,4 @@ Apply this tag to content that:
 - Does the solution actually solve the job?
 - Solution effectiveness validation
 - Minimum viable product testing
-- Second step: Job-Customer ’ Job-Solution ’ Product-Market
+- Second step: Job-Customer ï¿½ Job-Solution ï¿½ Product-Market

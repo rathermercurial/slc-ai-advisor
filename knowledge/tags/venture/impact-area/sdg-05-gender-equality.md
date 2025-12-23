@@ -1,8 +1,11 @@
 ---
-title: SDG 05 Gender Equality Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 05 Gender Equality
+aliases:
+  - '#sdg-05-gender-equality'
+  - '#venture/impact-area/sdg-05-gender-equality'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-05-gender-equality

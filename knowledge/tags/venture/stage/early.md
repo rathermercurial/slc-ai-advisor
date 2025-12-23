@@ -1,8 +1,11 @@
 ---
-title: Early Stage Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Early Stage
+aliases:
+  - '#early-stage'
+  - '#venture/stage/early'
+tags:
+  - stage
+  - venture/stage
 ---
 
 # early-stage

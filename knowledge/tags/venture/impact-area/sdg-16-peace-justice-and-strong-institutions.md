@@ -1,8 +1,11 @@
 ---
-title: SDG 16 Peace Justice and Strong Institutions Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 16 Peace Justice and Strong Institutions
+aliases:
+  - '#sdg-16-peace-justice-and-strong-institutions'
+  - '#venture/impact-area/sdg-16-peace-justice-and-strong-institutions'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-16-peace-justice-and-strong-institutions

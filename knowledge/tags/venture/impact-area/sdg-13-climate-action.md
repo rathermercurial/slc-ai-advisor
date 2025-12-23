@@ -1,8 +1,11 @@
 ---
-title: SDG 13 Climate Action Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 13 Climate Action
+aliases:
+  - '#sdg-13-climate-action'
+  - '#venture/impact-area/sdg-13-climate-action'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-13-climate-action

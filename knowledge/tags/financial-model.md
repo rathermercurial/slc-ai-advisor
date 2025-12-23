@@ -1,9 +1,10 @@
 ---
-title: Financial Model Tag Definition
-last_updated: 2025-07-03
-permalink: financial-model
-aliases: "#financial-model"
-tags: [design, admin, models/economic]
+title: Financial Model
+aliases:
+  - '#financial-model'
+tags:
+  - concept
+  - economic-model
 ---
 
 # financial-model

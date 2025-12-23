@@ -1,8 +1,11 @@
 ---
-title: Capacity Building Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Capacity Building
+aliases:
+  - '#capacity-building'
+  - '#venture/impact-mechanism/capacity-building'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # capacity-building

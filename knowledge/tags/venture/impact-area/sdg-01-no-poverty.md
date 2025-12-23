@@ -1,8 +1,11 @@
 ---
-title: SDG 01 No Poverty Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 01 No Poverty
+aliases:
+  - '#sdg-01-no-poverty'
+  - '#venture/impact-area/sdg-01-no-poverty'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-01-no-poverty

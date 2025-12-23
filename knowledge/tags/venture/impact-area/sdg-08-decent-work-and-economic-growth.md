@@ -1,8 +1,11 @@
 ---
-title: SDG 08 Decent Work and Economic Growth Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: SDG 08 Decent Work and Economic Growth
+aliases:
+  - '#sdg-08-decent-work-and-economic-growth'
+  - '#venture/impact-area/sdg-08-decent-work-and-economic-growth'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # sdg-08-decent-work-and-economic-growth

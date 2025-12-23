@@ -1,8 +1,11 @@
 ---
-title: Biodiversity and Ecosystems Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Biodiversity and Ecosystems
+aliases:
+  - '#biodiversity-and-ecosystems'
+  - '#venture/impact-area/biodiversity-and-ecosystems'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # biodiversity-and-ecosystems

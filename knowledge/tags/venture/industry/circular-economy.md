@@ -1,8 +1,11 @@
 ---
-title: Circular Economy Industry Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Circular Economy
+aliases:
+  - '#circular-economy'
+  - '#venture/industry/circular-economy'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # circular-economy

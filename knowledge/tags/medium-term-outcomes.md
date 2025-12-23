@@ -1,8 +1,9 @@
 ---
-title: Medium Term Outcomes Tag Definition
-last_updated: 2025-07-03
-source:
-tags: [impact-model, model/impact]
+title: Medium Term Outcomes
+aliases:
+  - '#medium-term-outcomes'
+tags:
+  - impact-model
 ---
 
 # medium-term-outcomes

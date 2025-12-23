@@ -1,8 +1,10 @@
 ---
-title: Business Model Design Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin]
+title: Business Model Design
+aliases:
+  - '#business-model-design'
+  - '#content/business-model-design'
+tags:
+  - content
 ---
 
 # business-model-design

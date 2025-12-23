@@ -1,8 +1,10 @@
 ---
-title: Video Content Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin]
+title: Video Content
+aliases:
+  - '#video-content'
+  - '#content/video-content'
+tags:
+  - content
 ---
 
 # video-content

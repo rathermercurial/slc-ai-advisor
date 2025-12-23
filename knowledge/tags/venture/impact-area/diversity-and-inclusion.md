@@ -1,8 +1,11 @@
 ---
-title: Diversity and Inclusion Impact Area Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Diversity and Inclusion
+aliases:
+  - '#diversity-and-inclusion'
+  - '#venture/impact-area/diversity-and-inclusion'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # diversity-and-inclusion

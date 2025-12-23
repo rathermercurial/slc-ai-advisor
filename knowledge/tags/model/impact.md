@@ -1,8 +1,10 @@
 ---
 title: Impact Model
-permalink: impact-model
-aliases: ["#impactmodel", "#model/impact"]
-tags: [model]
+aliases:
+  - '#impact-model'
+  - '#model/impact'
+tags:
+  - model
 ---
 
 Just as your customer model describes how you create customer value, your impact model shows how you create social value. It shows how your activities are going to generate positive social or environmental outcomes that will then create your long-term impact.

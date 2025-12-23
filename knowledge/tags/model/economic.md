@@ -1,9 +1,10 @@
 ---
 title: Economic Model
-last_updated: 2025-06-29
-permalink: economic-model
-aliases: ["#economic-model", "#model/economic"]
-tags: [model]
+aliases:
+  - '#economic-model'
+  - '#model/economic'
+tags:
+  - model
 ---
 
 # Economic Model

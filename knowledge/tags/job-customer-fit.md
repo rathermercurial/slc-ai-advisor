@@ -1,8 +1,10 @@
 ---
-title: Job-Customer Fit Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin, validation]
+title: Job-Customer Fit
+aliases:
+  - '#job-customer-fit'
+tags:
+  - concept
+  - validation
 ---
 
 # job-customer-fit
@@ -46,4 +48,4 @@ Apply this tag to content that:
 - Do customers actually have this job?
 - Job frequency and importance
 - Customer willingness to solve the job
-- First step: Job-Customer ’ Job-Solution ’ Product-Market
+- First step: Job-Customer ï¿½ Job-Solution ï¿½ Product-Market

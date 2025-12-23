@@ -1,8 +1,10 @@
 ---
 title: Impact Area Tags
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+aliases:
+  - '#impact-area'
+tags:
+  - venture/dimension
+  - venture/impact-area
 ---
 
 # Impact Area Tags

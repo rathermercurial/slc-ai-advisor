@@ -1,8 +1,11 @@
 ---
-title: Creative Industries Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Creative Industries
+aliases:
+  - '#creative-industries'
+  - '#venture/industry/creative-industries'
+tags:
+  - venture/dimension
+  - venture/industry
 ---
 
 # creative-industries

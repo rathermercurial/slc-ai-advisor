@@ -1,8 +1,11 @@
 ---
-title: Trust Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Trust
+aliases:
+  - '#trust'
+  - '#venture/legal-structure/trust'
+tags:
+  - venture/dimension
+  - venture/legal-structure
 ---
 
 # trust

@@ -1,8 +1,11 @@
 ---
-title: Standard Limited Company Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Standard Limited Company
+aliases:
+  - '#standard-limited-company'
+  - '#venture/legal-structure/standard-limited-company'
+tags:
+  - venture/dimension
+  - venture/legal-structure
 ---
 
 # standard-limited-company

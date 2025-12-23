@@ -1,8 +1,10 @@
 ---
-title: Product-Market Fit Tag Definition
-last_updated: 2025-12-23
-source:
-tags: [design, admin, validation]
+title: Product-Market Fit
+aliases:
+  - '#product-market-fit'
+tags:
+  - concept
+  - validation
 ---
 
 # product-market-fit
@@ -47,4 +49,4 @@ Apply this tag to content that:
 - Retention and engagement metrics
 - Organic growth signals
 - Customer pull vs. push
-- Final step: Job-Customer ’ Job-Solution ’ Product-Market
+- Final step: Job-Customer ï¿½ Job-Solution ï¿½ Product-Market

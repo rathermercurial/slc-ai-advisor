@@ -1,8 +1,11 @@
 ---
-title: Employment Model Tag Definition
-last_updated: 2025-06-30
-source:
-tags: [design, admin]
+title: Employment Model
+aliases:
+  - '#employment-model'
+  - '#venture/impact-mechanism/employment-model'
+tags:
+  - venture/dimension
+  - venture/impact-mechanism
 ---
 
 # employment-model

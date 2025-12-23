@@ -8,13 +8,14 @@
  * - GET /api/health - Health check
  * - POST /api/session - Create new session (B3)
  * - GET /api/session/:id - Get session (B3)
+ * - GET /api/session/:id/messages - Get chat history (C3)
  * - POST /api/chat - Send chat message (B5)
  * - GET /api/canvas - Get canvas state (B7)
  * - PUT /api/canvas/:section - Update canvas section (B7)
  * - GET /api/export/:format - Export canvas (B8)
  */
 
-// Export Durable Object for wrangler
+// Export Durable Objects for wrangler
 import { UserSession } from './durable-objects/UserSession';
 export { UserSession };
 
@@ -27,7 +28,7 @@ export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Only handle /api/* routes - static assets handled by Cloudflare
+    // Handle /api/* routes
     if (!url.pathname.startsWith('/api/')) {
       // This shouldn't happen due to wrangler.toml config, but handle gracefully
       return new Response('Not found', { status: 404 });
@@ -127,6 +128,23 @@ export default {
         const data = await response.json();
 
         return jsonResponse(data);
+      }
+
+      // Get chat messages
+      if (url.pathname.match(/^\/api\/session\/[^/]+\/messages$/) && request.method === 'GET') {
+        const sessionId = url.pathname.split('/')[3];
+        const limit = url.searchParams.get('limit') || '50';
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        const response = await stub.fetch(
+          new Request(`http://internal/messages?limit=${limit}`)
+        );
+        const messages = await response.json();
+
+        return jsonResponse(messages);
       }
 
       // ============================================

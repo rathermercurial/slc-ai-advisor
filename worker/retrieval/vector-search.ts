@@ -188,27 +188,37 @@ export async function searchKnowledgeBase(
   dimensions: Partial<VentureDimensions>,
   intent: QueryIntent
 ): Promise<RetrievedDocument[]> {
+  // Check if required bindings are available
+  if (!env.AI || !env.VECTORIZE) {
+    console.warn('AI or VECTORIZE bindings not available, skipping RAG');
+    return [];
+  }
+
+  let vector: number[];
+
+  // Step 1: Generate embedding
   try {
-    // Generate embedding using Workers AI
     const embeddingResult = await env.AI.run('@cf/baai/bge-m3', {
-      text: query,
+      text: [query],
     });
 
-    // Get embedding vector
-    const vector = embeddingResult.data[0];
+    vector = embeddingResult.data[0];
     if (!vector || !Array.isArray(vector)) {
       console.error('Invalid embedding result:', embeddingResult);
       return [];
     }
+  } catch (error) {
+    console.warn('Embedding generation failed:', error);
+    return [];
+  }
 
-    // Build query options with filters
+  // Step 2: Query Vectorize
+  try {
     const options = buildVectorizeQuery(program, dimensions, intent);
-
-    // Query Vectorize
     const results = await env.VECTORIZE.query(vector, options);
 
     if (!results.matches || results.matches.length === 0) {
-      // If no results with filters, try without dimension filters
+      // Try without dimension filters
       const fallbackOptions = buildVectorizeQuery(program, {}, intent);
       const fallbackResults = await env.VECTORIZE.query(vector, fallbackOptions);
 
@@ -221,7 +231,7 @@ export async function searchKnowledgeBase(
 
     return results.matches.map(formatMatch);
   } catch (error) {
-    console.error('Knowledge base search error:', error);
+    console.warn('Vectorize query failed (index may not exist):', error);
     return [];
   }
 }

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:ui": "VITE_FRONTEND_ONLY=true vite",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
@@ -30,6 +31,8 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "agents": "^0.3.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "zod": "^4.2.1"
   }
 }

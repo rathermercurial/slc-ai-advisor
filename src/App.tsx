@@ -26,6 +26,32 @@ function App() {
     return newId;
   });
 
+  const [_sessionReady, setSessionReady] = useState(false);
+
+  // Initialize session with backend
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        // Check if session exists on backend
+        const response = await fetch(`/api/session/${sessionId}`);
+        if (response.status === 404) {
+          // Register new session
+          await fetch('/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, program: 'generic' }),
+          });
+        }
+        setSessionReady(true);
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+        // Still allow usage with mock fallback
+        setSessionReady(true);
+      }
+    };
+    initSession();
+  }, [sessionId]);
+
   // Apply theme to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

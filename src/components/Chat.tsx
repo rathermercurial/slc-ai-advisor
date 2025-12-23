@@ -7,11 +7,6 @@ interface Message {
   content: string;
 }
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
 interface ChatProps {
   sessionId: string;
   apiEndpoint?: string; // External API endpoint for testing (e.g., Railway)
@@ -23,11 +18,12 @@ const DEFAULT_API_ENDPOINT = '/api/chat';
 /**
  * Chat interface for conversing with the AI advisor.
  *
- * Supports SSE streaming responses.
- * Set apiEndpoint prop to test against external services (e.g., Railway).
+ * Connects to backend API which handles:
+ * - Session management via Durable Objects
+ * - RAG retrieval from Vectorize
+ * - Claude via AI Gateway
  */
-export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
-  void _sessionId; // Will be used when we add session persistence
+export function Chat({ sessionId, apiEndpoint }: ChatProps) {
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -50,6 +46,30 @@ export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
 
+  // Load message history on mount (session reconnection)
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const response = await fetch(`/api/session/${sessionId}/messages`);
+        if (response.ok) {
+          const history = await response.json() as Array<{ id: string; role: 'user' | 'assistant'; content: string }>;
+          if (history.length > 0) {
+            // Replace welcome message with actual history
+            setMessages(history.map(msg => ({
+              id: msg.id || crypto.randomUUID(),
+              role: msg.role,
+              content: msg.content,
+            })));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load chat history:', error);
+        // Keep welcome message on error
+      }
+    };
+    loadHistory();
+  }, [sessionId]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -59,14 +79,6 @@ export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
       role: 'user',
       content: input.trim(),
     };
-
-    // Build chat history for API
-    const history: ChatMessage[] = messages
-      .filter((m) => m.role !== 'system')
-      .map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }));
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
@@ -81,8 +93,8 @@ export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          sessionId,
           message: userMessage.content,
-          history,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -91,46 +103,13 @@ export function Chat({ sessionId: _sessionId, apiEndpoint }: ChatProps) {
         throw new Error(`API error: ${response.status}`);
       }
 
-      // Handle SSE streaming response
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
+      // Handle JSON response from backend
+      const data = await response.json() as { response: string; sources?: Array<{ title: string; type: string }> };
 
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.content) {
-                fullContent += data.content;
-                setStreamingContent(fullContent);
-              }
-              if (data.done) {
-                // Streaming complete
-                break;
-              }
-            } catch {
-              // Ignore parse errors for incomplete chunks
-            }
-          }
-        }
-      }
-
-      // Add complete message to history
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: fullContent || 'Sorry, I received an empty response.',
+        content: data.response || 'Sorry, I received an empty response.',
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {

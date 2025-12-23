@@ -64,13 +64,13 @@ export function Canvas({ sessionId }: CanvasProps) {
       ...prev,
       [sectionKey]: content,
     }));
-    console.log(`Saved section ${sectionKey}:`, content);
+    // TODO: Persist to backend via PUT /api/canvas/:section
   };
 
   const handleImpactSave = (updatedImpact: ImpactModel) => {
     setImpactModel(updatedImpact);
     setShowImpactPanel(false);
-    console.log('Saved impact model:', updatedImpact);
+    // TODO: Persist to backend via PUT /api/canvas/impact-model
   };
 
   return (

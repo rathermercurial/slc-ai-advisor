@@ -1,5 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component, ReactNode } from 'react';
 import { Canvas, Chat } from './components';
+
+/**
+ * Error boundary to catch and display React errors
+ */
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20, color: 'red' }}>
+          <h2>Something went wrong:</h2>
+          <pre>{this.state.error?.message}</pre>
+          <pre>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /**
  * SLC AI Advisor - Main Application
@@ -20,14 +50,51 @@ function App() {
       : 'light';
   });
 
-  const [sessionId] = useState(() => {
-    // Get or create session ID
-    const saved = localStorage.getItem('sessionId');
-    if (saved) return saved;
-    const newId = crypto.randomUUID();
-    localStorage.setItem('sessionId', newId);
-    return newId;
-  });
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+
+  // Initialize or restore session
+  useEffect(() => {
+    async function initSession() {
+      const saved = localStorage.getItem('sessionId');
+
+      if (saved) {
+        // Check if session exists on server
+        try {
+          const response = await fetch(`/api/session/${saved}`);
+          if (response.ok) {
+            setSessionId(saved);
+            setSessionReady(true);
+            return;
+          }
+        } catch (err) {
+          console.warn('Session check failed, creating new session');
+        }
+      }
+
+      // Create new session
+      try {
+        const response = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ program: 'generic' }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('sessionId', data.sessionId);
+          setSessionId(data.sessionId);
+          setSessionReady(true);
+        } else {
+          console.error('Failed to create session');
+        }
+      } catch (err) {
+        console.error('Session creation error:', err);
+      }
+    }
+
+    initSession();
+  }, []);
 
   // Apply theme to document
   useEffect(() => {
@@ -39,30 +106,48 @@ function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  return (
-    <div className="app">
-      <header className="app-header">
-        <h1>SLC AI Advisor</h1>
-        <div className="app-header-actions">
-          <button
-            className="theme-toggle"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-          >
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
-        </div>
-      </header>
+  // Show loading until session is ready
+  if (!sessionReady || !sessionId) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>SLC AI Advisor</h1>
+        </header>
+        <main className="app-main" style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <div>Initializing session...</div>
+        </main>
+      </div>
+    );
+  }
 
-      <main className="app-main">
-        <div className="layout-canvas">
-          <Canvas sessionId={sessionId} />
-        </div>
-        <div className="layout-chat">
-          <Chat sessionId={sessionId} />
-        </div>
-      </main>
-    </div>
+  return (
+    <ErrorBoundary>
+      <div className="app">
+        <header className="app-header">
+          <h1>SLC AI Advisor</h1>
+          <div className="app-header-actions">
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+          </div>
+        </header>
+
+        <main className="app-main">
+          <div className="layout-canvas">
+            <Canvas sessionId={sessionId} />
+          </div>
+          <div className="layout-chat">
+            <ErrorBoundary>
+              <Chat sessionId={sessionId} />
+            </ErrorBoundary>
+          </div>
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 }
 

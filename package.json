@@ -28,10 +28,8 @@
     "wrangler": "^4.56.0"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.0",
     "@anthropic-ai/sdk": "^0.71.2",
     "agents": "^0.3.0",
-    "ai": "^6.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",

@@ -3,11 +3,17 @@ import ReactMarkdown from 'react-markdown';
 
 interface ChatProps {
   sessionId: string;
+  onCanvasUpdate?: () => void;
 }
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
+  content: string;
+}
+
+interface CanvasUpdate {
+  section: string;
   content: string;
 }
 
@@ -17,6 +23,7 @@ interface ChatResponse {
     title: string;
     type: string;
   }>;
+  canvasUpdates?: CanvasUpdate[];
 }
 
 /**
@@ -25,7 +32,7 @@ interface ChatResponse {
  * Sends messages to /api/chat and displays responses.
  * Messages are persisted by the UserSession Durable Object.
  */
-export function Chat({ sessionId }: ChatProps) {
+export function Chat({ sessionId, onCanvasUpdate }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -99,6 +106,11 @@ export function Chat({ sessionId }: ChatProps) {
         role: 'assistant',
         content: data.response,
       }]);
+
+      // Trigger canvas refresh if updates were made
+      if (data.canvasUpdates && data.canvasUpdates.length > 0) {
+        onCanvasUpdate?.();
+      }
     } catch (err) {
       console.error('Chat error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');

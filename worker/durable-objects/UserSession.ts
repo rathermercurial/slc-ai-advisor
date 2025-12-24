@@ -320,8 +320,9 @@ export class UserSession extends DurableObject<Env> {
    * Get session metadata
    */
   getSession(): Session | null {
-    const row = this.sql.exec('SELECT * FROM session LIMIT 1').one();
-    if (!row) return null;
+    const rows = this.sql.exec('SELECT * FROM session LIMIT 1').toArray();
+    if (rows.length === 0) return null;
+    const row = rows[0];
 
     return {
       id: row.id as string,
@@ -355,12 +356,13 @@ export class UserSession extends DurableObject<Env> {
     const session = this.getSession();
     if (!session) return null;
 
-    const row = this.sql.exec(
+    const rows = this.sql.exec(
       'SELECT * FROM venture_profile WHERE session_id = ?',
       session.id
-    ).one();
+    ).toArray();
 
-    if (!row) return null;
+    if (rows.length === 0) return null;
+    const row = rows[0];
 
     return {
       id: session.id,
@@ -518,13 +520,14 @@ export class UserSession extends DurableObject<Env> {
       };
     }
 
-    const row = this.sql.exec(
+    const rows = this.sql.exec(
       'SELECT * FROM canvas_section WHERE session_id = ? AND section_key = ?',
       session.id,
       key
-    ).one();
+    ).toArray();
 
-    if (!row) return null;
+    if (rows.length === 0) return null;
+    const row = rows[0];
 
     return {
       sessionId: row.session_id as string,
@@ -625,12 +628,13 @@ export class UserSession extends DurableObject<Env> {
     const session = this.getSession();
     if (!session) return null;
 
-    const row = this.sql.exec(
+    const rows = this.sql.exec(
       'SELECT * FROM impact_model WHERE session_id = ?',
       session.id
-    ).one();
+    ).toArray();
 
-    if (!row) return null;
+    if (rows.length === 0) return null;
+    const row = rows[0];
 
     return {
       sessionId: row.session_id as string,

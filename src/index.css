@@ -520,13 +520,13 @@ body {
 }
 
 /* ============================================
-   Impact Panel (Slide-in)
+   Impact Panel (Slide-up from bottom)
    ============================================ */
 
 .impact-panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.3);
   z-index: 100;
   animation: fadeIn 0.2s ease;
 }
@@ -538,22 +538,25 @@ body {
 
 .impact-panel {
   position: fixed;
-  right: 0;
-  top: 0;
   bottom: 0;
-  width: 450px;
-  max-width: 90vw;
+  left: 0;
+  right: 0;
+  height: 45vh;
+  max-height: 500px;
+  min-height: 300px;
   background: var(--bg-secondary);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   z-index: 101;
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.2s ease;
+  animation: slideUp 0.25s ease;
+  border-top: 1px solid var(--border-color);
+  border-radius: 12px 12px 0 0;
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 .impact-panel-header {
@@ -585,36 +588,48 @@ body {
 
 .impact-panel-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 1.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.impact-field-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .impact-field {
-  margin-bottom: 1.5rem;
-}
-
-.impact-field:last-child {
-  margin-bottom: 0;
+  flex-shrink: 0;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .impact-field label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+  white-space: nowrap;
 }
 
 .impact-field textarea {
   width: 100%;
-  min-height: 70px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   padding: 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1.4;
-  resize: vertical;
+  resize: none;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -625,10 +640,13 @@ body {
 }
 
 .impact-field-arrow {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-muted);
   font-size: 1.25rem;
-  margin: 0.5rem 0;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
 }
 
 .impact-panel-footer {

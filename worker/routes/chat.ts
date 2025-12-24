@@ -286,8 +286,12 @@ async function callClaudeWithTools(
       tools: CANVAS_TOOLS,
     });
 
-    // Process tool calls in a loop
-    while (response.stop_reason === 'tool_use') {
+    // Process tool calls in a loop (with safety limit to prevent infinite loops)
+    const MAX_TOOL_ITERATIONS = 10;
+    let toolIterations = 0;
+
+    while (response.stop_reason === 'tool_use' && toolIterations < MAX_TOOL_ITERATIONS) {
+      toolIterations++;
       const toolUseBlocks = response.content.filter(
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
       );
@@ -300,13 +304,18 @@ async function callClaudeWithTools(
 
           // Execute the canvas update
           try {
-            await stub.fetch(
+            const updateResponse = await stub.fetch(
               new Request(`http://internal/canvas-section/${input.section}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: input.content }),
               })
             );
+
+            if (!updateResponse.ok) {
+              const errorText = await updateResponse.text();
+              throw new Error(`HTTP ${updateResponse.status}: ${errorText}`);
+            }
 
             canvasUpdates.push({
               section: input.section,
@@ -350,6 +359,11 @@ async function callClaudeWithTools(
       });
     }
 
+    // Warn if we hit the iteration limit
+    if (toolIterations >= MAX_TOOL_ITERATIONS) {
+      console.warn(`Tool loop hit max iterations (${MAX_TOOL_ITERATIONS})`);
+    }
+
     // Extract final text response
     const textBlocks = response.content.filter(
       (block): block is Anthropic.TextBlock => block.type === 'text'
@@ -377,6 +391,28 @@ Please try again in a moment, or let me know if you have a specific methodology 
       canvasUpdates: [],
     };
   }
+
+  // Add impact model fields if they have content
+  if (impactModel) {
+    const impactFields = [
+      ['issue', 'Issue'],
+      ['participants', 'Participants'],
+      ['activities', 'Activities'],
+      ['outputs', 'Outputs'],
+      ['shortTermOutcomes', 'Short-term Outcomes'],
+      ['mediumTermOutcomes', 'Medium-term Outcomes'],
+      ['longTermOutcomes', 'Long-term Outcomes'],
+      ['impact', 'Impact'],
+    ];
+
+    for (const [key, label] of impactFields) {
+      if (impactModel[key] && impactModel[key].trim()) {
+        lines.push(`**${label}**: ${impactModel[key]}`);
+      }
+    }
+  }
+
+  return lines.join('\n');
 }
 
 /**

@@ -53,14 +53,27 @@ How the venture creates social/environmental change:
 - Connect sections when relevant (e.g., how customers relate to jobs to be done)`;
 
 /**
- * Build system prompt with RAG context
+ * Build system prompt with RAG context and user's canvas state
  */
-export function buildSystemPrompt(ragContext: string): string {
-  if (!ragContext) {
-    return BASE_SYSTEM_PROMPT;
+export function buildSystemPrompt(ragContext: string, canvasContext?: string): string {
+  let prompt = BASE_SYSTEM_PROMPT;
+
+  // Add user's canvas state if they have content
+  if (canvasContext) {
+    prompt += `
+
+## User's Current Canvas
+
+The user has filled in the following sections of their Social Lean Canvas. Reference this when giving advice:
+
+${canvasContext}
+
+Use this information to give personalized, contextual advice. When the user asks about their venture, reference what they've written.`;
   }
 
-  return `${BASE_SYSTEM_PROMPT}
+  // Add RAG context if available
+  if (ragContext) {
+    prompt += `
 
 ## Knowledge Base Context
 
@@ -71,6 +84,9 @@ ${ragContext}
 ---
 
 Use this context to provide specific, grounded responses. If examples are provided, explain how they apply to the user's situation. If methodology guidance is provided, adapt it to the user's context.`;
+  }
+
+  return prompt;
 }
 
 /**

@@ -80,6 +80,17 @@ export async function handleChat(
     );
     const recentMessages = await messagesResponse.json() as ConversationMessage[];
 
+    // Get canvas state so Claude knows what user has written
+    const [canvasSectionsRes, impactModelRes] = await Promise.all([
+      stub.fetch(new Request('http://internal/canvas-sections')),
+      stub.fetch(new Request('http://internal/model/impact')),
+    ]);
+    const canvasSections = await canvasSectionsRes.json() as Array<{
+      sectionKey: string;
+      content: string;
+    }>;
+    const impactModel = await impactModelRes.json() as Record<string, string> | null;
+
     // Parse query intent
     const intent = parseQueryIntent(message);
 
@@ -95,8 +106,11 @@ export async function handleChat(
     // Build RAG context
     const ragContext = buildRAGContext(documents);
 
-    // Build system prompt
-    const systemPrompt = buildSystemPrompt(ragContext);
+    // Build canvas context for system prompt
+    const canvasContext = buildCanvasContext(canvasSections, impactModel);
+
+    // Build system prompt with RAG and canvas context
+    const systemPrompt = buildSystemPrompt(ragContext, canvasContext);
 
     // Call Claude via AI Gateway
     const response = await callClaude(
@@ -211,6 +225,50 @@ The Social Lean Canvas has 11 sections organized into 3 models:
 
 Please try again in a moment, or let me know if you have a specific methodology question I can help with.`;
   }
+}
+
+/**
+ * Build canvas context string for system prompt
+ */
+function buildCanvasContext(
+  sections: Array<{ sectionKey: string; content: string }>,
+  impactModel: Record<string, string> | null
+): string {
+  const filledSections = sections.filter(s => s.content && s.content.trim());
+
+  if (filledSections.length === 0 && !impactModel) {
+    return '';
+  }
+
+  const lines: string[] = [];
+
+  // Add filled sections
+  for (const section of filledSections) {
+    const label = section.sectionKey.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+    lines.push(`**${label}**: ${section.content}`);
+  }
+
+  // Add impact model fields if they have content
+  if (impactModel) {
+    const impactFields = [
+      ['issue', 'Issue'],
+      ['participants', 'Participants'],
+      ['activities', 'Activities'],
+      ['outputs', 'Outputs'],
+      ['shortTermOutcomes', 'Short-term Outcomes'],
+      ['mediumTermOutcomes', 'Medium-term Outcomes'],
+      ['longTermOutcomes', 'Long-term Outcomes'],
+      ['impact', 'Impact'],
+    ];
+
+    for (const [key, label] of impactFields) {
+      if (impactModel[key] && impactModel[key].trim()) {
+        lines.push(`**${label}**: ${impactModel[key]}`);
+      }
+    }
+  }
+
+  return lines.join('\n');
 }
 
 /**

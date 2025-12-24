@@ -391,6 +391,28 @@ Please try again in a moment, or let me know if you have a specific methodology 
       canvasUpdates: [],
     };
   }
+
+  // Add impact model fields if they have content
+  if (impactModel) {
+    const impactFields = [
+      ['issue', 'Issue'],
+      ['participants', 'Participants'],
+      ['activities', 'Activities'],
+      ['outputs', 'Outputs'],
+      ['shortTermOutcomes', 'Short-term Outcomes'],
+      ['mediumTermOutcomes', 'Medium-term Outcomes'],
+      ['longTermOutcomes', 'Long-term Outcomes'],
+      ['impact', 'Impact'],
+    ];
+
+    for (const [key, label] of impactFields) {
+      if (impactModel[key] && impactModel[key].trim()) {
+        lines.push(`**${label}**: ${impactModel[key]}`);
+      }
+    }
+  }
+
+  return lines.join('\n');
 }
 
 /**

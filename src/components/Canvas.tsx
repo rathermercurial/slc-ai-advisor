@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CanvasSection } from './CanvasSection';
 import { ImpactPanel } from './ImpactPanel';
 import {
@@ -10,6 +10,13 @@ import {
 
 interface CanvasProps {
   sessionId: string;
+  refreshKey?: number;
+}
+
+interface CanvasSectionData {
+  sectionKey: CanvasSectionId;
+  content: string;
+  isComplete: boolean;
 }
 
 /**
@@ -42,7 +49,7 @@ const SECTION_HELPER_TEXT: Record<CanvasSectionId, string> = {
  * The Social Lean Canvas with official layout.
  * Layout matches socialleancanvas.com
  */
-export function Canvas({ sessionId }: CanvasProps) {
+export function Canvas({ sessionId, refreshKey }: CanvasProps) {
   const [sections, setSections] = useState(() =>
     createEmptySections(sessionId).reduce(
       (acc, section) => {
@@ -58,20 +65,125 @@ export function Canvas({ sessionId }: CanvasProps) {
   );
 
   const [showImpactPanel, setShowImpactPanel] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch canvas state on mount
+  useEffect(() => {
+    async function fetchCanvas() {
+      try {
+        const response = await fetch(`/api/session/${sessionId}/canvas`);
+        if (!response.ok) {
+          throw new Error('Failed to load canvas');
+        }
+        const data = await response.json();
+
+        // Update sections from backend
+        if (data.sections && Array.isArray(data.sections)) {
+          const sectionsMap = data.sections.reduce(
+            (acc: Record<CanvasSectionId, string>, s: CanvasSectionData) => {
+              acc[s.sectionKey] = s.content;
+              return acc;
+            },
+            {} as Record<CanvasSectionId, string>
+          );
+          setSections(sectionsMap);
+        }
+
+        // Update impact model from backend
+        if (data.impactModel) {
+          setImpactModel(data.impactModel);
+        }
+      } catch (err) {
+        console.error('Failed to fetch canvas:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load canvas');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchCanvas();
+  }, [sessionId, refreshKey]);
+
+  // Persist section to backend
+  const persistSection = useCallback(async (sectionKey: CanvasSectionId, content: string) => {
+    try {
+      const response = await fetch(`/api/session/${sessionId}/canvas/${sectionKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (!response.ok) {
+        console.error('Failed to save section:', sectionKey);
+      }
+    } catch (err) {
+      console.error('Failed to persist section:', err);
+    }
+  }, [sessionId]);
+
+  // Persist impact model to backend
+  const persistImpactModel = useCallback(async (model: ImpactModel) => {
+    try {
+      const response = await fetch(`/api/session/${sessionId}/canvas/impact-model`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          issue: model.issue,
+          participants: model.participants,
+          activities: model.activities,
+          outputs: model.outputs,
+          shortTermOutcomes: model.shortTermOutcomes,
+          mediumTermOutcomes: model.mediumTermOutcomes,
+          longTermOutcomes: model.longTermOutcomes,
+          impact: model.impact,
+        }),
+      });
+      if (!response.ok) {
+        console.error('Failed to save impact model');
+      }
+    } catch (err) {
+      console.error('Failed to persist impact model:', err);
+    }
+  }, [sessionId]);
 
   const handleSectionSave = (sectionKey: CanvasSectionId, content: string) => {
+    // Optimistic update
     setSections((prev) => ({
       ...prev,
       [sectionKey]: content,
     }));
-    // TODO: Persist to backend via PUT /api/canvas/:section
+    // Persist to backend
+    persistSection(sectionKey, content);
   };
 
   const handleImpactSave = (updatedImpact: ImpactModel) => {
+    // Optimistic update
     setImpactModel(updatedImpact);
     setShowImpactPanel(false);
-    // TODO: Persist to backend via PUT /api/canvas/impact-model
+    // Persist to backend
+    persistImpactModel(updatedImpact);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="slc-canvas loading">
+        <div className="canvas-loading">Loading canvas...</div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="slc-canvas error">
+        <div className="canvas-error">
+          <p>Failed to load canvas: {error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

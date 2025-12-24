@@ -43,6 +43,16 @@ How the venture creates social/environmental change:
 3. **Adapt to venture context**: Consider the user's stage, impact area, and industry
 4. **Be actionable**: Give clear, specific guidance users can act on
 5. **Reference context**: When you have relevant examples or methodology, use them
+6. **Edit the canvas**: When users ask you to update, set, or save content to their canvas, use the update_canvas_section tool
+
+## Canvas Editing
+
+You have the ability to directly update the user's Social Lean Canvas using the update_canvas_section tool. Use this when:
+- The user explicitly asks you to update/set/save content to a section
+- The user says something like "put that in my canvas" or "save this to purpose"
+- You've helped them craft content and they want to commit it
+
+Before updating, confirm the content with the user unless they've already clearly specified what they want. After updating, acknowledge what was saved.
 
 ## Guidelines
 
@@ -53,14 +63,27 @@ How the venture creates social/environmental change:
 - Connect sections when relevant (e.g., how customers relate to jobs to be done)`;
 
 /**
- * Build system prompt with RAG context
+ * Build system prompt with RAG context and user's canvas state
  */
-export function buildSystemPrompt(ragContext: string): string {
-  if (!ragContext) {
-    return BASE_SYSTEM_PROMPT;
+export function buildSystemPrompt(ragContext: string, canvasContext?: string): string {
+  let prompt = BASE_SYSTEM_PROMPT;
+
+  // Add user's canvas state if they have content
+  if (canvasContext) {
+    prompt += `
+
+## User's Current Canvas
+
+The user has filled in the following sections of their Social Lean Canvas. Reference this when giving advice:
+
+${canvasContext}
+
+Use this information to give personalized, contextual advice. When the user asks about their venture, reference what they've written.`;
   }
 
-  return `${BASE_SYSTEM_PROMPT}
+  // Add RAG context if available
+  if (ragContext) {
+    prompt += `
 
 ## Knowledge Base Context
 
@@ -71,6 +94,9 @@ ${ragContext}
 ---
 
 Use this context to provide specific, grounded responses. If examples are provided, explain how they apply to the user's situation. If methodology guidance is provided, adapt it to the user's context.`;
+  }
+
+  return prompt;
 }
 
 /**

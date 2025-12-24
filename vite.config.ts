@@ -6,5 +6,15 @@ import { cloudflare } from '@cloudflare/vite-plugin';
 const frontendOnly = process.env.VITE_FRONTEND_ONLY === 'true';
 
 export default defineConfig({
-  plugins: frontendOnly ? [react()] : [cloudflare(), react()],
+  plugins: frontendOnly
+    ? [react()]
+    : [
+        cloudflare({
+          // Run fully local - no remote Cloudflare connection needed
+          remoteBindings: false,
+          // Persist DO state locally between restarts
+          persistState: true,
+        }),
+        react(),
+      ],
 });

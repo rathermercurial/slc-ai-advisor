@@ -72,7 +72,7 @@ Complete these after Demo to reach full MVP.
 | Task | Description | Status |
 |------|-------------|--------|
 | B6 | Dimension inference | pending |
-| B7 | Canvas CRUD endpoints | ⚠️ DO logic done, API routes not exposed |
+| B7 | Canvas CRUD endpoints | ✅ |
 | B8 | Export endpoint | pending |
 | B9 | Rate limiting | pending |
 | B10 | Error handling | pending |
@@ -80,11 +80,11 @@ Complete these after Demo to reach full MVP.
 ### Track C
 | Task | Description | Status |
 |------|-------------|--------|
-| C4 | Canvas display | ⚠️ UI done, needs backend persistence |
-| C5 | Impact Model display | ⚠️ UI done, needs backend persistence |
+| C4 | Canvas display | ✅ |
+| C5 | Impact Model display | ✅ |
 | C6 | Copy button | pending |
 | C7 | Export menu | pending (blocked by B8) |
-| C8 | Loading/error states | ⚠️ partial (Chat done, Canvas pending) |
+| C8 | Loading/error states | ✅ |
 | C9 | Demo styling | ⚠️ partial (basic styles exist) |
 
 ### Integration
@@ -306,16 +306,19 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Depends on:** B5
 - **Status:** pending
 
-#### B7. [M] Implement canvas CRUD endpoints
+#### B7. [M] Implement canvas CRUD endpoints ✅
 - **Description:**
-  - `GET /api/canvas` - Returns full CanvasState (all sections + ImpactModel)
-  - `PUT /api/canvas/:section` - Update section by key (e.g., 'purpose', 'customers')
-  - `PUT /api/canvas/impact-model` - Update Impact Model fields (auto-syncs impact section)
-  - `PUT /api/canvas/impact-model/impact` - Update just the impact summary (syncs both places)
-- **Files:** `src/worker/canvas.ts`
+  - `GET /api/session/:id/canvas` - Returns full CanvasState (all sections + ImpactModel)
+  - `PUT /api/session/:id/canvas/:section` - Update section by key (e.g., 'purpose', 'customers')
+  - `PUT /api/session/:id/canvas/impact-model` - Update Impact Model fields (auto-syncs impact section)
+- **Implementation:**
+  - Routes added to `worker/index.ts`
+  - Uses existing DO internal routes
+  - Returns completionPercentage in GET response
+- **Files:** `worker/index.ts`
 - **Tests:** Update section, verify persistence, update Impact Model, verify sync
 - **Depends on:** B2
-- **Status:** pending
+- **Status:** complete
 
 #### B8. [S] Implement export endpoint
 - **Description:** Export canvas as Markdown or JSON format. Impact Model exports nested within impact section.
@@ -369,38 +372,36 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Status:** complete
 - **PR:** #25
 
-#### C4. [L] Implement canvas display ⚠️ PARTIAL
+#### C4. [L] Implement canvas display ✅
 - **Description:** Visual canvas layout showing all 11 sections with completion status. Standard sections display simple content. Impact section shows summary with expand option.
 - **Must show:**
   - Section names from `CANVAS_SECTION_LABELS` ✅
   - Completion indicators ✅
   - Model groupings as visual hints (not navigation) ✅
 - **Files:** `src/components/Canvas.tsx`, `src/components/CanvasSection.tsx`
-- **Done:**
+- **Implementation:**
   - Full 11-section layout matching socialleancanvas.com
   - Inline editing with save/cancel
   - Section numbers, completion status, model badges
-- **Remaining:**
-  - Fetch canvas state from backend on mount (needs B7 `GET /api/canvas`)
-  - Persist edits to backend (needs B7 `PUT /api/canvas/:section`)
-- **Depends on:** C1, B7 (needs canvas endpoint)
-- **Status:** UI complete, backend persistence pending
+  - Fetches canvas state from backend on mount
+  - Persists edits to backend with optimistic updates
+- **Depends on:** C1, B7
+- **Status:** complete
 
-#### C5. [M] Implement nested Impact Model display ⚠️ PARTIAL
+#### C5. [M] Implement nested Impact Model display ✅
 - **Description:** Impact section expands to show full causality chain. The 8 Impact Model fields display as a flow: Issue → Participants → Activities → Outputs → Outcomes (3 levels) → Impact.
 - **Key behavior:**
   - Collapsed: Shows `impactModel.impact` as impact section content ✅
   - Expanded: Shows all 8 fields with causality arrows ✅
-  - Editing any field (including `impact`) syncs automatically ⚠️ local only
-- **Files:** `src/components/ImpactPanel.tsx` (renamed from ImpactModel.tsx)
-- **Done:**
+  - Editing any field (including `impact`) syncs automatically ✅
+- **Files:** `src/components/ImpactPanel.tsx`
+- **Implementation:**
   - Slide-in panel with all 8 fields
   - Causality arrows between fields
   - Save/cancel/close with Escape key
-- **Remaining:**
-  - Persist to backend (needs B7 `PUT /api/canvas/impact-model`)
+  - Persists to backend via PUT /api/session/:id/canvas/impact-model
 - **Depends on:** C4
-- **Status:** UI complete, backend persistence pending
+- **Status:** complete
 
 #### C6. [S] Implement copy button
 - **Description:** Copy button to copy canvas section content to clipboard
@@ -416,19 +417,19 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Depends on:** C4, B8 (needs export endpoint)
 - **Status:** pending
 
-#### C8. [M] Add loading states and error handling ⚠️ PARTIAL
+#### C8. [M] Add loading states and error handling ✅
 - **Description:** Loading spinners, error messages, connection status indicator
 - **Files:** `src/components/` (various)
-- **Done:**
+- **Implementation:**
   - Chat: loading indicator ("Thinking..."), error display
   - App: "Initializing session..." loading state
-- **Remaining:**
-  - Canvas: loading state when fetching from backend
-  - Canvas: error handling for failed saves
+  - Canvas: "Loading canvas..." state when fetching
+  - Canvas: error state with retry button
+- **Remaining (nice-to-have):**
   - Connection status indicator
 - **Tests:** Simulate slow responses, errors, verify UI feedback
 - **Depends on:** C3, C4
-- **Status:** partial (Chat done, Canvas pending)
+- **Status:** complete
 
 #### C9. [S] Style for demo ⚠️ PARTIAL
 - **Description:** Basic styling to make demo presentable (not production polish)

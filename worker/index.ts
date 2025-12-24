@@ -5,14 +5,15 @@
  * Static assets (React app) are served automatically by Cloudflare.
  *
  * Routes:
- * - GET /api/health - Health check
+ * - GET  /api/health - Health check
  * - POST /api/session - Create new session (B3)
- * - GET /api/session/:id - Get session (B3)
- * - GET /api/session/:id/messages - Get chat history (C3)
+ * - GET  /api/session/:id - Get session (B3)
+ * - GET  /api/session/:id/messages - Get chat history (C3)
+ * - GET  /api/session/:id/canvas - Get full canvas state (B7)
+ * - PUT  /api/session/:id/canvas/:section - Update canvas section (B7)
+ * - PUT  /api/session/:id/canvas/impact-model - Update impact model (B7)
  * - POST /api/chat - Send chat message (B5)
- * - GET /api/canvas - Get canvas state (B7)
- * - PUT /api/canvas/:section - Update canvas section (B7)
- * - GET /api/export/:format - Export canvas (B8)
+ * - GET  /api/export/:format - Export canvas (B8) - TODO
  */
 
 // Export Durable Objects for wrangler
@@ -100,7 +101,11 @@ export default {
         return jsonResponse(profile);
       }
 
-      // Get canvas sections
+      // ============================================
+      // B7: Canvas CRUD
+      // ============================================
+
+      // Get full canvas state (sections + impactModel)
       if (url.pathname.match(/^\/api\/session\/[^/]+\/canvas$/) && request.method === 'GET') {
         const sessionId = url.pathname.split('/')[3];
 
@@ -108,10 +113,128 @@ export default {
           env.USER_SESSION.idFromName(sessionId)
         );
 
-        const response = await stub.fetch(new Request('http://internal/canvas-sections'));
-        const sections = await response.json();
+        // Fetch sections and impact model in parallel
+        const [sectionsRes, impactRes, sessionRes] = await Promise.all([
+          stub.fetch(new Request('http://internal/canvas-sections')),
+          stub.fetch(new Request('http://internal/model/impact')),
+          stub.fetch(new Request('http://internal/session')),
+        ]);
 
-        return jsonResponse(sections);
+        const sections = await sectionsRes.json();
+        const impactModel = await impactRes.json();
+        const session = await sessionRes.json() as { id: string; current_section?: string; created_at?: string; updated_at?: string };
+
+        // Calculate completion percentage
+        const sectionArray = sections as Array<{ isComplete: boolean }>;
+        const completedCount = sectionArray.filter(s => s.isComplete).length;
+        const completionPercentage = Math.round((completedCount / 11) * 100);
+
+        // Return full CanvasState per design.md
+        return jsonResponse({
+          sessionId,
+          sections,
+          impactModel,
+          currentSection: session.current_section || null,
+          completionPercentage,
+          createdAt: session.created_at,
+          updatedAt: session.updated_at,
+        });
+      }
+
+      // Update canvas section
+      if (url.pathname.match(/^\/api\/session\/[^/]+\/canvas\/[^/]+$/) && request.method === 'PUT') {
+        const parts = url.pathname.split('/');
+        const sessionId = parts[3];
+        const sectionKey = parts[5];
+
+        // Validate section key
+        const validSections = [
+          'purpose', 'customers', 'jobsToBeDone', 'valueProposition',
+          'solution', 'channels', 'revenue', 'costs', 'keyMetrics',
+          'advantage', 'impact'
+        ];
+        if (!validSections.includes(sectionKey)) {
+          return jsonResponse({ error: `Invalid section: ${sectionKey}` }, 400);
+        }
+
+        const body = await request.json() as { content: string };
+        if (typeof body.content !== 'string') {
+          return jsonResponse({ error: 'content is required' }, 400);
+        }
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        const response = await stub.fetch(new Request(`http://internal/canvas-section/${sectionKey}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: body.content }),
+        }));
+
+        if (!response.ok) {
+          return jsonResponse({ error: 'Failed to update section' }, 500);
+        }
+
+        return jsonResponse({ success: true, sectionKey });
+      }
+
+      // Update impact model (all fields or specific field)
+      if (url.pathname.match(/^\/api\/session\/[^/]+\/canvas\/impact-model$/) && request.method === 'PUT') {
+        const sessionId = url.pathname.split('/')[3];
+
+        const body = await request.json() as {
+          field?: string;
+          content?: string;
+          // Or full update with all fields
+          issue?: string;
+          participants?: string;
+          activities?: string;
+          outputs?: string;
+          shortTermOutcomes?: string;
+          mediumTermOutcomes?: string;
+          longTermOutcomes?: string;
+          impact?: string;
+        };
+
+        const stub = env.USER_SESSION.get(
+          env.USER_SESSION.idFromName(sessionId)
+        );
+
+        // Single field update
+        if (body.field && body.content !== undefined) {
+          const validFields = [
+            'issue', 'participants', 'activities', 'outputs',
+            'shortTermOutcomes', 'mediumTermOutcomes', 'longTermOutcomes', 'impact'
+          ];
+          if (!validFields.includes(body.field)) {
+            return jsonResponse({ error: `Invalid field: ${body.field}` }, 400);
+          }
+
+          await stub.fetch(new Request('http://internal/impact-model-field', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ field: body.field, content: body.content }),
+          }));
+
+          return jsonResponse({ success: true, field: body.field });
+        }
+
+        // Full update - update each provided field
+        const fields = ['issue', 'participants', 'activities', 'outputs',
+                       'shortTermOutcomes', 'mediumTermOutcomes', 'longTermOutcomes', 'impact'] as const;
+
+        for (const field of fields) {
+          if (body[field] !== undefined) {
+            await stub.fetch(new Request('http://internal/impact-model-field', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ field, content: body[field] }),
+            }));
+          }
+        }
+
+        return jsonResponse({ success: true });
       }
 
       // Get model (grouped view)
@@ -155,7 +278,6 @@ export default {
         return handleChat(request, env);
       }
 
-      // B7: PUT /api/canvas/:section - To be implemented
       // B8: GET /api/export/:format - To be implemented
 
       return jsonResponse({ error: 'Not found' }, 404);

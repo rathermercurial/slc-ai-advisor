@@ -60,7 +60,7 @@ export function ImpactPanel({ impactModel, onSave, onClose }: ImpactPanelProps) 
 
         <div className="impact-panel-content">
           {IMPACT_MODEL_FIELDS.map((field, index) => (
-            <div key={field}>
+            <div key={field} className="impact-field-group">
               <div className="impact-field">
                 <label htmlFor={field}>{IMPACT_MODEL_LABELS[field]}</label>
                 <textarea
@@ -71,7 +71,7 @@ export function ImpactPanel({ impactModel, onSave, onClose }: ImpactPanelProps) 
                 />
               </div>
               {index < IMPACT_MODEL_FIELDS.length - 1 && (
-                <div className="impact-field-arrow">&darr;</div>
+                <div className="impact-field-arrow">&rarr;</div>
               )}
             </div>
           ))}

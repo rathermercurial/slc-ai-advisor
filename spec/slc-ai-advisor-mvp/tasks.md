@@ -47,17 +47,17 @@ These tasks must be complete for the Demo milestone. Focus here first.
 | Task | Description | Status |
 |------|-------------|--------|
 | B1 | Initialize Worker project | ✅ |
-| B2 | Durable Object + SQLite | pending |
-| B3 | Session management | pending |
-| B4 | Selection Matrix filters | pending |
-| B5 | Chat handler with RAG | pending |
+| B2 | Durable Object + SQLite | ✅ |
+| B3 | Session management | ✅ |
+| B4 | Selection Matrix filters | ✅ (awaiting indexed KB) |
+| B5 | Chat handler with RAG | ✅ (awaiting indexed KB) |
 
 ### Track C (Frontend)
 | Task | Description | Status |
 |------|-------------|--------|
 | C1 | Initialize React app | ✅ |
-| C2 | Chat interface | pending |
-| C3 | Connect to backend | pending |
+| C2 | Chat interface | ✅ (REST API) |
+| C3 | Connect to backend | ✅ (REST API) |
 
 ## MVP-Additional Tasks
 
@@ -72,7 +72,7 @@ Complete these after Demo to reach full MVP.
 | Task | Description | Status |
 |------|-------------|--------|
 | B6 | Dimension inference | pending |
-| B7 | Canvas CRUD endpoints | pending |
+| B7 | Canvas CRUD endpoints | ⚠️ DO logic done, API routes not exposed |
 | B8 | Export endpoint | pending |
 | B9 | Rate limiting | pending |
 | B10 | Error handling | pending |
@@ -80,12 +80,12 @@ Complete these after Demo to reach full MVP.
 ### Track C
 | Task | Description | Status |
 |------|-------------|--------|
-| C4 | Canvas display | pending |
-| C5 | Impact Model display | pending |
+| C4 | Canvas display | ⚠️ UI done, needs backend persistence |
+| C5 | Impact Model display | ⚠️ UI done, needs backend persistence |
 | C6 | Copy button | pending |
-| C7 | Export menu | pending |
-| C8 | Loading/error states | pending |
-| C9 | Demo styling | pending |
+| C7 | Export menu | pending (blocked by B8) |
+| C8 | Loading/error states | ⚠️ partial (Chat done, Canvas pending) |
+| C9 | Demo styling | ⚠️ partial (basic styles exist) |
 
 ### Integration
 | Task | Description | Status |
@@ -351,41 +351,56 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Branch:** `feature/frontend`
 - **PR:** #6
 
-#### C2. [M] Implement chat interface (DEMO-CRITICAL)
-- **Description:** Chat UI with message list, input field, using `useAgentChat` hook from AI SDK
+#### C2. [M] Implement chat interface (DEMO-CRITICAL) ✅
+- **Description:** Chat UI with message list, input field, markdown rendering
+- **Implementation:** Uses REST API (`POST /api/chat`) instead of Agents SDK. This was a deliberate architectural decision (see PR #25, commit def0f00) to use `@anthropic-ai/sdk` per design.md.
 - **Files:** `src/components/Chat.tsx`, `src/App.tsx`
-- **Tests:** Send message, see response (mock initially)
+- **Tests:** Send message, see response with markdown formatting
 - **Depends on:** C1
-- **Status:** pending
+- **Status:** complete
+- **PR:** #25
 
-#### C3. [M] Connect chat to backend (DEMO-CRITICAL)
-- **Description:** Connect useAgentChat to Worker API, handle session ID storage in localStorage, implement reconnection
-- **Files:** `src/components/Chat.tsx`, `src/hooks/useSession.ts`
+#### C3. [M] Connect chat to backend (DEMO-CRITICAL) ✅
+- **Description:** Connect chat to Worker API via REST, handle session ID storage in localStorage, implement reconnection
+- **Implementation:** Session created via `POST /api/session`, stored in localStorage, validated on page load. Chat calls `POST /api/chat` with sessionId.
+- **Files:** `src/components/Chat.tsx`, `src/App.tsx`
 - **Tests:** Messages persist across refresh, session continues
-- **Depends on:** C2, B5 (needs chat endpoint)
-- **Status:** pending
+- **Depends on:** C2, B5
+- **Status:** complete
+- **PR:** #25
 
-#### C4. [L] Implement canvas display
+#### C4. [L] Implement canvas display ⚠️ PARTIAL
 - **Description:** Visual canvas layout showing all 11 sections with completion status. Standard sections display simple content. Impact section shows summary with expand option.
 - **Must show:**
-  - Section names from `CANVAS_SECTION_LABELS`
-  - Completion indicators
-  - Model groupings as visual hints (not navigation)
+  - Section names from `CANVAS_SECTION_LABELS` ✅
+  - Completion indicators ✅
+  - Model groupings as visual hints (not navigation) ✅
 - **Files:** `src/components/Canvas.tsx`, `src/components/CanvasSection.tsx`
-- **Tests:** Canvas renders all 11 sections, shows correct data from API
+- **Done:**
+  - Full 11-section layout matching socialleancanvas.com
+  - Inline editing with save/cancel
+  - Section numbers, completion status, model badges
+- **Remaining:**
+  - Fetch canvas state from backend on mount (needs B7 `GET /api/canvas`)
+  - Persist edits to backend (needs B7 `PUT /api/canvas/:section`)
 - **Depends on:** C1, B7 (needs canvas endpoint)
-- **Status:** pending
+- **Status:** UI complete, backend persistence pending
 
-#### C5. [M] Implement nested Impact Model display
+#### C5. [M] Implement nested Impact Model display ⚠️ PARTIAL
 - **Description:** Impact section expands to show full causality chain. The 8 Impact Model fields display as a flow: Issue → Participants → Activities → Outputs → Outcomes (3 levels) → Impact.
 - **Key behavior:**
-  - Collapsed: Shows `impactModel.impact` as impact section content
-  - Expanded: Shows all 8 fields with causality arrows
-  - Editing any field (including `impact`) syncs automatically
-- **Files:** `src/components/ImpactModel.tsx`
-- **Tests:** Expand/collapse works, all 8 fields display, editing syncs
+  - Collapsed: Shows `impactModel.impact` as impact section content ✅
+  - Expanded: Shows all 8 fields with causality arrows ✅
+  - Editing any field (including `impact`) syncs automatically ⚠️ local only
+- **Files:** `src/components/ImpactPanel.tsx` (renamed from ImpactModel.tsx)
+- **Done:**
+  - Slide-in panel with all 8 fields
+  - Causality arrows between fields
+  - Save/cancel/close with Escape key
+- **Remaining:**
+  - Persist to backend (needs B7 `PUT /api/canvas/impact-model`)
 - **Depends on:** C4
-- **Status:** pending
+- **Status:** UI complete, backend persistence pending
 
 #### C6. [S] Implement copy button
 - **Description:** Copy button to copy canvas section content to clipboard
@@ -401,19 +416,34 @@ C1 ✅ → C2 → C3 ───────────────────�
 - **Depends on:** C4, B8 (needs export endpoint)
 - **Status:** pending
 
-#### C8. [M] Add loading states and error handling
+#### C8. [M] Add loading states and error handling ⚠️ PARTIAL
 - **Description:** Loading spinners, error messages, connection status indicator
 - **Files:** `src/components/` (various)
+- **Done:**
+  - Chat: loading indicator ("Thinking..."), error display
+  - App: "Initializing session..." loading state
+- **Remaining:**
+  - Canvas: loading state when fetching from backend
+  - Canvas: error handling for failed saves
+  - Connection status indicator
 - **Tests:** Simulate slow responses, errors, verify UI feedback
 - **Depends on:** C3, C4
-- **Status:** pending
+- **Status:** partial (Chat done, Canvas pending)
 
-#### C9. [S] Style for demo
+#### C9. [S] Style for demo ⚠️ PARTIAL
 - **Description:** Basic styling to make demo presentable (not production polish)
-- **Files:** `src/styles/`
+- **Files:** `src/index.css`
+- **Done:**
+  - Basic layout styles (two-column, header)
+  - Canvas grid layout
+  - Chat message styling
+  - Dark mode support
+- **Remaining:**
+  - Polish and refinement
+  - Responsive adjustments
 - **Tests:** Visual review
 - **Depends on:** C8
-- **Status:** pending
+- **Status:** partial (basic styles exist)
 
 ---
 

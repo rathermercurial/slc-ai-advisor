@@ -10,6 +10,7 @@ import {
 
 interface CanvasProps {
   sessionId: string;
+  refreshKey?: number;
 }
 
 interface CanvasSectionData {
@@ -48,7 +49,7 @@ const SECTION_HELPER_TEXT: Record<CanvasSectionId, string> = {
  * The Social Lean Canvas with official layout.
  * Layout matches socialleancanvas.com
  */
-export function Canvas({ sessionId }: CanvasProps) {
+export function Canvas({ sessionId, refreshKey }: CanvasProps) {
   const [sections, setSections] = useState(() =>
     createEmptySections(sessionId).reduce(
       (acc, section) => {
@@ -102,7 +103,7 @@ export function Canvas({ sessionId }: CanvasProps) {
     }
 
     fetchCanvas();
-  }, [sessionId]);
+  }, [sessionId, refreshKey]);
 
   // Persist section to backend
   const persistSection = useCallback(async (sectionKey: CanvasSectionId, content: string) => {

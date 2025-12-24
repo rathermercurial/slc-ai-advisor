@@ -52,6 +52,12 @@ function App() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const [canvasVersion, setCanvasVersion] = useState(0);
+
+  // Callback for when chat updates the canvas
+  const handleCanvasUpdate = () => {
+    setCanvasVersion((v) => v + 1);
+  };
 
   // Initialize or restore session
   useEffect(() => {
@@ -138,11 +144,11 @@ function App() {
 
         <main className="app-main">
           <div className="layout-canvas">
-            <Canvas sessionId={sessionId} />
+            <Canvas sessionId={sessionId} refreshKey={canvasVersion} />
           </div>
           <div className="layout-chat">
             <ErrorBoundary>
-              <Chat sessionId={sessionId} />
+              <Chat sessionId={sessionId} onCanvasUpdate={handleCanvasUpdate} />
             </ErrorBoundary>
           </div>
         </main>

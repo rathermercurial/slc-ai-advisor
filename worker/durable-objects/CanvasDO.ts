@@ -410,6 +410,21 @@ export class CanvasDO extends DurableObject<Env> {
   }
 
   /**
+   * Update an Impact Model field directly
+   *
+   * Routes to ImpactModelManager for field updates.
+   * Fields: issue, participants, activities, outputs,
+   * shortTermOutcomes, mediumTermOutcomes, longTermOutcomes, impact
+   */
+  async updateImpactField(
+    field: string,
+    content: string
+  ): Promise<UpdateResult> {
+    await this.ensureInitialized();
+    return this.impactManager.updateSection(field, content);
+  }
+
+  /**
    * Get overall canvas completion
    */
   private async getOverallCompletion(): Promise<ModelCompletion> {

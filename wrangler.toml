@@ -56,6 +56,8 @@ binding = "AI"
 
 # Environment Variables (set via wrangler secret or dashboard)
 # ANTHROPIC_API_KEY - Set via: wrangler secret put ANTHROPIC_API_KEY
+# CF_ACCOUNT_ID - Set via: wrangler secret put CF_ACCOUNT_ID
+# CF_GATEWAY_ID - Set via: wrangler secret put CF_GATEWAY_ID
 
 # Development
 [dev]

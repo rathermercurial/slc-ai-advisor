@@ -7,9 +7,10 @@ declare global {
     // API Keys
     ANTHROPIC_API_KEY: string;
 
-    // AI Gateway configuration (optional)
-    CF_ACCOUNT_ID?: string;
-    CF_GATEWAY_ID?: string;
+    // AI Gateway configuration (required for SLCAgent)
+    CF_ACCOUNT_ID: string;
+    CF_GATEWAY_ID: string;
+    CF_AIG_TOKEN?: string; // Optional: Required if Authenticated Gateway is enabled
 
     // Static assets
     ASSETS: Fetcher;

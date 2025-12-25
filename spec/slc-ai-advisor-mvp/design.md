@@ -2,38 +2,52 @@
 
 ## Architecture Overview
 
-A conversational AI advisor for social entrepreneurs using the Social Lean Canvas. The system provides methodology guidance and contextual example retrieval using the Selection Matrix - multi-dimensional filtering by venture characteristics before semantic search.
+A conversational AI advisor using two-component separation:
+- **SLCAgent** - AI orchestrator for conversation and tool execution
+- **CanvasDO** - Goal artifact with Model Manager classes
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│  Unified Worker (Cloudflare Workers Static Assets)                  │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │  Frontend (React + Vite + @cloudflare/vite-plugin)          │   │
-│  │  - Chat interface with useAgentChat                          │   │
-│  │  - Canvas display (11 sections)                              │   │
-│  │  - Impact Model nested in impact section                      │   │
-│  │  - Export (copy, Markdown, JSON)                             │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │  API Routes (/api/*)                                         │   │
-│  │  - Chat handler with RAG                                     │   │
-│  │  - Canvas CRUD                                               │   │
-│  │  - Session routing to Durable Objects                        │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-                                  │
-           ┌──────────────────────┼──────────────────────┐
-           ▼                      ▼                      ▼
-┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-│  Anthropic API  │   │ Durable Object  │   │   Vectorize     │
-│  (via AI        │   │ (UserSession    │   │   (Knowledge    │
-│   Gateway)      │   │  + SQLite)      │   │    Base Index)  │
-└─────────────────┘   └─────────────────┘   └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       Worker (Stateless Entry Point)                    │
+│  Serves UI (Static Assets), routes /api/* to Agent/DO                  │
+└───────────────────────────────────────┬─────────────────────────────────┘
+                                        │
+              ┌─────────────────────────┴─────────────────────────┐
+              ▼                                                   ▼
+┌──────────────────────────────┐                ┌─────────────────────────────────────┐
+│  SLCAgent (Orchestrator)     │                │     CanvasDO (Goal Artifact)        │
+│  extends AIChatAgent         │                │     extends DurableObject           │
+│                              │                │                                     │
+│  Agent's Own State:          │   Tool calls   │  Cross-cutting:                     │
+│  ├── conversation (this.sql) │───────────────▶│  ├── purpose, keyMetrics            │
+│  ├── message (this.sql)      │                │  └── ventureProfile (7-dim)         │
+│  ├── status, preferences     │                │                                     │
+│  └── currentCanvasId         │                │  Model Managers:                    │
+│                              │                │  ├── CustomerModelManager           │
+│  Capabilities:               │                │  ├── EconomicModelManager           │
+│  ├── onChatMessage()         │                │  └── ImpactModelManager             │
+│  ├── setState() → UI sync    │                │                                     │
+│  └── Tool definitions        │◀───────────────│  Each: validate, complete, export   │
+└──────────────────────────────┘                └─────────────────────────────────────┘
+              │
+              ▼
+    ┌──────────────────┐
+    │    Vectorize     │
+    │   (Public KB)    │
+    └──────────────────┘
 ```
 
 MVP simplification: Chat-primary interface. Visual canvas editor deferred to post-MVP.
 
 ## Components
+
+### Worker (Stateless Entry Point)
+- **Purpose:** Route requests, serve UI, handle auth
+- **Responsibilities:**
+  - Serve React frontend via Static Assets
+  - Route /api/* to SLCAgent or CanvasDO
+  - Handle MCP server requests (future)
+- **Files:** `worker/index.ts`
 
 ### Frontend (React + Vite)
 - **Purpose:** Provide chat interface and canvas display for users
@@ -43,38 +57,55 @@ MVP simplification: Chat-primary interface. Visual canvas editor deferred to pos
   - Display Impact Model nested within impact section
   - Handle section editing via chat
   - Copy button + export (Markdown, JSON)
-  - Store sessionId in localStorage
+  - Store canvasId in localStorage
 - **Interface:** React app using Agents SDK `useAgentChat` hook
 - **Build:** `@cloudflare/vite-plugin` for unified deployment with Worker
-- **Files:** `src/` (React app), `worker/` (API routes)
+- **Files:** `src/` (React app)
 
-### API Worker
-- **Purpose:** Handle requests and coordinate between LLM, storage, and retrieval
+### SLCAgent (extends AIChatAgent)
+- **Purpose:** AI orchestrator for conversation and tool execution
 - **Responsibilities:**
-  - Route chat messages to Anthropic with RAG context
-  - Implement Selection Matrix (filter by dimensions before semantic search)
-  - CRUD for canvas sections and Impact Model
-  - Rate limiting (100 req/min per session)
-  - Error handling with graceful degradation
-- **Interface:**
-  ```
-  POST /api/chat           - Send message, receive AI response
-  GET  /api/canvas         - Get current canvas state (includes Impact Model)
-  PUT  /api/canvas/:section - Update specific section (by key, e.g., 'purpose', 'customers')
-  PUT  /api/canvas/impact-model - Update Impact Model fields (syncs impact section)
-  GET  /api/session        - Get session metadata
-  POST /api/export         - Export canvas (format: md|json)
-  POST /api/import         - Import canvas data
-  ```
+  - Handle streaming chat via `onChatMessage()`
+  - Execute tools that modify CanvasDO
+  - Update status via `setState()` (syncs to frontend)
+  - Store conversation history in own `this.sql`
+- **State:** conversation, message tables (agent's own DB)
+- **Files:** `worker/agents/SLCAgent.ts`
 
-### Durable Object (UserSession)
-- **Purpose:** Persist all user state with strong consistency
+### CanvasDO (extends DurableObject)
+- **Purpose:** Goal artifact - the canvas being built
 - **Responsibilities:**
-  - Store venture profile (7 dimensions with confidence scores)
-  - Store canvas content (standard sections in canvas_section, impact in impact_model)
-  - Store conversation history
-  - Keep Impact Model's `impact` field synced with impact section
-- **Interface:** SQLite database within Durable Object
+  - Store canvas sections via Model Managers
+  - Store venture profile (7 dimensions)
+  - Validate updates via Model Manager rules
+  - Export canvas in multiple formats
+- **Files:** `worker/durable-objects/CanvasDO.ts`, `src/models/*.ts`
+
+### Model Managers
+
+Model Managers encapsulate business logic for each of the three models, providing clean interfaces that work for MVP (single DO) or future child-DO architecture.
+
+#### Interface
+
+```typescript
+interface IModelManager {
+  getModel(): Promise<ModelData>;
+  updateSection(section: string, content: string): Promise<UpdateResult>;
+  validate(): Promise<ValidationResult>;
+  getCompletion(): Promise<ModelCompletion>;
+  export(format: 'json' | 'md'): Promise<string>;
+}
+```
+
+#### Managers
+
+| Manager | Sections | Notes |
+|---------|----------|-------|
+| CustomerModelManager | customers, jobsToBeDone, valueProposition, solution | Dependency chain validation |
+| EconomicModelManager | channels, revenue, costs, advantage | Business sustainability |
+| ImpactModelManager | 8-field causality chain | Must complete in order |
+
+See `tmp/backend-suggestions.md` section 3.5 for implementation details.
 
 ### Vectorize Index
 - **Purpose:** Enable semantic search with dimensional filtering
@@ -266,9 +297,37 @@ interface ConversationMessage {
 
 ### SQLite Schema
 
+Two separate databases in the two-component architecture:
+
+#### Agent's Database (SLCAgent's `this.sql`)
+
 ```sql
--- Session metadata
-CREATE TABLE session (
+-- Conversations for this agent
+CREATE TABLE conversation (
+  id TEXT PRIMARY KEY,
+  canvas_id TEXT NOT NULL,
+  title TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Messages within conversations
+CREATE TABLE message (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  role TEXT NOT NULL,           -- 'user' | 'assistant'
+  content TEXT NOT NULL,
+  timestamp TEXT NOT NULL
+);
+
+CREATE INDEX idx_message_conv ON message(conversation_id, timestamp);
+```
+
+#### Canvas Database (CanvasDO's `ctx.storage.sql`)
+
+```sql
+-- Canvas metadata
+CREATE TABLE canvas (
   id TEXT PRIMARY KEY,
   current_section TEXT,         -- Curriculum progress (section key)
   created_at TEXT NOT NULL,
@@ -277,7 +336,7 @@ CREATE TABLE session (
 
 -- Venture profile (7 dimensions)
 CREATE TABLE venture_profile (
-  session_id TEXT PRIMARY KEY,
+  canvas_id TEXT PRIMARY KEY,
   venture_stage TEXT,
   impact_areas TEXT,            -- JSON array
   impact_mechanisms TEXT,       -- JSON array
@@ -294,18 +353,18 @@ CREATE TABLE venture_profile (
 -- Canvas sections (all sections except impact)
 -- Impact is stored in impact_model table
 CREATE TABLE canvas_section (
-  session_id TEXT NOT NULL,
+  canvas_id TEXT NOT NULL,
   section_key TEXT NOT NULL,    -- One of: purpose, customers, jobsToBeDone, etc. (NOT 'impact')
   content TEXT NOT NULL DEFAULT '',
   is_complete INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL,
-  PRIMARY KEY (session_id, section_key)
+  PRIMARY KEY (canvas_id, section_key)
 );
 
 -- Impact Model (impact section - full causality chain)
 -- The 'impact' column IS the impact section's content
 CREATE TABLE impact_model (
-  session_id TEXT PRIMARY KEY,
+  canvas_id TEXT PRIMARY KEY,
   issue TEXT NOT NULL DEFAULT '',
   participants TEXT NOT NULL DEFAULT '',
   activities TEXT NOT NULL DEFAULT '',
@@ -317,17 +376,6 @@ CREATE TABLE impact_model (
   is_complete INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL
 );
-
--- Chat messages
-CREATE TABLE message (
-  id TEXT PRIMARY KEY,
-  session_id TEXT NOT NULL,
-  role TEXT NOT NULL,           -- 'user' | 'assistant'
-  content TEXT NOT NULL,
-  timestamp TEXT NOT NULL
-);
-
-CREATE INDEX idx_message_session ON message(session_id, timestamp);
 ```
 
 ## Interfaces
@@ -425,7 +473,7 @@ async updateImpactModel(sessionId: string, field: string, content: string): Prom
   - `agents` ^0.2.32 (Cloudflare Agents SDK)
   - `@anthropic-ai/sdk` ^0.39.0 (Anthropic SDK - routed through AI Gateway)
   - `gray-matter` ^4.0.3 (frontmatter parsing)
-  - `zod` ^3.23.0 (optional, response validation)
+  - `zod` ^4.0.0 (response validation - v4 for performance + JSON Schema export)
 - **APIs:**
   - Anthropic Claude API (via AI Gateway `/anthropic` endpoint)
   - Workers AI (embeddings: @cf/baai/bge-m3, 1024 dimensions)

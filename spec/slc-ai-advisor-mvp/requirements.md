@@ -260,15 +260,14 @@ With this: Natural conversation, contextual responses, canvas continuity.
 
 ### Milestones
 
-**Prepare Repo:** Specification complete, repository structured for collaborative development. Unblocks all implementation tracks.
+| Milestone | Target | Success Criteria |
+|-----------|--------|------------------|
+| **Demo** | Week 1 | Chat with RAG. Canvas persists. Streaming with status updates. |
+| **MVP** | Week 2 | Full Selection Matrix. Dimensions inferred. Impact Model synced. |
+| **Integration** | Future | Functions abstracted for embedding in any frontend. |
 
-**Proof of Concept (PoC):** Basic advisor functionality. Chat works with indexed knowledge base. RAG retrieval operational.
-
-**Demo:** Basic semantic search with rudimentary filtering (namespace + tags/aliases metadata). Canvas state persists across sessions. Advisor answers methodology questions using indexed KB.
-
-**MVP:** Full Selection Matrix (progressive relaxation, dimensional similarity scoring). Venture dimensions inferred from conversation. Curriculum progress tracked. Impact Model synced. Ready for user testing.
-
-**Integration-ready (Future):** Functions fully abstracted, ready to integrate into any frontend (like socialleancanvas.com).
+See [tasks.md](tasks.md) for detailed task breakdown by milestone.
+See GitHub Milestones for current progress.
 
 ### Must Demonstrate (MVP)
 

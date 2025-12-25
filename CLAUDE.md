@@ -17,13 +17,17 @@ AI advisor for social entrepreneurs using the Social Lean Canvas methodology. Fi
 
 ## Architecture
 
-Single Cloudflare Worker (Workers Static Assets). No CORS needed.
+Two-component separation. Single Cloudflare Worker (Workers Static Assets). No CORS needed.
 
 ```
-Worker → Durable Object (SQLite state)
-      → Vectorize (1024-dim embeddings, bge-m3)
-      → Anthropic (Claude via AI Gateway)
+Worker (entry) → SLCAgent (orchestrator, extends AIChatAgent)
+              → CanvasDO (goal artifact, extends DurableObject)
+              → Vectorize (1024-dim embeddings, bge-m3)
+              → Anthropic (Claude via AI Gateway)
 ```
+
+- **SLCAgent**: Conversation + tool execution. Has own `this.sql` for messages.
+- **CanvasDO**: Canvas state + Model Managers. Stores sections, venture profile.
 
 **Stack:**
 - Frontend: React 19 + Vite + Agents SDK (`useAgentChat`)
@@ -36,21 +40,22 @@ Worker → Durable Object (SQLite state)
 |----------|---------|
 | `spec/slc-ai-advisor-mvp/requirements.md` | What we're building |
 | `spec/slc-ai-advisor-mvp/design.md` | Architecture, data models, interfaces |
-| `spec/slc-ai-advisor-mvp/tasks.md` | Tasks by milestone (Demo vs MVP) |
+| `spec/slc-ai-advisor-mvp/tasks.md` | Milestones and definitions of done |
 
 ## File Structure
 
 ```
-src/types/          # TypeScript interfaces (canvas.ts, venture.ts)
-worker/             # API entry point
-  index.ts          # Request handler
-  env.d.ts          # Env type extensions
+src/
+  types/            # TypeScript interfaces (canvas.ts, venture.ts)
+  models/           # Model Manager classes
+worker/
+  index.ts          # Entry point, request routing
+  agents/           # SLCAgent (AIChatAgent)
+  durable-objects/  # CanvasDO
 knowledge/          # Knowledge base
   programs/         # Learning journeys (generic/, p2p/) → Vectorize namespaces
   tags/             # Concepts & dimensions → Vectorize metadata
-  attachments/      # Images and assets
 spec/               # Specification documents
-scripts/            # Indexing scripts (Track A)
 ```
 
 ## Key Reference Files
@@ -76,18 +81,6 @@ npm run typecheck    # TypeScript check
 npx wrangler types   # Regenerate worker types
 wrangler deploy      # Deploy to Cloudflare
 ```
-
-## GitHub Issues
-
-| Issue | Description |
-|-------|-------------|
-| #7 | Track A: Knowledge Base |
-| #8 | A2: KB Restructure (blocker) |
-| #9 | A3-A6: Indexing to Demo |
-| #10 | Track B: Backend |
-| #11 | B1-B5: Backend to Demo |
-| #12 | Track C: Frontend |
-| #13 | C1-C3: Frontend to Demo |
 
 ## Skills Available
 

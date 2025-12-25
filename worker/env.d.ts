@@ -1,4 +1,7 @@
-// Extend the generated Env interface with secrets not in wrangler.toml
+import type { CanvasDO } from './durable-objects/CanvasDO';
+import type { SLCAgent } from './agents/SLCAgent';
+
+// Extend the generated Env interface with secrets and DO bindings
 declare global {
   interface Env {
     // API Keys
@@ -10,6 +13,10 @@ declare global {
 
     // Static assets
     ASSETS: Fetcher;
+
+    // Durable Objects
+    CANVAS: DurableObjectNamespace<CanvasDO>;
+    SLC_AGENT: DurableObjectNamespace<SLCAgent>;
   }
 }
 

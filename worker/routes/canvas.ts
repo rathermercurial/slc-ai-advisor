@@ -1,0 +1,237 @@
+/**
+ * Canvas API Routes
+ *
+ * REST endpoints for canvas operations.
+ * Routes to CanvasDO via RPC methods.
+ *
+ * Routes:
+ * - POST /api/canvas - Create new canvas
+ * - GET /api/canvas/:id - Get full canvas state
+ * - PUT /api/canvas/:id/section/:key - Update section
+ * - GET /api/canvas/:id/model/:model - Get model view
+ * - GET /api/canvas/:id/venture-profile - Get dimensions
+ * - PUT /api/canvas/:id/venture-profile - Update dimension
+ * - GET /api/canvas/:id/export/:format - Export canvas
+ */
+
+import type { CanvasDO } from '../durable-objects/CanvasDO';
+import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
+import type { VentureDimensions } from '../../src/types/venture';
+
+/**
+ * UUID validation regex
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Valid venture dimension keys
+ */
+const VALID_DIMENSIONS: (keyof VentureDimensions)[] = [
+  'ventureStage',
+  'impactAreas',
+  'impactMechanisms',
+  'legalStructure',
+  'revenueSources',
+  'fundingSources',
+  'industries',
+];
+
+/**
+ * Maximum content length (50KB)
+ */
+const MAX_CONTENT_LENGTH = 50000;
+
+/**
+ * Handle canvas-related API routes
+ */
+export async function handleCanvasRoute(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/').filter(Boolean);
+  // parts: ['api', 'canvas', ...rest]
+
+  try {
+    // POST /api/canvas - Create new canvas
+    if (parts.length === 2 && request.method === 'POST') {
+      const canvasId = crypto.randomUUID();
+      const stub = getCanvasStub(env, canvasId);
+
+      const canvas = await stub.getFullCanvas();
+
+      return jsonResponse({
+        canvasId,
+        canvas,
+      });
+    }
+
+    // All other routes require a canvas ID
+    if (parts.length < 3) {
+      return jsonResponse({ error: 'Canvas ID required' }, 400);
+    }
+
+    const canvasId = parts[2];
+
+    // Validate canvas ID format
+    if (!UUID_REGEX.test(canvasId)) {
+      return jsonResponse({ error: 'Invalid canvas ID format' }, 400);
+    }
+
+    const stub = getCanvasStub(env, canvasId);
+
+    // GET /api/canvas/:id - Get full canvas
+    if (parts.length === 3 && request.method === 'GET') {
+      const canvas = await stub.getFullCanvas();
+      return jsonResponse(canvas);
+    }
+
+    // PUT /api/canvas/:id/section/:key - Update section
+    if (parts.length === 5 && parts[3] === 'section' && request.method === 'PUT') {
+      const sectionKey = parts[4];
+
+      // Validate section key
+      if (!CANVAS_SECTIONS.includes(sectionKey as CanvasSectionId)) {
+        return jsonResponse({ error: `Invalid section: ${sectionKey}` }, 400);
+      }
+
+      const body = await request.json().catch(() => ({})) as { content?: string };
+      if (typeof body.content !== 'string') {
+        return jsonResponse({ error: 'content is required' }, 400);
+      }
+
+      // Validate content length
+      if (body.content.length > MAX_CONTENT_LENGTH) {
+        return jsonResponse({ error: 'Content too large (max 50KB)' }, 413);
+      }
+
+      const result = await stub.updateSection(sectionKey as CanvasSectionId, body.content);
+      return jsonResponse(result);
+    }
+
+    // GET /api/canvas/:id/model/:model - Get model view
+    if (parts.length === 5 && parts[3] === 'model' && request.method === 'GET') {
+      const model = parts[4];
+
+      switch (model) {
+        case 'customer':
+          return jsonResponse(await stub.getCustomerModel());
+        case 'economic':
+          return jsonResponse(await stub.getEconomicModel());
+        case 'impact':
+          return jsonResponse(await stub.getImpactModel());
+        default:
+          return jsonResponse({ error: `Unknown model: ${model}` }, 400);
+      }
+    }
+
+    // GET /api/canvas/:id/venture-profile - Get venture profile
+    if (parts.length === 4 && parts[3] === 'venture-profile' && request.method === 'GET') {
+      const profile = await stub.getVentureProfile();
+      return jsonResponse(profile);
+    }
+
+    // PUT /api/canvas/:id/venture-profile - Update dimension
+    if (parts.length === 4 && parts[3] === 'venture-profile' && request.method === 'PUT') {
+      const body = await request.json().catch(() => ({})) as {
+        dimension?: keyof VentureDimensions;
+        value?: string | string[] | null;
+        confidence?: number;
+        confirmed?: boolean;
+      };
+
+      if (!body.dimension) {
+        return jsonResponse({ error: 'dimension is required' }, 400);
+      }
+
+      // Validate dimension key
+      if (!VALID_DIMENSIONS.includes(body.dimension)) {
+        return jsonResponse({ error: `Invalid dimension: ${body.dimension}` }, 400);
+      }
+
+      await stub.updateVentureDimension(
+        body.dimension,
+        body.value ?? null,
+        body.confidence,
+        body.confirmed
+      );
+
+      const profile = await stub.getVentureProfile();
+      return jsonResponse(profile);
+    }
+
+    // GET /api/canvas/:id/dimensions-for-filtering - Get filtered dimensions
+    if (parts.length === 4 && parts[3] === 'dimensions-for-filtering' && request.method === 'GET') {
+      const dimensions = await stub.getDimensionsForFiltering();
+      return jsonResponse(dimensions);
+    }
+
+    // GET /api/canvas/:id/export/:format - Export canvas
+    if (parts.length === 5 && parts[3] === 'export' && request.method === 'GET') {
+      const format = parts[4];
+
+      if (format !== 'json' && format !== 'md') {
+        return jsonResponse({ error: 'Format must be json or md' }, 400);
+      }
+
+      const exported = await stub.exportCanvas(format);
+
+      if (format === 'json') {
+        return new Response(exported, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Disposition': `attachment; filename="canvas-${canvasId}.json"`,
+          },
+        });
+      }
+
+      return new Response(exported, {
+        headers: {
+          'Content-Type': 'text/markdown',
+          'Content-Disposition': `attachment; filename="canvas-${canvasId}.md"`,
+        },
+      });
+    }
+
+    // PUT /api/canvas/:id/current-section - Set current section
+    if (parts.length === 4 && parts[3] === 'current-section' && request.method === 'PUT') {
+      const body = await request.json().catch(() => ({})) as { section?: CanvasSectionId | null };
+
+      // Validate section if provided
+      if (body.section !== null && body.section !== undefined) {
+        if (!CANVAS_SECTIONS.includes(body.section)) {
+          return jsonResponse({ error: `Invalid section: ${body.section}` }, 400);
+        }
+      }
+
+      await stub.setCurrentSection(body.section ?? null);
+
+      return jsonResponse({ success: true });
+    }
+
+    return jsonResponse({ error: 'Not found' }, 404);
+  } catch (error) {
+    console.error('Canvas route error:', error);
+    return jsonResponse(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      500
+    );
+  }
+}
+
+/**
+ * Get CanvasDO stub by canvas ID
+ */
+function getCanvasStub(env: Env, canvasId: string): DurableObjectStub<CanvasDO> {
+  return env.CANVAS.get(env.CANVAS.idFromName(canvasId)) as DurableObjectStub<CanvasDO>;
+}
+
+/**
+ * Helper to create JSON responses
+ */
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}

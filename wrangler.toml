@@ -9,11 +9,13 @@ compatibility_flags = ["nodejs_compat"]
 main = "./worker/index.ts"
 
 # Static assets configuration (React SPA)
+# - directory: where Vite outputs the built frontend
 # - not_found_handling: serve index.html for SPA client-side routing
-# - run_worker_first: route /api/* to worker before static assets
+# - run_worker_first: route /api/* and /agents/* to worker before static assets
 [assets]
+directory = "./dist"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/agents/*"]
 
 # Observability
 [observability]
@@ -28,15 +30,25 @@ enabled = true
 binding = "VECTORIZE"
 index_name = "slc-knowledge-base"
 
-# Durable Objects for Session State
+# Durable Objects
+# - CANVAS: Goal artifact (canvas state with Model Managers)
+# - SLC_AGENT: AI conversation orchestrator
 [durable_objects]
 bindings = [
-  { name = "USER_SESSION", class_name = "UserSession" }
+  { name = "CANVAS", class_name = "CanvasDO" },
+  { name = "SLC_AGENT", class_name = "SLCAgent" }
 ]
 
+# Migration v1: Original UserSession (now deleted)
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["UserSession"]
+
+# Migration v2: Two-component architecture (Phase 0)
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["CanvasDO", "SLCAgent"]
+deleted_classes = ["UserSession"]
 
 # AI Binding for embeddings
 [ai]

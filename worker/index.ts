@@ -1,167 +1,67 @@
 /**
  * SLC AI Advisor - Worker Entry Point
  *
- * Handles API routes for the SLC AI Advisor.
- * Static assets (React app) are served automatically by Cloudflare.
+ * Two-component architecture:
+ * - SLCAgent: AI conversation orchestrator (extends AIChatAgent)
+ * - CanvasDO: Goal artifact with Model Managers
  *
  * Routes:
  * - GET /api/health - Health check
- * - POST /api/session - Create new session (B3)
- * - GET /api/session/:id - Get session (B3)
- * - GET /api/session/:id/messages - Get chat history (C3)
- * - POST /api/chat - Send chat message (B5)
- * - GET /api/canvas - Get canvas state (B7)
- * - PUT /api/canvas/:section - Update canvas section (B7)
- * - GET /api/export/:format - Export canvas (B8)
+ * - /api/canvas/* - Canvas CRUD operations
+ * - /agents/* - Agent WebSocket connections (Agents SDK)
  */
 
+import { routeAgentRequest } from 'agents';
+
 // Export Durable Objects for wrangler
-import { UserSession } from './durable-objects/UserSession';
-export { UserSession };
+export { CanvasDO } from './durable-objects/CanvasDO';
+export { SLCAgent } from './agents/SLCAgent';
 
 // Import route handlers
-import { handleChat } from './routes/chat';
+import { handleCanvasRoute } from './routes/canvas';
 
 // Env interface extended in worker/env.d.ts
 
 export default {
-  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    _ctx: ExecutionContext
+  ): Promise<Response> {
     const url = new URL(request.url);
 
-    // Handle /api/* routes
-    if (!url.pathname.startsWith('/api/')) {
-      // This shouldn't happen due to wrangler.toml config, but handle gracefully
-      return new Response('Not found', { status: 404 });
-    }
-
     try {
-      // Health check
-      if (url.pathname === '/api/health') {
-        return jsonResponse({
-          status: 'ok',
-          service: 'slc-ai-advisor',
-          timestamp: new Date().toISOString(),
-        });
+      // Route agent requests (WebSocket for chat)
+      if (url.pathname.startsWith('/agents/')) {
+        return routeAgentRequest(request, env);
       }
 
-      // ============================================
-      // B3: Session Management
-      // ============================================
-
-      // Create new session
-      if (url.pathname === '/api/session' && request.method === 'POST') {
-        const sessionId = crypto.randomUUID();
-        const body = await request.json().catch(() => ({})) as { program?: string };
-        const program = body.program || 'generic';
-
-        // Get Durable Object stub and initialize session
-        const stub = env.USER_SESSION.get(
-          env.USER_SESSION.idFromName(sessionId)
-        );
-
-        await stub.fetch(new Request('http://internal/init', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, program }),
-        }));
-
-        return jsonResponse({ sessionId, program });
-      }
-
-      // Get session state
-      if (url.pathname.match(/^\/api\/session\/[^/]+$/) && request.method === 'GET') {
-        const sessionId = url.pathname.split('/')[3];
-
-        const stub = env.USER_SESSION.get(
-          env.USER_SESSION.idFromName(sessionId)
-        );
-
-        const response = await stub.fetch(new Request('http://internal/session'));
-        const session = await response.json();
-
-        if (!session || !session.id) {
-          return jsonResponse({ error: 'Session not found' }, 404);
+      // Handle /api/* routes
+      if (url.pathname.startsWith('/api/')) {
+        // Health check
+        if (url.pathname === '/api/health') {
+          return jsonResponse({
+            status: 'ok',
+            service: 'slc-ai-advisor',
+            version: '2.0.0', // Phase 0 architecture
+            timestamp: new Date().toISOString(),
+          });
         }
 
-        return jsonResponse(session);
+        // Canvas routes
+        if (url.pathname.startsWith('/api/canvas')) {
+          return handleCanvasRoute(request, env);
+        }
+
+        return jsonResponse({ error: 'Not found' }, 404);
       }
 
-      // Get venture profile
-      if (url.pathname.match(/^\/api\/session\/[^/]+\/venture-profile$/) && request.method === 'GET') {
-        const sessionId = url.pathname.split('/')[3];
-
-        const stub = env.USER_SESSION.get(
-          env.USER_SESSION.idFromName(sessionId)
-        );
-
-        const response = await stub.fetch(new Request('http://internal/venture-profile'));
-        const profile = await response.json();
-
-        return jsonResponse(profile);
-      }
-
-      // Get canvas sections
-      if (url.pathname.match(/^\/api\/session\/[^/]+\/canvas$/) && request.method === 'GET') {
-        const sessionId = url.pathname.split('/')[3];
-
-        const stub = env.USER_SESSION.get(
-          env.USER_SESSION.idFromName(sessionId)
-        );
-
-        const response = await stub.fetch(new Request('http://internal/canvas-sections'));
-        const sections = await response.json();
-
-        return jsonResponse(sections);
-      }
-
-      // Get model (grouped view)
-      if (url.pathname.match(/^\/api\/session\/[^/]+\/model\/[^/]+$/) && request.method === 'GET') {
-        const parts = url.pathname.split('/');
-        const sessionId = parts[3];
-        const model = parts[5];
-
-        const stub = env.USER_SESSION.get(
-          env.USER_SESSION.idFromName(sessionId)
-        );
-
-        const response = await stub.fetch(new Request(`http://internal/model/${model}`));
-        const data = await response.json();
-
-        return jsonResponse(data);
-      }
-
-      // Get chat messages
-      if (url.pathname.match(/^\/api\/session\/[^/]+\/messages$/) && request.method === 'GET') {
-        const sessionId = url.pathname.split('/')[3];
-        const limit = url.searchParams.get('limit') || '50';
-
-        const stub = env.USER_SESSION.get(
-          env.USER_SESSION.idFromName(sessionId)
-        );
-
-        const response = await stub.fetch(
-          new Request(`http://internal/messages?limit=${limit}`)
-        );
-        const messages = await response.json();
-
-        return jsonResponse(messages);
-      }
-
-      // ============================================
-      // B5: Chat with RAG
-      // ============================================
-
-      if (url.pathname === '/api/chat' && request.method === 'POST') {
-        return handleChat(request, env);
-      }
-
-      // B7: PUT /api/canvas/:section - To be implemented
-      // B8: GET /api/export/:format - To be implemented
-
-      return jsonResponse({ error: 'Not found' }, 404);
+      // This shouldn't happen due to wrangler.toml config
+      return new Response('Not found', { status: 404 });
     } catch (error) {
       console.error('API error:', error);
-      return jsonResponse({ error: 'Internal server error' }, 500);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return jsonResponse({ error: 'Internal server error', message }, 500);
     }
   },
 };

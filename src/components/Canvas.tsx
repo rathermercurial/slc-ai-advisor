@@ -9,7 +9,7 @@ import {
 } from '../types/canvas';
 
 interface CanvasProps {
-  sessionId: string;
+  canvasId: string;
 }
 
 /**
@@ -42,9 +42,9 @@ const SECTION_HELPER_TEXT: Record<CanvasSectionId, string> = {
  * The Social Lean Canvas with official layout.
  * Layout matches socialleancanvas.com
  */
-export function Canvas({ sessionId }: CanvasProps) {
+export function Canvas({ canvasId }: CanvasProps) {
   const [sections, setSections] = useState(() =>
-    createEmptySections(sessionId).reduce(
+    createEmptySections(canvasId).reduce(
       (acc, section) => {
         acc[section.sectionKey] = section.content;
         return acc;
@@ -54,7 +54,7 @@ export function Canvas({ sessionId }: CanvasProps) {
   );
 
   const [impactModel, setImpactModel] = useState<ImpactModel>(() =>
-    createEmptyImpactModel(sessionId)
+    createEmptyImpactModel(canvasId)
   );
 
   const [showImpactPanel, setShowImpactPanel] = useState(false);

@@ -2,86 +2,45 @@
  * SLC Agent - AI Conversation Orchestrator
  *
  * Extends AIChatAgent to handle AI conversations with tool execution.
- * Manages its own conversation history in SQLite, references CanvasDO for canvas state.
- *
- * Phase 0: Skeleton implementation with stub onChatMessage()
- * Phase 1: Will implement streaming, tools, and AI Gateway integration
+ * Uses @anthropic-ai/sdk for API calls through Cloudflare AI Gateway.
  */
 
 import { AIChatAgent } from 'agents/ai-chat-agent';
-import type { Message } from 'agents/ai-chat-agent';
+import Anthropic from '@anthropic-ai/sdk';
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+} from 'ai';
+import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
+import type { Connection } from 'agents';
+import { formatCanvasContext, buildSystemPrompt } from './prompts';
+import { ANTHROPIC_TOOLS, executeTool } from './anthropic-tools';
 
 /**
  * Agent state that syncs to connected clients
  */
 export interface AgentState {
-  /** Current agent status for UI display */
   status: 'idle' | 'thinking' | 'searching' | 'updating' | 'error';
-
-  /** Human-readable status message */
   statusMessage: string;
-
-  /** ID of the canvas this agent is working with */
-  currentCanvasId: string | null;
-
-  /** Unique conversation ID */
-  conversationId: string;
 }
 
 /**
  * SLC Agent implementation
  */
 export class SLCAgent extends AIChatAgent<Env, AgentState> {
-  /**
-   * Initial state for new agent instances
-   */
   initialState: AgentState = {
     status: 'idle',
     statusMessage: '',
-    currentCanvasId: null,
-    conversationId: crypto.randomUUID(),
   };
 
-  private schemaInitialized = false;
-
   /**
-   * Ensure conversation and message tables exist
+   * Handle errors - logs and updates state
    */
-  async ensureSchema(): Promise<void> {
-    if (this.schemaInitialized) return;
-
-    const sql = this.ctx.storage.sql;
-
-    // Conversation table
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS conversation (
-        id TEXT PRIMARY KEY,
-        canvas_id TEXT,
-        title TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `);
-
-    // Message table
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS message (
-        id TEXT PRIMARY KEY,
-        conversation_id TEXT NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        timestamp TEXT NOT NULL
-      )
-    `);
-
-    // Index for efficient message retrieval
-    sql.exec(`
-      CREATE INDEX IF NOT EXISTS idx_message_conversation
-      ON message(conversation_id, timestamp)
-    `);
-
-    this.schemaInitialized = true;
+  onError(connection: Connection, error: Error): void {
+    console.error('[SLCAgent] onError:', error.message);
+    console.error('[SLCAgent] onError stack:', error.stack);
+    this.setStatus('error', error.message);
   }
 
   /**
@@ -94,135 +53,250 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   }
 
   /**
-   * Set the current canvas for this agent
-   */
-  async setCanvas(canvasId: string): Promise<void> {
-    await this.ensureSchema();
-
-    const state = this.getState();
-    this.setState({
-      ...state,
-      currentCanvasId: canvasId,
-    });
-
-    // Create or update conversation record
-    const sql = this.ctx.storage.sql;
-    const now = new Date().toISOString();
-
-    sql.exec(
-      `INSERT OR REPLACE INTO conversation (id, canvas_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?)`,
-      state.conversationId,
-      canvasId,
-      now,
-      now
-    );
-  }
-
-  /**
-   * Store a message in the agent's database
-   */
-  async storeMessage(role: 'user' | 'assistant', content: string): Promise<void> {
-    await this.ensureSchema();
-
-    const sql = this.ctx.storage.sql;
-    const state = this.getState();
-    const now = new Date().toISOString();
-
-    sql.exec(
-      `INSERT INTO message (id, conversation_id, role, content, timestamp)
-       VALUES (?, ?, ?, ?, ?)`,
-      crypto.randomUUID(),
-      state.conversationId,
-      role,
-      content,
-      now
-    );
-  }
-
-  /**
-   * Get recent messages from the conversation
-   */
-  async getRecentMessages(limit = 50): Promise<Array<{ role: string; content: string }>> {
-    await this.ensureSchema();
-
-    const sql = this.ctx.storage.sql;
-    const state = this.getState();
-
-    const rows = sql
-      .exec<{ role: string; content: string }>(
-        `SELECT role, content FROM message
-         WHERE conversation_id = ?
-         ORDER BY timestamp DESC
-         LIMIT ?`,
-        state.conversationId,
-        limit
-      )
-      .toArray();
-
-    // Return in chronological order
-    return rows.reverse();
-  }
-
-  /**
    * Update agent status (syncs to connected clients)
    */
   setStatus(status: AgentState['status'], message = ''): void {
-    const state = this.getState();
     this.setState({
-      ...state,
       status,
       statusMessage: message,
     });
   }
 
   /**
-   * Handle incoming chat message
-   *
-   * STUB: Phase 1 will implement:
-   * - Get canvas context from CanvasDO
-   * - Build system prompt with canvas state
-   * - Stream response via AI Gateway
-   * - Execute tool calls (update canvas, search KB)
-   * - Store messages
+   * Get canvas context for system prompt
+   */
+  private async getCanvasContext(): Promise<string> {
+    const canvasId = this.name;
+    if (!canvasId) {
+      console.log('[SLCAgent] No canvas ID (agent name)');
+      return formatCanvasContext(null);
+    }
+
+    try {
+      console.log('[SLCAgent] Getting canvas:', canvasId);
+      const stub = this.getCanvasStub(canvasId);
+      const canvas = await stub.getFullCanvas();
+
+      return formatCanvasContext({
+        purpose: canvas.purpose,
+        customers: canvas.sections.find(s => s.sectionKey === 'customers')?.content,
+        jobsToBeDone: canvas.sections.find(s => s.sectionKey === 'jobsToBeDone')?.content,
+        valueProposition: canvas.sections.find(s => s.sectionKey === 'valueProposition')?.content,
+        solution: canvas.sections.find(s => s.sectionKey === 'solution')?.content,
+        channels: canvas.sections.find(s => s.sectionKey === 'channels')?.content,
+        revenue: canvas.sections.find(s => s.sectionKey === 'revenue')?.content,
+        costs: canvas.sections.find(s => s.sectionKey === 'costs')?.content,
+        advantage: canvas.sections.find(s => s.sectionKey === 'advantage')?.content,
+        keyMetrics: canvas.keyMetrics,
+        impactModel: canvas.impactModel,
+      });
+    } catch (error) {
+      console.error('[SLCAgent] Failed to get canvas context:', error);
+      return formatCanvasContext(null);
+    }
+  }
+
+  /**
+   * Extract text content from a UIMessage
+   */
+  private getMessageText(message: UIMessage): string {
+    if (!message.parts) return '';
+    return message.parts
+      .filter((part): part is { type: 'text'; text: string } =>
+        part.type === 'text' && 'text' in part
+      )
+      .map((part) => part.text)
+      .join('');
+  }
+
+  /**
+   * Handle incoming chat message with streaming response
    */
   async onChatMessage(
-    onFinish: (response: Message) => void
+    onFinish: StreamTextOnFinishCallback<ToolSet>
   ): Promise<Response | undefined> {
-    await this.ensureSchema();
+    console.log('[SLCAgent] onChatMessage called');
+    console.log('[SLCAgent] Agent name (canvasId):', this.name);
+    console.log('[SLCAgent] Message count:', this.messages.length);
+    console.log('[SLCAgent] CF_ACCOUNT_ID:', this.env.CF_ACCOUNT_ID ? 'set' : 'NOT SET');
+    console.log('[SLCAgent] CF_GATEWAY_ID:', this.env.CF_GATEWAY_ID ? 'set' : 'NOT SET');
+    console.log('[SLCAgent] ANTHROPIC_API_KEY:', this.env.ANTHROPIC_API_KEY ? 'set' : 'NOT SET');
 
-    // Update status
     this.setStatus('thinking', 'Processing your message...');
 
     try {
-      // Phase 1 will implement actual AI chat
-      // For now, return a stub response
-      const stubMessage: Message = {
-        role: 'assistant',
-        content:
-          'SLCAgent is under construction. Phase 1 will enable streaming chat with canvas tools and knowledge base search.',
-      };
+      // Get canvas context
+      this.setStatus('searching', 'Gathering context...');
+      const canvasContext = await this.getCanvasContext();
+      const systemPrompt = buildSystemPrompt(canvasContext);
 
-      // Store the response
-      await this.storeMessage('assistant', stubMessage.content);
+      // Create Anthropic client via AI Gateway (per design.md specification)
+      // If CF_AIG_TOKEN is set, the gateway has Authenticated Gateway enabled
+      const defaultHeaders: Record<string, string> = {};
+      if (this.env.CF_AIG_TOKEN) {
+        defaultHeaders['cf-aig-authorization'] = `Bearer ${this.env.CF_AIG_TOKEN}`;
+      }
 
-      // Reset status
-      this.setStatus('idle');
-
-      // Finish with the response
-      onFinish(stubMessage);
-
-      return undefined; // Let SDK handle response serialization
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.setStatus('error', errorMessage);
-
-      onFinish({
-        role: 'assistant',
-        content: `I encountered an error: ${errorMessage}. Please try again.`,
+      const client = new Anthropic({
+        apiKey: this.env.ANTHROPIC_API_KEY,
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${this.env.CF_ACCOUNT_ID}/${this.env.CF_GATEWAY_ID}/anthropic`,
+        defaultHeaders,
       });
 
-      return undefined;
+      this.setStatus('thinking', 'Generating response...');
+
+      // Convert UIMessages to Anthropic message format
+      const anthropicMessages: Anthropic.MessageParam[] = this.messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: this.getMessageText(m),
+        }));
+
+      console.log('[SLCAgent] Sending', anthropicMessages.length, 'messages to Anthropic');
+
+      // Use Vercel AI SDK utilities to create UI message stream
+      const textPartId = crypto.randomUUID();
+      const toolContext = this; // For tool execution
+
+      const uiStream = createUIMessageStream({
+        execute: async ({ writer }) => {
+          try {
+            let currentMessages = [...anthropicMessages];
+            let continueLoop = true;
+            const maxSteps = 5;
+            let step = 0;
+
+            while (continueLoop && step < maxSteps) {
+              step++;
+              console.log(`[SLCAgent] Step ${step}/${maxSteps}`);
+
+              // Create streaming response with tools
+              const stream = client.messages.stream({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 4096,
+                system: systemPrompt,
+                messages: currentMessages,
+                tools: ANTHROPIC_TOOLS,
+              });
+
+              let fullText = '';
+              let hasStartedText = false;
+              const toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = [];
+
+              // Process stream events
+              for await (const event of stream) {
+                if (event.type === 'content_block_start') {
+                  if (event.content_block.type === 'text' && !hasStartedText) {
+                    writer.write({ type: 'text-start', id: textPartId });
+                    hasStartedText = true;
+                  }
+                } else if (event.type === 'content_block_delta') {
+                  if (event.delta.type === 'text_delta') {
+                    const text = event.delta.text;
+                    fullText += text;
+                    writer.write({ type: 'text-delta', id: textPartId, delta: text });
+                  } else if (event.delta.type === 'input_json_delta') {
+                    // Tool input is being streamed - we'll get full input at end
+                  }
+                } else if (event.type === 'content_block_stop') {
+                  // Content block finished
+                } else if (event.type === 'message_delta') {
+                  // Check stop reason
+                  if (event.delta.stop_reason === 'tool_use') {
+                    console.log('[SLCAgent] Tool use detected');
+                  }
+                }
+              }
+
+              // Get final message to extract tool calls
+              const finalMessage = await stream.finalMessage();
+
+              // Close text if we started it
+              if (hasStartedText) {
+                writer.write({ type: 'text-end', id: textPartId });
+              }
+
+              // Check for tool use
+              const toolUseBlocks = finalMessage.content.filter(
+                (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+              );
+
+              if (toolUseBlocks.length > 0) {
+                console.log(`[SLCAgent] Executing ${toolUseBlocks.length} tool(s)`);
+
+                // Build tool results
+                const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
+                for (const toolBlock of toolUseBlocks) {
+                  console.log(`[SLCAgent] Executing tool: ${toolBlock.name}`);
+                  try {
+                    const result = await executeTool(
+                      toolContext,
+                      toolBlock.name,
+                      toolBlock.input as Record<string, unknown>
+                    );
+                    toolResults.push({
+                      type: 'tool_result',
+                      tool_use_id: toolBlock.id,
+                      content: JSON.stringify(result),
+                    });
+                    console.log(`[SLCAgent] Tool ${toolBlock.name} succeeded`);
+                  } catch (error) {
+                    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+                    console.error(`[SLCAgent] Tool ${toolBlock.name} failed:`, errorMsg);
+                    toolResults.push({
+                      type: 'tool_result',
+                      tool_use_id: toolBlock.id,
+                      content: `Error: ${errorMsg}`,
+                      is_error: true,
+                    });
+                  }
+                }
+
+                // Add assistant message and tool results to continue conversation
+                currentMessages.push({
+                  role: 'assistant',
+                  content: finalMessage.content,
+                });
+                currentMessages.push({
+                  role: 'user',
+                  content: toolResults,
+                });
+
+                // Continue loop to get Claude's response after tool execution
+                continueLoop = true;
+              } else {
+                // No tool use, we're done
+                continueLoop = false;
+              }
+
+              console.log(`[SLCAgent] Step ${step} complete, text length: ${fullText.length}`);
+            }
+
+            // Note: Don't manually write 'finish' - createUIMessageStream handles it
+            // when the execute function completes successfully
+            console.log('[SLCAgent] Stream finished');
+            this.setStatus('idle', '');
+          } catch (error) {
+            console.error('[SLCAgent] Stream error:', error);
+            writer.write({
+              type: 'error',
+              errorText: error instanceof Error ? error.message : 'Unknown error',
+            });
+            this.setStatus('error', 'Stream failed');
+          }
+        },
+      });
+
+      // Return as UI message stream response
+      return createUIMessageStreamResponse({ stream: uiStream });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[SLCAgent] Chat error:', error);
+      console.error('[SLCAgent] Error stack:', error instanceof Error ? error.stack : 'no stack');
+      this.setStatus('error', errorMessage);
+      throw error;
     }
   }
 }

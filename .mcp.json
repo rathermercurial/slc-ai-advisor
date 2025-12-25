@@ -11,6 +11,18 @@
     "cloudflare-builds": {
       "type": "http",
       "url": "https://builds.mcp.cloudflare.com/mcp"
+    },
+    "cloudflare-ai-gateway": {
+      "type": "http",
+      "url": "https://ai-gateway.mcp.cloudflare.com/mcp"
+    },
+    "cloudflare-observability": {
+      "type": "http",
+      "url": "https://observability.mcp.cloudflare.com/mcp"
+    },
+    "cloudflare-browser": {
+      "type": "http",
+      "url": "https://browser.mcp.cloudflare.com/mcp"
     }
   }
 }

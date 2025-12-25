@@ -86,3 +86,65 @@ wrangler deploy      # Deploy to Cloudflare
 
 - **spec-driven** - Requirements → Design → Tasks → Implementation workflow
 - **cloudflare** - Cloudflare Workers patterns and documentation
+
+## Cloudflare Skill Files
+
+The cloudflare skill (`.claude/skills/cloudflare/`) includes project-specific patterns:
+
+| File | Content |
+|------|---------|
+| `SKILL.md` | Entry point, code standards, wrangler.jsonc template |
+| `REFERENCE.md` | API quick reference (KV, D1, R2, DO, Queues, Vectorize, AI) |
+| `EXAMPLES.md` | Working code examples |
+| `DURABLE-OBJECTS.md` | SQLite storage, WebSocket hibernation, alarms |
+| `VECTORIZE.md` | Metadata filtering for Selection Matrix, bge-m3 patterns |
+| `AGENTS-SDK.md` | useAgentChat, AIChatAgent, state management |
+| `AI-GATEWAY.md` | Routing, caching, logging, debugging |
+| `MCP-PATTERNS.md` | When to use each MCP server |
+
+## Subagents Available
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| `cloudflare-lookup` | Sonnet | Knowledge retrieval, doc search, MCP discovery. Use for "how do I..." questions. |
+| `cloudflare-developer` | Opus | Full implementation, code writing, deployment. Use for actual development work. |
+
+**Delegation pattern:**
+- Questions → `cloudflare-lookup` (fast, read-only)
+- Implementation → `cloudflare-developer` (full power)
+
+## MCP Servers
+
+| Server | Purpose |
+|--------|---------|
+| `cloudflare-docs` | Documentation search |
+| `cloudflare-bindings` | Manage Workers, KV, D1, R2, Hyperdrive |
+| `cloudflare-builds` | CI/CD debugging, build logs |
+| `cloudflare-ai-gateway` | AI request monitoring, logs |
+| `cloudflare-browser` | Fetch external URLs |
+| `cloudflare-observability` | Production logs, metrics, traces |
+
+### Collaborator Setup
+
+MCP servers are defined in `.mcp.json`. To enable them, add to your user settings (`~/.claude/settings.json`):
+
+```json
+{
+  "enableAllProjectMcpServers": true
+}
+```
+
+Or selectively enable:
+
+```json
+{
+  "enabledMcpjsonServers": [
+    "cloudflare-docs",
+    "cloudflare-bindings",
+    "cloudflare-builds",
+    "cloudflare-ai-gateway",
+    "cloudflare-observability",
+    "cloudflare-browser"
+  ]
+}
+```

@@ -20,6 +20,10 @@ tmp/
 *.tmp
 *.log
 
+# Claude Code local settings
+.claude/settings.local.json
+.claude/temp/
+
 # TypeScript
 *.tsbuildinfo
 

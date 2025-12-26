@@ -1,8 +1,12 @@
 /**
  * Anthropic-format tool definitions for SLCAgent
  *
- * Converts our tool definitions to Anthropic's expected format
- * and provides execution handlers.
+ * Unified tool definitions combining:
+ * - Canvas tools: Update/read canvas sections
+ * - Knowledge tools: Search methodology, examples, knowledge base
+ *
+ * @see https://github.com/rathermercurial/slc/issues/38 - Canvas tools
+ * @see https://github.com/rathermercurial/slc/issues/39 - Knowledge tools
  */
 
 import type Anthropic from '@anthropic-ai/sdk';
@@ -14,9 +18,10 @@ import type { AgentState } from './SLCAgent';
  */
 export interface ToolContext {
   name: string; // Agent instance name = canvasId
-  state: AgentState; // Property getter from AIChatAgent
+  state: AgentState;
   setState(state: AgentState): void;
   getCanvasStub(canvasId: string): DurableObjectStub<CanvasDO>;
+  env: Env; // For Vectorize and AI bindings
 }
 
 /**
@@ -132,6 +137,118 @@ export const ANTHROPIC_TOOLS: Anthropic.Tool[] = [
       required: [],
     },
   },
+  // Knowledge tools
+  {
+    name: 'search_methodology',
+    description:
+      'Search the Social Lean Canvas methodology documentation. Use this to find guidance on how to fill canvas sections, best practices, and conceptual explanations.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language query about SLC methodology',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results (default: 5, max: 10)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'search_examples',
+    description:
+      'Search venture examples from the knowledge base. Use Selection Matrix dimensions to filter for relevant examples matching the current venture profile.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language query about venture examples',
+        },
+        filters: {
+          type: 'object',
+          description: 'Selection Matrix dimension filters',
+          properties: {
+            stage: {
+              type: 'string',
+              enum: ['idea', 'validation', 'growth', 'scale'],
+              description: 'Venture development stage',
+            },
+            impactArea: {
+              type: 'string',
+              description: 'Primary impact area (e.g., health, education, environment)',
+            },
+            mechanism: {
+              type: 'string',
+              enum: ['product', 'service', 'platform', 'hybrid'],
+              description: 'How impact is delivered',
+            },
+            legalStructure: {
+              type: 'string',
+              enum: ['nonprofit', 'forprofit', 'hybrid', 'cooperative'],
+              description: 'Legal/organizational structure',
+            },
+            revenueSource: {
+              type: 'string',
+              enum: ['earned', 'grants', 'donations', 'mixed'],
+              description: 'Primary revenue source',
+            },
+            fundingSource: {
+              type: 'string',
+              enum: ['bootstrapped', 'angel', 'vc', 'grants', 'crowdfunding'],
+              description: 'Primary funding source',
+            },
+            industry: {
+              type: 'string',
+              description: 'Industry vertical',
+            },
+          },
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results (default: 3, max: 10)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'search_knowledge_base',
+    description:
+      'General semantic search across the entire knowledge base including methodology docs, examples, and reference materials.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language search query',
+        },
+        contentType: {
+          type: 'string',
+          enum: ['methodology', 'example', 'reference', 'all'],
+          description: 'Filter by content type (default: all)',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results (default: 5, max: 20)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'get_venture_profile',
+    description:
+      'Get the current venture dimension profile from the canvas. Returns inferred Selection Matrix dimensions based on canvas content.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 /**
@@ -210,7 +327,121 @@ export async function executeTool(
       return canvas;
     }
 
+    // Knowledge tools
+    case 'search_methodology': {
+      setStatus('searching', 'Searching methodology...');
+      const result = await searchKnowledge(ctx.env, {
+        query: toolInput.query as string,
+        contentType: 'methodology',
+        limit: Math.min((toolInput.limit as number) || 5, 10),
+      });
+      return result;
+    }
+
+    case 'search_examples': {
+      setStatus('searching', 'Searching examples...');
+      const filters = (toolInput.filters as SelectionMatrixFilters) || {};
+      const result = await searchKnowledge(ctx.env, {
+        query: toolInput.query as string,
+        contentType: 'example',
+        filters,
+        limit: Math.min((toolInput.limit as number) || 3, 10),
+      });
+      return result;
+    }
+
+    case 'search_knowledge_base': {
+      setStatus('searching', 'Searching knowledge base...');
+      const contentType = (toolInput.contentType as string) || 'all';
+      const result = await searchKnowledge(ctx.env, {
+        query: toolInput.query as string,
+        contentType: contentType === 'all' ? undefined : contentType,
+        limit: Math.min((toolInput.limit as number) || 5, 20),
+      });
+      return result;
+    }
+
+    case 'get_venture_profile': {
+      setStatus('searching', 'Getting venture profile...');
+      const profile = await stub.getVentureProfile();
+      return profile;
+    }
+
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }
+}
+
+/**
+ * Selection Matrix dimension filters for knowledge search
+ */
+interface SelectionMatrixFilters {
+  stage?: 'idea' | 'validation' | 'growth' | 'scale';
+  impactArea?: string;
+  mechanism?: 'product' | 'service' | 'platform' | 'hybrid';
+  legalStructure?: 'nonprofit' | 'forprofit' | 'hybrid' | 'cooperative';
+  revenueSource?: 'earned' | 'grants' | 'donations' | 'mixed';
+  fundingSource?: 'bootstrapped' | 'angel' | 'vc' | 'grants' | 'crowdfunding';
+  industry?: string;
+}
+
+/**
+ * Search options for knowledge base queries
+ */
+interface SearchOptions {
+  query: string;
+  contentType?: string;
+  filters?: SelectionMatrixFilters;
+  limit?: number;
+}
+
+/**
+ * Search the knowledge base using Vectorize
+ */
+async function searchKnowledge(
+  env: Env,
+  options: SearchOptions
+): Promise<{ results: Array<{ content: string; metadata: Record<string, unknown>; score: number }> }> {
+  const { query, contentType, filters, limit = 5 } = options;
+
+  // Generate embedding for query using bge-m3
+  const embeddingResponse = await env.AI.run('@cf/baai/bge-m3', {
+    text: [query],
+  });
+  const embedding = embeddingResponse.data[0];
+
+  // Build metadata filter
+  const metadataFilter: Record<string, unknown> = {};
+  if (contentType) {
+    metadataFilter.contentType = contentType;
+  }
+  if (filters) {
+    if (filters.stage) metadataFilter.stage = filters.stage;
+    if (filters.impactArea) metadataFilter.impactArea = filters.impactArea;
+    if (filters.mechanism) metadataFilter.mechanism = filters.mechanism;
+    if (filters.legalStructure) metadataFilter.legalStructure = filters.legalStructure;
+    if (filters.revenueSource) metadataFilter.revenueSource = filters.revenueSource;
+    if (filters.fundingSource) metadataFilter.fundingSource = filters.fundingSource;
+    if (filters.industry) metadataFilter.industry = filters.industry;
+  }
+
+  // Query Vectorize with metadata filtering
+  const queryOptions: VectorizeQueryOptions = {
+    topK: limit,
+    returnMetadata: 'all',
+  };
+  if (Object.keys(metadataFilter).length > 0) {
+    queryOptions.filter = metadataFilter;
+  }
+
+  const vectorResults = await env.VECTORIZE.query(embedding, queryOptions);
+
+  // Format results
+  const results = vectorResults.matches.map((match) => ({
+    content: (match.metadata?.content as string) || '',
+    metadata: match.metadata || {},
+    score: match.score,
+  }));
+
+  return { results };
 }

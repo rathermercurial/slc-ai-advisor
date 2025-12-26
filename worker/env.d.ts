@@ -21,6 +21,12 @@ declare global {
 
     // Analytics Engine for metrics
     SLC_ANALYTICS: AnalyticsEngineDataset;
+
+    // Vectorize for knowledge base search
+    VECTORIZE: Vectorize;
+
+    // AI for embeddings
+    AI: Ai;
   }
 }
 

@@ -53,6 +53,7 @@ function App() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [canvasId, setCanvasId] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   // Initialize or restore session
   useEffect(() => {
@@ -60,7 +61,8 @@ function App() {
       const savedSession = localStorage.getItem('sessionId');
       const savedCanvas = localStorage.getItem('canvasId');
 
-      if (savedSession && savedCanvas) {
+      // Validate stored IDs match (they should be the same)
+      if (savedSession && savedCanvas && savedSession === savedCanvas) {
         // Check if session exists on server
         try {
           const response = await fetch(`/api/session/${savedSession}`);
@@ -74,6 +76,10 @@ function App() {
           console.warn('Session check failed, creating new session');
         }
       }
+
+      // Clear any stale/mismatched session data
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('canvasId');
 
       // Create new session
       try {
@@ -91,10 +97,11 @@ function App() {
           setCanvasId(data.canvasId);
           setSessionReady(true);
         } else {
-          console.error('Failed to create session');
+          setSessionError('Failed to create session. Please refresh the page.');
         }
       } catch (err) {
         console.error('Session creation error:', err);
+        setSessionError('Network error. Please check your connection and refresh.');
       }
     }
 
@@ -111,7 +118,7 @@ function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Show loading until session is ready
+  // Show loading or error until session is ready
   if (!sessionReady || !sessionId || !canvasId) {
     return (
       <div className="app">
@@ -119,7 +126,16 @@ function App() {
           <h1>SLC AI Advisor</h1>
         </header>
         <main className="app-main" style={{ justifyContent: 'center', alignItems: 'center' }}>
-          <div>Initializing session...</div>
+          {sessionError ? (
+            <div style={{ color: 'var(--color-error, #e53e3e)', textAlign: 'center' }}>
+              <p>{sessionError}</p>
+              <button onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div>Initializing session...</div>
+          )}
         </main>
       </div>
     );

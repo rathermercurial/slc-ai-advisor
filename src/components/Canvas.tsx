@@ -59,6 +59,7 @@ export function Canvas({ canvasId }: CanvasProps) {
 
   const [showImpactPanel, setShowImpactPanel] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load canvas state from backend on mount
   useEffect(() => {
@@ -81,9 +82,12 @@ export function Canvas({ canvasId }: CanvasProps) {
           if (data.impactModel) {
             setImpactModel(data.impactModel);
           }
+        } else {
+          setLoadError('Failed to load canvas data');
         }
       } catch (err) {
         console.error('Failed to load canvas:', err);
+        setLoadError('Network error loading canvas');
       } finally {
         setIsLoading(false);
       }
@@ -138,11 +142,20 @@ export function Canvas({ canvasId }: CanvasProps) {
     }
   }, [canvasId]);
 
-  // Show loading state
-  if (isLoading) {
+  // Show loading or error state
+  if (isLoading || loadError) {
     return (
       <div className="slc-canvas" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div>Loading canvas...</div>
+        {loadError ? (
+          <div style={{ color: 'var(--color-error, #e53e3e)', textAlign: 'center' }}>
+            <p>{loadError}</p>
+            <button onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div>Loading canvas...</div>
+        )}
       </div>
     );
   }

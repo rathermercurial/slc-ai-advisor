@@ -60,12 +60,16 @@ export async function handleSessionRoute(
       }
 
       // Check if canvas exists by trying to fetch it
-      // Since DOs are created on-demand, we check if it has been initialized
+      // Note: DOs are created on-demand, so we check if it has been initialized
+      // by verifying it has a valid createdAt timestamp
       const stub = getCanvasStub(env, sessionId);
 
       try {
         const canvas = await stub.getFullCanvas();
         // Session exists if canvas has been created (has a createdAt timestamp)
+        // Note: This will create an empty canvas for unknown sessions, but that's
+        // acceptable since UUIDs are unpredictable. The canvas will be orphaned
+        // if the user doesn't use it.
         if (canvas.createdAt) {
           return jsonResponse({
             exists: true,
@@ -74,8 +78,9 @@ export async function handleSessionRoute(
             completionPercentage: canvas.completionPercentage,
           });
         }
-      } catch {
-        // Canvas doesn't exist or error occurred
+      } catch (error) {
+        console.error('Session check error:', error);
+        return jsonResponse({ error: 'Failed to check session' }, 500);
       }
 
       return jsonResponse({ exists: false }, 404);

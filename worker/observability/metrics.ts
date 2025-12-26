@@ -10,7 +10,7 @@
  * - indexes: Indexed fields (up to 1) - for efficient filtering
  *
  * Usage:
- *   const metrics = createMetrics(env.ANALYTICS);
+ *   const metrics = createMetrics(env.SLC_ANALYTICS);
  *   metrics.trackEvent('message_received', { sessionId: 'abc', durationMs: 150 });
  */
 

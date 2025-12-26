@@ -20,7 +20,7 @@ declare global {
     SLC_AGENT: DurableObjectNamespace<SLCAgent>;
 
     // Analytics Engine for metrics
-    ANALYTICS: AnalyticsEngineDataset;
+    SLC_ANALYTICS: AnalyticsEngineDataset;
   }
 }
 

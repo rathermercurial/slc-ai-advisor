@@ -33,7 +33,7 @@ export default {
     const url = new URL(request.url);
     const requestId = getOrCreateRequestId(request);
     const logger = createLogger('worker', requestId);
-    const metrics = createMetrics(env.ANALYTICS);
+    const metrics = createMetrics(env.SLC_ANALYTICS);
     const startTime = Date.now();
 
     try {
@@ -134,7 +134,7 @@ async function checkHealth(env: Env): Promise<{
   }
 
   // Check Analytics Engine binding
-  if (env.ANALYTICS) {
+  if (env.SLC_ANALYTICS) {
     dependencies.push({ name: 'analytics-engine', status: 'ok' });
   } else {
     dependencies.push({ name: 'analytics-engine', status: 'error', message: 'Binding not available' });

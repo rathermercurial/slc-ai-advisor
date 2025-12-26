@@ -57,8 +57,8 @@ binding = "AI"
 # Analytics Engine for metrics
 # Query via: https://developers.cloudflare.com/analytics/analytics-engine/sql-api/
 [[analytics_engine_datasets]]
-binding = "ANALYTICS"
-dataset = "slc_metrics"
+binding = "SLC_ANALYTICS"
+dataset = "slc_events"
 
 # Environment Variables (set via wrangler secret or dashboard)
 # ANTHROPIC_API_KEY - Set via: wrangler secret put ANTHROPIC_API_KEY

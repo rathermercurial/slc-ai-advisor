@@ -235,6 +235,47 @@ Minimum 20 characters required.`,
 ];
 
 /**
+ * Valid customer section values
+ */
+const VALID_CUSTOMER_SECTIONS: CustomerSectionId[] = [
+  'customers',
+  'jobsToBeDone',
+  'valueProposition',
+  'solution',
+];
+
+/**
+ * Valid economic section values
+ */
+const VALID_ECONOMIC_SECTIONS: EconomicSectionId[] = [
+  'channels',
+  'revenue',
+  'costs',
+  'advantage',
+];
+
+/**
+ * Valid impact field values
+ */
+const VALID_IMPACT_FIELDS: ImpactModelField[] = [
+  'issue',
+  'participants',
+  'activities',
+  'outputs',
+  'shortTermOutcomes',
+  'mediumTermOutcomes',
+  'longTermOutcomes',
+  'impact',
+];
+
+/**
+ * Validate that a value is a non-empty string
+ */
+function validateContent(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+/**
  * Execute a canvas tool call against CanvasDO
  *
  * Routes the tool call to the appropriate Model Manager through CanvasDO
@@ -250,34 +291,80 @@ export async function executeCanvasTool(
 
     switch (toolName) {
       case 'update_purpose': {
-        const input = toolInput as UpdatePurposeInput;
-        result = await canvasStub.updateSection('purpose', input.content);
+        if (!validateContent(toolInput.content)) {
+          return {
+            success: false,
+            message: 'Invalid input: content must be a non-empty string',
+          };
+        }
+        result = await canvasStub.updateSection('purpose', toolInput.content);
         break;
       }
 
       case 'update_customer_section': {
-        const input = toolInput as UpdateCustomerSectionInput;
-        result = await canvasStub.updateSection(input.section, input.content);
+        const section = toolInput.section as CustomerSectionId;
+        if (!VALID_CUSTOMER_SECTIONS.includes(section)) {
+          return {
+            success: false,
+            message: `Invalid section: ${section}. Valid sections: ${VALID_CUSTOMER_SECTIONS.join(', ')}`,
+          };
+        }
+        if (!validateContent(toolInput.content)) {
+          return {
+            success: false,
+            message: 'Invalid input: content must be a non-empty string',
+          };
+        }
+        result = await canvasStub.updateSection(section, toolInput.content);
         break;
       }
 
       case 'update_economic_section': {
-        const input = toolInput as UpdateEconomicSectionInput;
-        result = await canvasStub.updateSection(input.section, input.content);
+        const section = toolInput.section as EconomicSectionId;
+        if (!VALID_ECONOMIC_SECTIONS.includes(section)) {
+          return {
+            success: false,
+            message: `Invalid section: ${section}. Valid sections: ${VALID_ECONOMIC_SECTIONS.join(', ')}`,
+          };
+        }
+        if (!validateContent(toolInput.content)) {
+          return {
+            success: false,
+            message: 'Invalid input: content must be a non-empty string',
+          };
+        }
+        result = await canvasStub.updateSection(section, toolInput.content);
         break;
       }
 
       case 'update_impact_field': {
-        const input = toolInput as UpdateImpactFieldInput;
+        const field = toolInput.field as ImpactModelField;
+        if (!VALID_IMPACT_FIELDS.includes(field)) {
+          return {
+            success: false,
+            message: `Invalid field: ${field}. Valid fields: ${VALID_IMPACT_FIELDS.join(', ')}`,
+          };
+        }
+        if (!validateContent(toolInput.content)) {
+          return {
+            success: false,
+            message: 'Invalid input: content must be a non-empty string',
+          };
+        }
         // Impact Model fields route through dedicated updateImpactField method
         // which handles the 8-field causality chain validation
-        result = await canvasStub.updateImpactField(input.field, input.content);
+        result = await canvasStub.updateImpactField(field, toolInput.content);
         break;
       }
 
       case 'update_key_metrics': {
-        const input = toolInput as UpdateKeyMetricsInput;
-        result = await canvasStub.updateSection('keyMetrics', input.content);
+        if (!validateContent(toolInput.content)) {
+          return {
+            success: false,
+            message: 'Invalid input: content must be a non-empty string',
+          };
+        }
+        result = await canvasStub.updateSection('keyMetrics', toolInput.content);
         break;
       }
 

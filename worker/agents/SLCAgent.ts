@@ -18,7 +18,6 @@ import {
   type ToolResult,
   type CanvasToolName,
 } from './anthropic-tools';
-import type { UpdateResult } from '../../src/models';
 
 /**
  * Pending canvas update for human-in-the-loop confirmation

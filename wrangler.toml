@@ -54,6 +54,12 @@ deleted_classes = ["UserSession"]
 [ai]
 binding = "AI"
 
+# Analytics Engine for metrics
+# Query via: https://developers.cloudflare.com/analytics/analytics-engine/sql-api/
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "slc_metrics"
+
 # Environment Variables (set via wrangler secret or dashboard)
 # ANTHROPIC_API_KEY - Set via: wrangler secret put ANTHROPIC_API_KEY
 # CF_ACCOUNT_ID - Set via: wrangler secret put CF_ACCOUNT_ID

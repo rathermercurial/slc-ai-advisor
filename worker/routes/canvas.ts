@@ -46,7 +46,8 @@ const MAX_CONTENT_LENGTH = 50000;
  */
 export async function handleCanvasRoute(
   request: Request,
-  env: Env
+  env: Env,
+  requestId?: string
 ): Promise<Response> {
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean);
@@ -63,19 +64,19 @@ export async function handleCanvasRoute(
       return jsonResponse({
         canvasId,
         canvas,
-      });
+      }, 200, requestId);
     }
 
     // All other routes require a canvas ID
     if (parts.length < 3) {
-      return jsonResponse({ error: 'Canvas ID required' }, 400);
+      return jsonResponse({ error: 'Canvas ID required' }, 400, requestId);
     }
 
     const canvasId = parts[2];
 
     // Validate canvas ID format
     if (!UUID_REGEX.test(canvasId)) {
-      return jsonResponse({ error: 'Invalid canvas ID format' }, 400);
+      return jsonResponse({ error: 'Invalid canvas ID format' }, 400, requestId);
     }
 
     const stub = getCanvasStub(env, canvasId);
@@ -83,7 +84,7 @@ export async function handleCanvasRoute(
     // GET /api/canvas/:id - Get full canvas
     if (parts.length === 3 && request.method === 'GET') {
       const canvas = await stub.getFullCanvas();
-      return jsonResponse(canvas);
+      return jsonResponse(canvas, 200, requestId);
     }
 
     // PUT /api/canvas/:id/section/:key - Update section
@@ -92,21 +93,21 @@ export async function handleCanvasRoute(
 
       // Validate section key
       if (!CANVAS_SECTIONS.includes(sectionKey as CanvasSectionId)) {
-        return jsonResponse({ error: `Invalid section: ${sectionKey}` }, 400);
+        return jsonResponse({ error: `Invalid section: ${sectionKey}` }, 400, requestId);
       }
 
       const body = await request.json().catch(() => ({})) as { content?: string };
       if (typeof body.content !== 'string') {
-        return jsonResponse({ error: 'content is required' }, 400);
+        return jsonResponse({ error: 'content is required' }, 400, requestId);
       }
 
       // Validate content length
       if (body.content.length > MAX_CONTENT_LENGTH) {
-        return jsonResponse({ error: 'Content too large (max 50KB)' }, 413);
+        return jsonResponse({ error: 'Content too large (max 50KB)' }, 413, requestId);
       }
 
       const result = await stub.updateSection(sectionKey as CanvasSectionId, body.content);
-      return jsonResponse(result);
+      return jsonResponse(result, 200, requestId);
     }
 
     // GET /api/canvas/:id/model/:model - Get model view
@@ -115,20 +116,20 @@ export async function handleCanvasRoute(
 
       switch (model) {
         case 'customer':
-          return jsonResponse(await stub.getCustomerModel());
+          return jsonResponse(await stub.getCustomerModel(), 200, requestId);
         case 'economic':
-          return jsonResponse(await stub.getEconomicModel());
+          return jsonResponse(await stub.getEconomicModel(), 200, requestId);
         case 'impact':
-          return jsonResponse(await stub.getImpactModel());
+          return jsonResponse(await stub.getImpactModel(), 200, requestId);
         default:
-          return jsonResponse({ error: `Unknown model: ${model}` }, 400);
+          return jsonResponse({ error: `Unknown model: ${model}` }, 400, requestId);
       }
     }
 
     // GET /api/canvas/:id/venture-profile - Get venture profile
     if (parts.length === 4 && parts[3] === 'venture-profile' && request.method === 'GET') {
       const profile = await stub.getVentureProfile();
-      return jsonResponse(profile);
+      return jsonResponse(profile, 200, requestId);
     }
 
     // PUT /api/canvas/:id/venture-profile - Update dimension
@@ -141,12 +142,12 @@ export async function handleCanvasRoute(
       };
 
       if (!body.dimension) {
-        return jsonResponse({ error: 'dimension is required' }, 400);
+        return jsonResponse({ error: 'dimension is required' }, 400, requestId);
       }
 
       // Validate dimension key
       if (!VALID_DIMENSIONS.includes(body.dimension)) {
-        return jsonResponse({ error: `Invalid dimension: ${body.dimension}` }, 400);
+        return jsonResponse({ error: `Invalid dimension: ${body.dimension}` }, 400, requestId);
       }
 
       await stub.updateVentureDimension(
@@ -157,13 +158,13 @@ export async function handleCanvasRoute(
       );
 
       const profile = await stub.getVentureProfile();
-      return jsonResponse(profile);
+      return jsonResponse(profile, 200, requestId);
     }
 
     // GET /api/canvas/:id/dimensions-for-filtering - Get filtered dimensions
     if (parts.length === 4 && parts[3] === 'dimensions-for-filtering' && request.method === 'GET') {
       const dimensions = await stub.getDimensionsForFiltering();
-      return jsonResponse(dimensions);
+      return jsonResponse(dimensions, 200, requestId);
     }
 
     // GET /api/canvas/:id/export/:format - Export canvas
@@ -171,26 +172,25 @@ export async function handleCanvasRoute(
       const format = parts[4];
 
       if (format !== 'json' && format !== 'md') {
-        return jsonResponse({ error: 'Format must be json or md' }, 400);
+        return jsonResponse({ error: 'Format must be json or md' }, 400, requestId);
       }
 
       const exported = await stub.exportCanvas(format);
+      const headers: Record<string, string> = {
+        'Content-Disposition': `attachment; filename="canvas-${canvasId}.${format}"`,
+      };
 
-      if (format === 'json') {
-        return new Response(exported, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Content-Disposition': `attachment; filename="canvas-${canvasId}.json"`,
-          },
-        });
+      if (requestId) {
+        headers['X-Request-ID'] = requestId;
       }
 
-      return new Response(exported, {
-        headers: {
-          'Content-Type': 'text/markdown',
-          'Content-Disposition': `attachment; filename="canvas-${canvasId}.md"`,
-        },
-      });
+      if (format === 'json') {
+        headers['Content-Type'] = 'application/json';
+        return new Response(exported, { headers });
+      }
+
+      headers['Content-Type'] = 'text/markdown';
+      return new Response(exported, { headers });
     }
 
     // PUT /api/canvas/:id/current-section - Set current section
@@ -200,21 +200,22 @@ export async function handleCanvasRoute(
       // Validate section if provided
       if (body.section !== null && body.section !== undefined) {
         if (!CANVAS_SECTIONS.includes(body.section)) {
-          return jsonResponse({ error: `Invalid section: ${body.section}` }, 400);
+          return jsonResponse({ error: `Invalid section: ${body.section}` }, 400, requestId);
         }
       }
 
       await stub.setCurrentSection(body.section ?? null);
 
-      return jsonResponse({ success: true });
+      return jsonResponse({ success: true }, 200, requestId);
     }
 
-    return jsonResponse({ error: 'Not found' }, 404);
+    return jsonResponse({ error: 'Not found' }, 404, requestId);
   } catch (error) {
     console.error('Canvas route error:', error);
     return jsonResponse(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      500
+      500,
+      requestId
     );
   }
 }
@@ -227,11 +228,12 @@ function getCanvasStub(env: Env, canvasId: string): DurableObjectStub<CanvasDO> 
 }
 
 /**
- * Helper to create JSON responses
+ * Helper to create JSON responses with request ID header
  */
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+function jsonResponse(data: unknown, status = 200, requestId?: string): Response {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (requestId) {
+    headers['X-Request-ID'] = requestId;
+  }
+  return new Response(JSON.stringify(data), { status, headers });
 }

@@ -18,6 +18,9 @@ declare global {
     // Durable Objects
     CANVAS: DurableObjectNamespace<CanvasDO>;
     SLC_AGENT: DurableObjectNamespace<SLCAgent>;
+
+    // Analytics Engine for metrics
+    ANALYTICS: AnalyticsEngineDataset;
   }
 }
 

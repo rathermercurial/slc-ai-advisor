@@ -21,6 +21,10 @@ run_worker_first = ["/api/*", "/agents/*"]
 [observability]
 enabled = true
 
+# Enable preview URLs for non-production branch builds
+# See: https://developers.cloudflare.com/workers/configuration/previews/
+preview_urls = true
+
 # Vectorize Index for Knowledge Base
 # NOTE: Create this index via CLI (see spec/slc-ai-advisor-mvp/design.md):
 #   wrangler vectorize create slc-knowledge-base --dimensions 1024 --metric cosine
@@ -54,8 +58,16 @@ deleted_classes = ["UserSession"]
 [ai]
 binding = "AI"
 
+# Analytics Engine for metrics
+# Query via: https://developers.cloudflare.com/analytics/analytics-engine/sql-api/
+[[analytics_engine_datasets]]
+binding = "SLC_ANALYTICS"
+dataset = "slc_events"
+
 # Environment Variables (set via wrangler secret or dashboard)
 # ANTHROPIC_API_KEY - Set via: wrangler secret put ANTHROPIC_API_KEY
+# CF_ACCOUNT_ID - Set via: wrangler secret put CF_ACCOUNT_ID
+# CF_GATEWAY_ID - Set via: wrangler secret put CF_GATEWAY_ID
 
 # Development
 [dev]

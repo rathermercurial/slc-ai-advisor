@@ -37,8 +37,8 @@ class ErrorBoundary extends Component<
  * Two-column layout: Canvas on left (60%), Chat on right (40%).
  * Dark mode toggle in header.
  *
- * Chat uses Cloudflare Agents SDK for real-time WebSocket communication.
- * Session management is handled automatically by the ChatAgent.
+ * Canvas-first flow: A canvas is created before chat begins.
+ * The canvasId is used as the agent session identifier.
  */
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -51,19 +51,24 @@ function App() {
   });
 
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [canvasId, setCanvasId] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   // Initialize or restore session
   useEffect(() => {
     async function initSession() {
-      const saved = localStorage.getItem('sessionId');
+      const savedSession = localStorage.getItem('sessionId');
+      const savedCanvas = localStorage.getItem('canvasId');
 
-      if (saved) {
+      // Validate stored IDs match (they should be the same)
+      if (savedSession && savedCanvas && savedSession === savedCanvas) {
         // Check if session exists on server
         try {
-          const response = await fetch(`/api/session/${saved}`);
+          const response = await fetch(`/api/session/${savedSession}`);
           if (response.ok) {
-            setSessionId(saved);
+            setSessionId(savedSession);
+            setCanvasId(savedCanvas);
             setSessionReady(true);
             return;
           }
@@ -72,24 +77,31 @@ function App() {
         }
       }
 
+      // Clear any stale/mismatched session data
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('canvasId');
+
       // Create new session
       try {
         const response = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ program: 'generic' }),
+          body: JSON.stringify({}),
         });
 
         if (response.ok) {
           const data = await response.json();
           localStorage.setItem('sessionId', data.sessionId);
+          localStorage.setItem('canvasId', data.canvasId);
           setSessionId(data.sessionId);
+          setCanvasId(data.canvasId);
           setSessionReady(true);
         } else {
-          console.error('Failed to create session');
+          setSessionError('Failed to create session. Please refresh the page.');
         }
       } catch (err) {
         console.error('Session creation error:', err);
+        setSessionError('Network error. Please check your connection and refresh.');
       }
     }
 
@@ -106,15 +118,24 @@ function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Show loading until session is ready
-  if (!sessionReady || !sessionId) {
+  // Show loading or error until session is ready
+  if (!sessionReady || !sessionId || !canvasId) {
     return (
       <div className="app">
         <header className="app-header">
           <h1>SLC AI Advisor</h1>
         </header>
         <main className="app-main" style={{ justifyContent: 'center', alignItems: 'center' }}>
-          <div>Initializing session...</div>
+          {sessionError ? (
+            <div style={{ color: 'var(--color-error, #e53e3e)', textAlign: 'center' }}>
+              <p>{sessionError}</p>
+              <button onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div>Initializing session...</div>
+          )}
         </main>
       </div>
     );
@@ -131,18 +152,18 @@ function App() {
               onClick={toggleTheme}
               title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
-              {theme === 'light' ? '🌙' : '☀️'}
+              {theme === 'light' ? 'Dark' : 'Light'}
             </button>
           </div>
         </header>
 
         <main className="app-main">
           <div className="layout-canvas">
-            <Canvas sessionId={sessionId} />
+            <Canvas canvasId={canvasId} />
           </div>
           <div className="layout-chat">
             <ErrorBoundary>
-              <Chat sessionId={sessionId} />
+              <Chat canvasId={canvasId} />
             </ErrorBoundary>
           </div>
         </main>

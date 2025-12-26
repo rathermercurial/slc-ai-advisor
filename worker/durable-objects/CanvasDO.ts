@@ -410,6 +410,21 @@ export class CanvasDO extends DurableObject<Env> {
   }
 
   /**
+   * Update an Impact Model field directly
+   *
+   * Routes to ImpactModelManager for field updates.
+   * Fields: issue, participants, activities, outputs,
+   * shortTermOutcomes, mediumTermOutcomes, longTermOutcomes, impact
+   */
+  async updateImpactField(
+    field: string,
+    content: string
+  ): Promise<UpdateResult> {
+    await this.ensureInitialized();
+    return this.impactManager.updateSection(field, content);
+  }
+
+  /**
    * Get overall canvas completion
    */
   private async getOverallCompletion(): Promise<ModelCompletion> {
@@ -485,6 +500,59 @@ export class CanvasDO extends DurableObject<Env> {
       ...this.impactManager.getModel(),
       completion: this.impactManager.getCompletion(),
       validation: this.impactManager.validate(),
+    };
+  }
+
+  /**
+   * Update the full Impact Model (all 8 fields)
+   * Used by the ImpactPanel for bulk saves
+   */
+  async updateFullImpactModel(impactModel: ImpactModel): Promise<UpdateResult> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    // Determine if all fields are complete
+    const isComplete = [
+      impactModel.issue,
+      impactModel.participants,
+      impactModel.activities,
+      impactModel.outputs,
+      impactModel.shortTermOutcomes,
+      impactModel.mediumTermOutcomes,
+      impactModel.longTermOutcomes,
+      impactModel.impact,
+    ].every(field => field && field.length >= 10);
+
+    sql.exec(
+      `UPDATE impact_model SET
+        issue = ?,
+        participants = ?,
+        activities = ?,
+        outputs = ?,
+        short_term_outcomes = ?,
+        medium_term_outcomes = ?,
+        long_term_outcomes = ?,
+        impact = ?,
+        is_complete = ?,
+        updated_at = ?
+      WHERE id = 'impact'`,
+      impactModel.issue || '',
+      impactModel.participants || '',
+      impactModel.activities || '',
+      impactModel.outputs || '',
+      impactModel.shortTermOutcomes || '',
+      impactModel.mediumTermOutcomes || '',
+      impactModel.longTermOutcomes || '',
+      impactModel.impact || '',
+      isComplete ? 1 : 0,
+      now
+    );
+
+    return {
+      success: true,
+      updatedSection: 'impact',
+      completion: await this.getOverallCompletion(),
     };
   }
 

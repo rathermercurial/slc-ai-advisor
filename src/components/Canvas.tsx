@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CanvasSection } from './CanvasSection';
 import { ImpactPanel } from './ImpactPanel';
 import {
@@ -9,7 +9,7 @@ import {
 } from '../types/canvas';
 
 interface CanvasProps {
-  sessionId: string;
+  canvasId: string;
 }
 
 /**
@@ -42,9 +42,9 @@ const SECTION_HELPER_TEXT: Record<CanvasSectionId, string> = {
  * The Social Lean Canvas with official layout.
  * Layout matches socialleancanvas.com
  */
-export function Canvas({ sessionId }: CanvasProps) {
+export function Canvas({ canvasId }: CanvasProps) {
   const [sections, setSections] = useState(() =>
-    createEmptySections(sessionId).reduce(
+    createEmptySections(canvasId).reduce(
       (acc, section) => {
         acc[section.sectionKey] = section.content;
         return acc;
@@ -54,24 +54,111 @@ export function Canvas({ sessionId }: CanvasProps) {
   );
 
   const [impactModel, setImpactModel] = useState<ImpactModel>(() =>
-    createEmptyImpactModel(sessionId)
+    createEmptyImpactModel(canvasId)
   );
 
   const [showImpactPanel, setShowImpactPanel] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const handleSectionSave = (sectionKey: CanvasSectionId, content: string) => {
+  // Load canvas state from backend on mount
+  useEffect(() => {
+    async function loadCanvas() {
+      try {
+        const response = await fetch(`/api/canvas/${canvasId}`);
+        if (response.ok) {
+          const data = await response.json();
+
+          // Update sections from backend
+          if (data.sections) {
+            const sectionsMap: Record<CanvasSectionId, string> = {} as Record<CanvasSectionId, string>;
+            for (const section of data.sections) {
+              sectionsMap[section.sectionKey as CanvasSectionId] = section.content || '';
+            }
+            setSections(sectionsMap);
+          }
+
+          // Update impact model from backend
+          if (data.impactModel) {
+            setImpactModel(data.impactModel);
+          }
+        } else {
+          setLoadError('Failed to load canvas data');
+        }
+      } catch (err) {
+        console.error('Failed to load canvas:', err);
+        setLoadError('Network error loading canvas');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadCanvas();
+  }, [canvasId]);
+
+  const handleSectionSave = useCallback(async (sectionKey: CanvasSectionId, content: string) => {
+    // Update local state immediately for responsiveness
     setSections((prev) => ({
       ...prev,
       [sectionKey]: content,
     }));
-    // TODO: Persist to backend via PUT /api/canvas/:section
-  };
 
-  const handleImpactSave = (updatedImpact: ImpactModel) => {
+    // Persist to backend
+    try {
+      const response = await fetch(`/api/canvas/${canvasId}/section/${sectionKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to save section:', error);
+      }
+    } catch (err) {
+      console.error('Failed to save section:', err);
+    }
+  }, [canvasId]);
+
+  const handleImpactSave = useCallback(async (updatedImpact: ImpactModel) => {
+    // Update local state immediately for responsiveness
     setImpactModel(updatedImpact);
     setShowImpactPanel(false);
-    // TODO: Persist to backend via PUT /api/canvas/impact-model
-  };
+
+    // Persist to backend
+    try {
+      const response = await fetch(`/api/canvas/${canvasId}/impact`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedImpact),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to save impact model:', error);
+      }
+    } catch (err) {
+      console.error('Failed to save impact model:', err);
+    }
+  }, [canvasId]);
+
+  // Show loading or error state
+  if (isLoading || loadError) {
+    return (
+      <div className="slc-canvas" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {loadError ? (
+          <div style={{ color: 'var(--color-error, #e53e3e)', textAlign: 'center' }}>
+            <p>{loadError}</p>
+            <button onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div>Loading canvas...</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>

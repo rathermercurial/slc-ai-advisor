@@ -1,63 +1,75 @@
-import { useState, FormEvent, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, FormEvent } from 'react';
+import { useAgent } from 'agents/react';
+import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
+import { ConnectionStatus } from './ConnectionStatus';
+import { StatusBar } from './StatusBar';
 
 interface ChatProps {
-  sessionId: string;
-}
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface ChatResponse {
-  response: string;
-  sources?: Array<{
-    title: string;
-    type: string;
-  }>;
+  canvasId: string;
 }
 
 /**
- * Chat interface using REST API
- *
- * Sends messages to /api/chat and displays responses.
- * Messages are persisted by the UserSession Durable Object.
+ * Agent state synced from SLCAgent
  */
-export function Chat({ sessionId }: ChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+interface AgentState {
+  status: 'idle' | 'thinking' | 'searching' | 'updating' | 'error';
+  statusMessage: string;
+  currentCanvasId: string | null;
+}
+
+/**
+ * Extract text content from a UIMessage
+ * UIMessage uses parts array with typed parts (text, tool, etc.)
+ */
+function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
+  if (!message.parts) return '';
+  return message.parts
+    .filter((part) => part.type === 'text' && part.text)
+    .map((part) => part.text)
+    .join('');
+}
+
+/**
+ * Chat interface using Cloudflare Agents SDK
+ *
+ * Connects to SLCAgent via WebSocket for real-time streaming responses.
+ * Agent state (status updates) syncs automatically via the agents SDK.
+ */
+export function Chat({ canvasId }: ChatProps) {
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [agentState, setAgentState] = useState<AgentState | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load message history on mount
-  useEffect(() => {
-    async function loadMessages() {
-      try {
-        const response = await fetch(`/api/session/${sessionId}/messages`);
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) {
-            setMessages(data.map((msg: { id?: string; role: string; content: string }, i: number) => ({
-              id: msg.id || `msg-${i}`,
-              role: msg.role as 'user' | 'assistant',
-              content: msg.content,
-            })));
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load messages:', err);
-      }
-    }
-    loadMessages();
-  }, [sessionId]);
+  // Connect to agent via WebSocket
+  const agent = useAgent<AgentState>({
+    agent: 'slc-agent',
+    name: canvasId,
+    onStateUpdate: (state) => {
+      setAgentState(state);
+    },
+  });
+
+  // Chat state from agent
+  const {
+    messages,
+    sendMessage,
+    status,
+    error,
+  } = useAgentChat({
+    agent,
+  });
+
+  // Determine loading state from status
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // The canvasId is passed as the agent 'name', so the agent instance
+  // is already scoped to this canvas. No need to call setCanvas.
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,50 +77,24 @@ export function Chat({ sessionId }: ChatProps) {
 
     const userMessage = input.trim();
     setInput('');
-    setError(null);
 
-    // Add user message immediately
-    const userMsgId = `user-${Date.now()}`;
-    setMessages(prev => [...prev, {
-      id: userMsgId,
-      role: 'user',
-      content: userMessage,
-    }]);
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          message: userMessage,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Chat failed: ${response.status}`);
-      }
-
-      const data: ChatResponse = await response.json();
-
-      // Add assistant response
-      setMessages(prev => [...prev, {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.response,
-      }]);
-    } catch (err) {
-      console.error('Chat error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsLoading(false);
-    }
+    // Send message via the agent chat
+    await sendMessage({ text: userMessage });
   };
 
   return (
     <div className="chat">
+      {/* Connection status */}
+      <div className="chat-header">
+        <ConnectionStatus readyState={agent.readyState} />
+      </div>
+
+      {/* Agent status bar (when not idle) */}
+      {agentState && agentState.status !== 'idle' && (
+        <StatusBar status={agentState.status} message={agentState.statusMessage} />
+      )}
+
+      {/* Messages */}
       <div className="chat-messages">
         {/* Welcome message when no chat history */}
         {messages.length === 0 && !isLoading && (
@@ -123,9 +109,9 @@ export function Chat({ sessionId }: ChatProps) {
         {messages.map((message) => (
           <div key={message.id} className={`chat-message ${message.role}`}>
             {message.role === 'assistant' ? (
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <ReactMarkdown>{getMessageText(message)}</ReactMarkdown>
             ) : (
-              message.content
+              getMessageText(message)
             )}
           </div>
         ))}
@@ -140,13 +126,14 @@ export function Chat({ sessionId }: ChatProps) {
         {/* Error message */}
         {error && (
           <div className="chat-message error">
-            Error: {error}
+            Error: {error.message}
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input form */}
       <div className="chat-input-container">
         <form className="chat-input-form" onSubmit={handleSubmit}>
           <input
@@ -155,12 +142,12 @@ export function Chat({ sessionId }: ChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your canvas..."
-            disabled={isLoading}
+            disabled={isLoading || agent.readyState !== 1}
           />
           <button
             type="submit"
             className="chat-send"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input.trim() || agent.readyState !== 1}
           >
             {isLoading ? 'Sending...' : 'Send'}
           </button>

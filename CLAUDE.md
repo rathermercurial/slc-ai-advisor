@@ -34,6 +34,12 @@ Worker (entry) → SLCAgent (orchestrator, extends AIChatAgent)
 - Backend: Cloudflare Workers + Durable Objects (SQLite)
 - Search: Vectorize with metadata filtering
 
+### AI Gateway Configuration
+- **Base URL**: `https://gateway.ai.cloudflare.com/v1/{CF_ACCOUNT_ID}/{CF_GATEWAY_ID}/anthropic`
+- **Auth Header**: `cf-aig-authorization: Bearer {CF_AIG_TOKEN}` (if Authenticated Gateway enabled)
+- **Model**: `claude-sonnet-4-20250514`
+- **Secrets**: `CF_ACCOUNT_ID`, `CF_GATEWAY_ID`, `ANTHROPIC_API_KEY` (required), `CF_AIG_TOKEN` (optional)
+
 ## Spec Documents
 
 | Document | Purpose |

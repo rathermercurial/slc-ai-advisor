@@ -8,6 +8,10 @@ compatibility_flags = ["nodejs_compat"]
 # Worker entry point (API routes)
 main = "./worker/index.ts"
 
+# Enable preview URLs for non-production branch builds
+# See: https://developers.cloudflare.com/workers/configuration/previews/
+preview_urls = true
+
 # Static assets configuration (React SPA)
 # - directory: where Vite outputs the built frontend
 # - not_found_handling: serve index.html for SPA client-side routing
@@ -16,10 +20,6 @@ main = "./worker/index.ts"
 directory = "./dist"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*", "/agents/*"]
-
-# Enable preview URLs for non-production branch builds
-# See: https://developers.cloudflare.com/workers/configuration/previews/
-preview_urls = true
 
 # Observability
 [observability]

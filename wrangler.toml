@@ -21,6 +21,10 @@ run_worker_first = ["/api/*", "/agents/*"]
 [observability]
 enabled = true
 
+# Enable preview URLs for non-production branch builds
+# See: https://developers.cloudflare.com/workers/configuration/previews/
+preview_urls = true
+
 # Vectorize Index for Knowledge Base
 # NOTE: Create this index via CLI (see spec/slc-ai-advisor-mvp/design.md):
 #   wrangler vectorize create slc-knowledge-base --dimensions 1024 --metric cosine

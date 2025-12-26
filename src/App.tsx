@@ -50,32 +50,40 @@ function App() {
       : 'light';
   });
 
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [canvasId, setCanvasId] = useState<string | null>(null);
-  const [canvasReady, setCanvasReady] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
-  // Initialize or restore canvas
+  // Initialize or restore session
   useEffect(() => {
-    async function initCanvas() {
-      // Check localStorage for existing canvasId
-      const saved = localStorage.getItem('canvasId');
+    async function initSession() {
+      const savedSession = localStorage.getItem('sessionId');
+      const savedCanvas = localStorage.getItem('canvasId');
 
-      if (saved) {
-        // Verify canvas exists on server
+      // Validate stored IDs match (they should be the same)
+      if (savedSession && savedCanvas && savedSession === savedCanvas) {
+        // Check if session exists on server
         try {
-          const response = await fetch(`/api/canvas/${saved}`);
+          const response = await fetch(`/api/session/${savedSession}`);
           if (response.ok) {
-            setCanvasId(saved);
-            setCanvasReady(true);
+            setSessionId(savedSession);
+            setCanvasId(savedCanvas);
+            setSessionReady(true);
             return;
           }
         } catch (err) {
-          console.warn('Canvas check failed, creating new canvas');
+          console.warn('Session check failed, creating new session');
         }
       }
 
-      // Create new canvas
+      // Clear any stale/mismatched session data
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('canvasId');
+
+      // Create new session
       try {
-        const response = await fetch('/api/canvas', {
+        const response = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
@@ -83,18 +91,21 @@ function App() {
 
         if (response.ok) {
           const data = await response.json();
+          localStorage.setItem('sessionId', data.sessionId);
           localStorage.setItem('canvasId', data.canvasId);
+          setSessionId(data.sessionId);
           setCanvasId(data.canvasId);
-          setCanvasReady(true);
+          setSessionReady(true);
         } else {
-          console.error('Failed to create canvas');
+          setSessionError('Failed to create session. Please refresh the page.');
         }
       } catch (err) {
-        console.error('Canvas creation error:', err);
+        console.error('Session creation error:', err);
+        setSessionError('Network error. Please check your connection and refresh.');
       }
     }
 
-    initCanvas();
+    initSession();
   }, []);
 
   // Apply theme to document
@@ -107,15 +118,24 @@ function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Show loading until canvas is ready
-  if (!canvasReady || !canvasId) {
+  // Show loading or error until session is ready
+  if (!sessionReady || !sessionId || !canvasId) {
     return (
       <div className="app">
         <header className="app-header">
           <h1>SLC AI Advisor</h1>
         </header>
         <main className="app-main" style={{ justifyContent: 'center', alignItems: 'center' }}>
-          <div>Initializing canvas...</div>
+          {sessionError ? (
+            <div style={{ color: 'var(--color-error, #e53e3e)', textAlign: 'center' }}>
+              <p>{sessionError}</p>
+              <button onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div>Initializing session...</div>
+          )}
         </main>
       </div>
     );

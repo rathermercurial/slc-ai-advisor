@@ -19,6 +19,7 @@ export { SLCAgent } from './agents/SLCAgent';
 
 // Import route handlers
 import { handleCanvasRoute } from './routes/canvas';
+import { handleSessionRoute } from './routes/session';
 import { createLogger, createMetrics, getOrCreateRequestId } from './observability';
 
 // Env interface extended in worker/env.d.ts
@@ -49,6 +50,11 @@ export default {
           const health = await checkHealth(env);
           const status = health.dependencies.every(d => d.status === 'ok') ? 200 : 503;
           return jsonResponse(health, status, requestId);
+        }
+
+        // Session routes
+        if (url.pathname.startsWith('/api/session')) {
+          return handleSessionRoute(request, env);
         }
 
         // Canvas routes

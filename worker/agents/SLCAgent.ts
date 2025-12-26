@@ -11,6 +11,31 @@
 import { AIChatAgent } from 'agents/ai-chat-agent';
 import type { Message } from 'agents/ai-chat-agent';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
+import {
+  CANVAS_TOOLS,
+  executeCanvasTool,
+  isCanvasTool,
+  type ToolResult,
+  type CanvasToolName,
+} from './anthropic-tools';
+import type { UpdateResult } from '../../src/models';
+
+/**
+ * Pending canvas update for human-in-the-loop confirmation
+ */
+export interface PendingCanvasUpdate {
+  /** Tool that triggered the update */
+  toolName: CanvasToolName;
+
+  /** Section or field being updated */
+  targetSection: string;
+
+  /** New content for the section */
+  content: string;
+
+  /** Timestamp of the pending update */
+  timestamp: string;
+}
 
 /**
  * Agent state that syncs to connected clients
@@ -27,6 +52,14 @@ export interface AgentState {
 
   /** Unique conversation ID */
   conversationId: string;
+
+  /** Last canvas update result (for frontend display) */
+  lastUpdateResult?: {
+    success: boolean;
+    section: string;
+    message: string;
+    completionPercentage: number;
+  };
 }
 
 /**
@@ -174,6 +207,86 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       status,
       statusMessage: message,
     });
+  }
+
+  /**
+   * Get canvas tools for Anthropic API
+   *
+   * Returns the tool definitions that can be passed to Claude's messages API.
+   */
+  getCanvasTools() {
+    return CANVAS_TOOLS;
+  }
+
+  /**
+   * Handle a tool call from Claude
+   *
+   * Routes canvas tools to CanvasDO through Model Managers with validation.
+   * Updates agent state with the result for frontend display.
+   *
+   * @param toolName - The name of the tool being called
+   * @param toolInput - The input parameters for the tool
+   * @returns Tool result with success/error status and message
+   */
+  async handleToolCall(
+    toolName: string,
+    toolInput: Record<string, unknown>
+  ): Promise<ToolResult> {
+    // Check if we have a canvas set
+    const state = this.getState();
+    if (!state.currentCanvasId) {
+      return {
+        success: false,
+        message: 'No canvas is currently set. Please start a session first.',
+      };
+    }
+
+    // Check if this is a canvas tool
+    if (!isCanvasTool(toolName)) {
+      return {
+        success: false,
+        message: `Unknown tool: ${toolName}. Available tools: ${CANVAS_TOOLS.map(t => t.name).join(', ')}`,
+      };
+    }
+
+    // Update status to show we're updating the canvas
+    this.setStatus('updating', `Updating canvas...`);
+
+    try {
+      // Get the canvas stub
+      const canvasStub = this.getCanvasStub(state.currentCanvasId);
+
+      // Execute the tool
+      const result = await executeCanvasTool(toolName, toolInput, canvasStub);
+
+      // Update state with the result
+      if (result.result) {
+        const updateResult = result.result;
+        this.setState({
+          ...state,
+          status: 'idle',
+          statusMessage: '',
+          lastUpdateResult: {
+            success: updateResult.success,
+            section: updateResult.updatedSection ?? toolName,
+            message: result.message,
+            completionPercentage: updateResult.completion.percentage,
+          },
+        });
+      } else {
+        this.setStatus('idle');
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.setStatus('error', errorMessage);
+
+      return {
+        success: false,
+        message: `Tool execution failed: ${errorMessage}`,
+      };
+    }
   }
 
   /**

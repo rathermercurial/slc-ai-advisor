@@ -448,6 +448,21 @@ export class CanvasDO extends DurableObject<Env> {
     );
   }
 
+  /**
+   * Update an Impact Model field directly
+   *
+   * Routes to ImpactModelManager with chain order validation.
+   * Use this for the 8 fields: issue → participants → activities → outputs →
+   * shortTermOutcomes → mediumTermOutcomes → longTermOutcomes → impact
+   */
+  async updateImpactField(
+    field: 'issue' | 'participants' | 'activities' | 'outputs' | 'shortTermOutcomes' | 'mediumTermOutcomes' | 'longTermOutcomes' | 'impact',
+    content: string
+  ): Promise<UpdateResult> {
+    await this.ensureInitialized();
+    return this.impactManager.updateSection(field, content);
+  }
+
   // ============================================
   // Model Access Methods
   // ============================================

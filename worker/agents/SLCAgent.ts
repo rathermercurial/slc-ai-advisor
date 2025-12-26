@@ -11,6 +11,7 @@
 import { AIChatAgent } from 'agents/ai-chat-agent';
 import type { Message } from 'agents/ai-chat-agent';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
+import { createLogger, type Logger } from '../observability';
 
 /**
  * Agent state that syncs to connected clients
@@ -44,6 +45,13 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   };
 
   private schemaInitialized = false;
+  private logger: Logger;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    // Logger uses conversationId as request ID for tracing
+    this.logger = createLogger('slc-agent', this.initialState.conversationId);
+  }
 
   /**
    * Ensure conversation and message tables exist
@@ -190,9 +198,11 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     onFinish: (response: Message) => void
   ): Promise<Response | undefined> {
     await this.ensureSchema();
+    const timer = this.logger.startTimer('chat-message');
 
     // Update status
     this.setStatus('thinking', 'Processing your message...');
+    this.logger.info('Processing chat message', { status: 'thinking' });
 
     try {
       // Phase 1 will implement actual AI chat
@@ -208,6 +218,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
       // Reset status
       this.setStatus('idle');
+      timer.end({ status: 'success' });
 
       // Finish with the response
       onFinish(stubMessage);
@@ -216,6 +227,8 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.setStatus('error', errorMessage);
+      this.logger.error('Chat message failed', error);
+      timer.end({ status: 'error' });
 
       onFinish({
         role: 'assistant',

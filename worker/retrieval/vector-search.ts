@@ -14,6 +14,7 @@
 
 import type { CanvasSectionId, Model } from '../../src/types/canvas';
 import type { VentureDimensions } from '../../src/types/venture';
+import { createLogger } from '../observability';
 
 /**
  * Represents the user's query intent
@@ -186,17 +187,21 @@ export async function searchKnowledgeBase(
   query: string,
   program: string,
   dimensions: Partial<VentureDimensions>,
-  intent: QueryIntent
+  intent: QueryIntent,
+  requestId?: string
 ): Promise<RetrievedDocument[]> {
+  const logger = createLogger('vector-search', requestId);
+
   // Check if required bindings are available
   if (!env.AI || !env.VECTORIZE) {
-    console.warn('AI or VECTORIZE bindings not available, skipping RAG');
+    logger.warn('Bindings not available, skipping RAG', { hasAI: !!env.AI, hasVectorize: !!env.VECTORIZE });
     return [];
   }
 
   let vector: number[];
 
   // Step 1: Generate embedding
+  const embedTimer = logger.startTimer('generate-embedding');
   try {
     const embeddingResult = await env.AI.run('@cf/baai/bge-m3', {
       text: [query],
@@ -204,34 +209,40 @@ export async function searchKnowledgeBase(
 
     vector = embeddingResult.data[0];
     if (!vector || !Array.isArray(vector)) {
-      console.error('Invalid embedding result:', embeddingResult);
+      logger.error('Invalid embedding result', null, { result: embeddingResult });
       return [];
     }
+    embedTimer.end({ dimensions: vector.length });
   } catch (error) {
-    console.warn('Embedding generation failed:', error);
+    logger.error('Embedding generation failed', error);
     return [];
   }
 
   // Step 2: Query Vectorize
+  const queryTimer = logger.startTimer('vectorize-query');
   try {
     const options = buildVectorizeQuery(program, dimensions, intent);
     const results = await env.VECTORIZE.query(vector, options);
 
     if (!results.matches || results.matches.length === 0) {
-      // Try without dimension filters
+      // Try without dimension filters (fallback)
+      logger.info('No matches with filters, trying fallback', { program, intent: intent.type });
       const fallbackOptions = buildVectorizeQuery(program, {}, intent);
       const fallbackResults = await env.VECTORIZE.query(vector, fallbackOptions);
 
       if (!fallbackResults.matches) {
+        queryTimer.end({ matches: 0, fallback: true });
         return [];
       }
 
+      queryTimer.end({ matches: fallbackResults.matches.length, fallback: true });
       return fallbackResults.matches.map(formatMatch);
     }
 
+    queryTimer.end({ matches: results.matches.length, fallback: false });
     return results.matches.map(formatMatch);
   } catch (error) {
-    console.warn('Vectorize query failed (index may not exist):', error);
+    logger.warn('Vectorize query failed (index may not exist)', { error });
     return [];
   }
 }

@@ -19,7 +19,7 @@ export { SLCAgent } from './agents/SLCAgent';
 
 // Import route handlers
 import { handleCanvasRoute } from './routes/canvas';
-import { createLogger, getOrCreateRequestId } from './observability';
+import { createLogger, createMetrics, getOrCreateRequestId } from './observability';
 
 // Env interface extended in worker/env.d.ts
 
@@ -32,6 +32,7 @@ export default {
     const url = new URL(request.url);
     const requestId = getOrCreateRequestId(request);
     const logger = createLogger('worker', requestId);
+    const metrics = createMetrics(env.ANALYTICS);
     const startTime = Date.now();
 
     try {
@@ -74,6 +75,12 @@ export default {
         path: url.pathname,
         method: request.method,
         durationMs: Date.now() - startTime,
+      });
+      metrics.trackEvent('error', {
+        sessionId: requestId,
+        errorType: error instanceof Error ? error.name : 'UnknownError',
+        durationMs: Date.now() - startTime,
+        success: false,
       });
       const message = error instanceof Error ? error.message : 'Unknown error';
       return jsonResponse({ error: 'Internal server error', message }, 500, requestId);
@@ -118,6 +125,13 @@ async function checkHealth(env: Env): Promise<{
     dependencies.push({ name: 'slc-agent-do', status: 'ok' });
   } else {
     dependencies.push({ name: 'slc-agent-do', status: 'error', message: 'Binding not available' });
+  }
+
+  // Check Analytics Engine binding
+  if (env.ANALYTICS) {
+    dependencies.push({ name: 'analytics-engine', status: 'ok' });
+  } else {
+    dependencies.push({ name: 'analytics-engine', status: 'error', message: 'Binding not available' });
   }
 
   const allOk = dependencies.every(d => d.status === 'ok');

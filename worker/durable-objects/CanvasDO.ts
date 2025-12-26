@@ -488,6 +488,59 @@ export class CanvasDO extends DurableObject<Env> {
     };
   }
 
+  /**
+   * Update the full Impact Model (all 8 fields)
+   * Used by the ImpactPanel for bulk saves
+   */
+  async updateFullImpactModel(impactModel: ImpactModel): Promise<UpdateResult> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    // Determine if all fields are complete
+    const isComplete = [
+      impactModel.issue,
+      impactModel.participants,
+      impactModel.activities,
+      impactModel.outputs,
+      impactModel.shortTermOutcomes,
+      impactModel.mediumTermOutcomes,
+      impactModel.longTermOutcomes,
+      impactModel.impact,
+    ].every(field => field && field.length >= 10);
+
+    sql.exec(
+      `UPDATE impact_model SET
+        issue = ?,
+        participants = ?,
+        activities = ?,
+        outputs = ?,
+        short_term_outcomes = ?,
+        medium_term_outcomes = ?,
+        long_term_outcomes = ?,
+        impact = ?,
+        is_complete = ?,
+        updated_at = ?
+      WHERE id = 'impact'`,
+      impactModel.issue || '',
+      impactModel.participants || '',
+      impactModel.activities || '',
+      impactModel.outputs || '',
+      impactModel.shortTermOutcomes || '',
+      impactModel.mediumTermOutcomes || '',
+      impactModel.longTermOutcomes || '',
+      impactModel.impact || '',
+      isComplete ? 1 : 0,
+      now
+    );
+
+    return {
+      success: true,
+      updatedSection: 'impact',
+      completion: await this.getOverallCompletion(),
+    };
+  }
+
   // ============================================
   // Venture Profile Methods
   // ============================================

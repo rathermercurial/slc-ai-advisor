@@ -109,6 +109,37 @@ export async function handleCanvasRoute(
       return jsonResponse(result);
     }
 
+    // PUT /api/canvas/:id/impact - Update full impact model
+    if (parts.length === 4 && parts[3] === 'impact' && request.method === 'PUT') {
+      const body = await request.json().catch(() => ({})) as {
+        issue?: string;
+        participants?: string;
+        activities?: string;
+        outputs?: string;
+        shortTermOutcomes?: string;
+        mediumTermOutcomes?: string;
+        longTermOutcomes?: string;
+        impact?: string;
+        sessionId?: string;
+      };
+
+      const result = await stub.updateFullImpactModel({
+        sessionId: body.sessionId || canvasId,
+        issue: body.issue || '',
+        participants: body.participants || '',
+        activities: body.activities || '',
+        outputs: body.outputs || '',
+        shortTermOutcomes: body.shortTermOutcomes || '',
+        mediumTermOutcomes: body.mediumTermOutcomes || '',
+        longTermOutcomes: body.longTermOutcomes || '',
+        impact: body.impact || '',
+        isComplete: false, // Will be calculated in the method
+        updatedAt: new Date().toISOString(),
+      });
+
+      return jsonResponse(result);
+    }
+
     // GET /api/canvas/:id/model/:model - Get model view
     if (parts.length === 5 && parts[3] === 'model' && request.method === 'GET') {
       const model = parts[4];

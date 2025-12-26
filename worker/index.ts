@@ -19,6 +19,7 @@ export { SLCAgent } from './agents/SLCAgent';
 
 // Import route handlers
 import { handleCanvasRoute } from './routes/canvas';
+import { handleSessionRoute } from './routes/session';
 
 // Env interface extended in worker/env.d.ts
 
@@ -46,6 +47,11 @@ export default {
             version: '2.0.0', // Phase 0 architecture
             timestamp: new Date().toISOString(),
           });
+        }
+
+        // Session routes
+        if (url.pathname.startsWith('/api/session')) {
+          return handleSessionRoute(request, env);
         }
 
         // Canvas routes

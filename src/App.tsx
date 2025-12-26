@@ -51,19 +51,22 @@ function App() {
   });
 
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [canvasId, setCanvasId] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
 
   // Initialize or restore session
   useEffect(() => {
     async function initSession() {
-      const saved = localStorage.getItem('sessionId');
+      const savedSession = localStorage.getItem('sessionId');
+      const savedCanvas = localStorage.getItem('canvasId');
 
-      if (saved) {
+      if (savedSession && savedCanvas) {
         // Check if session exists on server
         try {
-          const response = await fetch(`/api/session/${saved}`);
+          const response = await fetch(`/api/session/${savedSession}`);
           if (response.ok) {
-            setSessionId(saved);
+            setSessionId(savedSession);
+            setCanvasId(savedCanvas);
             setSessionReady(true);
             return;
           }
@@ -83,7 +86,9 @@ function App() {
         if (response.ok) {
           const data = await response.json();
           localStorage.setItem('sessionId', data.sessionId);
+          localStorage.setItem('canvasId', data.canvasId);
           setSessionId(data.sessionId);
+          setCanvasId(data.canvasId);
           setSessionReady(true);
         } else {
           console.error('Failed to create session');
@@ -107,7 +112,7 @@ function App() {
   };
 
   // Show loading until session is ready
-  if (!sessionReady || !sessionId) {
+  if (!sessionReady || !sessionId || !canvasId) {
     return (
       <div className="app">
         <header className="app-header">
@@ -138,7 +143,7 @@ function App() {
 
         <main className="app-main">
           <div className="layout-canvas">
-            <Canvas sessionId={sessionId} />
+            <Canvas canvasId={canvasId} />
           </div>
           <div className="layout-chat">
             <ErrorBoundary>

@@ -30,17 +30,19 @@
 |-------|----------|-------------|-------|--------|
 | **0** | P0 | Foundation - Model Managers + CanvasDO + SLCAgent skeleton | #40 | ✅ COMPLETE |
 | **1** | P0 | Streaming & Agent - Wire SLCAgent with `onChatMessage` | #36 | ✅ COMPLETE |
-| **2** | P0 | Session Persistence - localStorage + agent state | #37 | 🔄 IN PROGRESS |
-| **3** | P0 | Knowledge Tools - Agent-invoked RAG with Selection Matrix | #42 | 🔄 IN PROGRESS |
-| **4** | P1 | Canvas Tools - Route to Model Managers with validation | #38 | 🔄 IN PROGRESS |
-| **5** | P2 | Observability - Analytics Engine, structured logging | #39 | 🔄 IN PROGRESS |
+| **2** | P0 | Session Persistence - localStorage + agent state | #37 | ✅ COMPLETE |
+| **3** | P0 | Knowledge Tools - Agent-invoked RAG with Selection Matrix | #42 | ✅ COMPLETE |
+| **4** | P1 | Canvas Tools - Route to Model Managers with validation | #38 | ✅ COMPLETE |
+| **5** | P2 | Observability - Analytics Engine, structured logging | #39 | ✅ COMPLETE |
 | **6** | P3 | User Context Pipeline - Deferred to MVP | #41 | ⏸️ DEFERRED |
 
 **Completed:**
 - PR #43: Phase 0 (Model Managers, CanvasDO, venture profile)
 - PR #45: Phase 1 (Streaming, tools, frontend integration)
+- PR #50: Unified knowledge tools
+- Phases 2-5 on `feature/backend`
 
-**Current:** Phases 2-5 executing in parallel on `feature/backend`
+**Ready for:** Demo milestone - pending KB indexing (A2)
 
 ---
 

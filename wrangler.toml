@@ -17,13 +17,13 @@ directory = "./dist"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*", "/agents/*"]
 
-# Observability
-[observability]
-enabled = true
-
 # Enable preview URLs for non-production branch builds
 # See: https://developers.cloudflare.com/workers/configuration/previews/
 preview_urls = true
+
+# Observability
+[observability]
+enabled = true
 
 # Vectorize Index for Knowledge Base
 # NOTE: Create this index via CLI (see spec/slc-ai-advisor-mvp/design.md):

@@ -15,14 +15,22 @@ import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
 import { formatCanvasContext, buildSystemPrompt } from './prompts';
-import { ANTHROPIC_TOOLS, executeTool } from './anthropic-tools';
+import { ANTHROPIC_TOOLS, executeToolWithBroadcast } from './anthropic-tools';
 
 /**
  * Agent state that syncs to connected clients
+ *
+ * Includes canvas state for real-time sync when AI updates sections via tools.
+ * This leverages the Agents SDK's built-in WebSocket state sync rather than
+ * requiring a separate SSE endpoint or polling.
  */
 export interface AgentState {
   status: 'idle' | 'thinking' | 'searching' | 'updating' | 'error';
   statusMessage: string;
+  /** Canvas state - synced after tool execution */
+  canvas: import('../../src/types/canvas').CanvasState | null;
+  /** Timestamp of last canvas update for change detection */
+  canvasUpdatedAt: string | null;
 }
 
 /**
@@ -32,6 +40,8 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   initialState: AgentState = {
     status: 'idle',
     statusMessage: '',
+    canvas: null,
+    canvasUpdatedAt: null,
   };
 
   /**
@@ -54,31 +64,63 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
   /**
    * Update agent status (syncs to connected clients)
+   * Preserves existing canvas state
    */
   setStatus(status: AgentState['status'], message = ''): void {
     this.setState({
+      ...this.state,
       status,
       statusMessage: message,
     });
   }
 
   /**
+   * Broadcast canvas state to all connected clients
+   * Called after tool execution modifies the canvas
+   */
+  async broadcastCanvasUpdate(): Promise<void> {
+    const canvasId = this.name;
+    if (!canvasId) return;
+
+    try {
+      const stub = this.getCanvasStub(canvasId);
+      const canvas = await stub.getFullCanvas();
+      this.setState({
+        ...this.state,
+        canvas,
+        canvasUpdatedAt: canvas.updatedAt,
+      });
+      console.log('[SLCAgent] Canvas state broadcasted to clients');
+    } catch (error) {
+      console.error('[SLCAgent] Failed to broadcast canvas:', error);
+    }
+  }
+
+  /**
    * Get canvas context for system prompt
+   * Also broadcasts canvas state to clients for initial sync
    */
   private async getCanvasContext(): Promise<string> {
     const canvasId = this.name;
     if (!canvasId) {
-      console.log('[SLCAgent] No canvas ID (agent name)');
+      console.error('[SLCAgent] No canvas ID available');
       return formatCanvasContext(null);
     }
 
     try {
-      console.log('[SLCAgent] Getting canvas:', canvasId);
       const stub = this.getCanvasStub(canvasId);
       const canvas = await stub.getFullCanvas();
 
+      // Sync canvas state to connected clients
+      // This ensures frontend has canvas on first message
+      this.setState({
+        ...this.state,
+        canvas,
+        canvasUpdatedAt: canvas.updatedAt,
+      });
+
       return formatCanvasContext({
-        purpose: canvas.purpose,
+        purpose: canvas.sections.find(s => s.sectionKey === 'purpose')?.content,
         customers: canvas.sections.find(s => s.sectionKey === 'customers')?.content,
         jobsToBeDone: canvas.sections.find(s => s.sectionKey === 'jobsToBeDone')?.content,
         valueProposition: canvas.sections.find(s => s.sectionKey === 'valueProposition')?.content,
@@ -87,7 +129,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
         revenue: canvas.sections.find(s => s.sectionKey === 'revenue')?.content,
         costs: canvas.sections.find(s => s.sectionKey === 'costs')?.content,
         advantage: canvas.sections.find(s => s.sectionKey === 'advantage')?.content,
-        keyMetrics: canvas.keyMetrics,
+        keyMetrics: canvas.sections.find(s => s.sectionKey === 'keyMetrics')?.content,
         impactModel: canvas.impactModel,
       });
     } catch (error) {
@@ -231,8 +273,11 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
                 for (const toolBlock of toolUseBlocks) {
                   console.log(`[SLCAgent] Executing tool: ${toolBlock.name}`);
                   try {
-                    const result = await executeTool(
-                      toolContext,
+                    const result = await executeToolWithBroadcast(
+                      {
+                        ...toolContext,
+                        broadcastCanvasUpdate: () => toolContext.broadcastCanvasUpdate(),
+                      },
                       toolBlock.name,
                       toolBlock.input as Record<string, unknown>
                     );

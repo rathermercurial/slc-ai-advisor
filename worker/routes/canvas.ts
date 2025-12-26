@@ -107,7 +107,9 @@ export async function handleCanvasRoute(
       }
 
       const result = await stub.updateSection(sectionKey as CanvasSectionId, body.content);
-      return jsonResponse(result, 200, requestId);
+      // Return 422 Unprocessable Entity for validation failures
+      const status = result.success ? 200 : 422;
+      return jsonResponse(result, status, requestId);
     }
 
     // PUT /api/canvas/:id/impact - Update full impact model

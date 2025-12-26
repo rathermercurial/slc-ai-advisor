@@ -22,7 +22,20 @@ export interface ToolContext {
   setState(state: AgentState): void;
   getCanvasStub(canvasId: string): DurableObjectStub<CanvasDO>;
   env: Env; // For Vectorize and AI bindings
+  /** Callback to broadcast canvas state after modification */
+  broadcastCanvasUpdate(): Promise<void>;
 }
+
+/**
+ * Tools that modify canvas state and require broadcasting
+ */
+const CANVAS_MODIFYING_TOOLS = new Set([
+  'update_purpose',
+  'update_customer_section',
+  'update_economic_section',
+  'update_impact_field',
+  'update_key_metrics',
+]);
 
 /**
  * Tool definitions in Anthropic format
@@ -253,6 +266,9 @@ export const ANTHROPIC_TOOLS: Anthropic.Tool[] = [
 
 /**
  * Execute a tool and return the result
+ *
+ * For canvas-modifying tools, broadcasts the updated canvas state
+ * to all connected clients via the Agent's state sync mechanism.
  */
 export async function executeTool(
   ctx: ToolContext,
@@ -269,6 +285,9 @@ export async function executeTool(
   const setStatus = (status: AgentState['status'], message: string) => {
     ctx.setState({ ...ctx.state, status, statusMessage: message });
   };
+
+  // Track if this tool modifies canvas
+  const isCanvasModifying = CANVAS_MODIFYING_TOOLS.has(toolName);
 
   switch (toolName) {
     case 'update_purpose': {
@@ -370,6 +389,26 @@ export async function executeTool(
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }
+}
+
+/**
+ * Execute a tool with automatic canvas broadcast for modifying tools
+ *
+ * Wraps executeTool and broadcasts canvas state after canvas-modifying tools.
+ */
+export async function executeToolWithBroadcast(
+  ctx: ToolContext,
+  toolName: string,
+  toolInput: Record<string, unknown>
+): Promise<unknown> {
+  const result = await executeTool(ctx, toolName, toolInput);
+
+  // Broadcast canvas state if this tool modified the canvas
+  if (CANVAS_MODIFYING_TOOLS.has(toolName)) {
+    await ctx.broadcastCanvasUpdate();
+  }
+
+  return result;
 }
 
 /**

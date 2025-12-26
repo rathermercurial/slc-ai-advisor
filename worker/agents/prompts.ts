@@ -71,7 +71,44 @@ export function formatCanvasContext(canvas: {
   };
 } | null): string {
   if (!canvas) {
-    return 'No canvas selected. The user should create or select a canvas first.';
+    return 'Error: No canvas is loaded. This is unexpected - please have the user refresh the page.';
+  }
+
+  // Check if canvas is completely empty (new canvas)
+  const mainSections = [
+    canvas.purpose,
+    canvas.customers,
+    canvas.jobsToBeDone,
+    canvas.valueProposition,
+    canvas.solution,
+    canvas.channels,
+    canvas.revenue,
+    canvas.costs,
+    canvas.advantage,
+    canvas.keyMetrics,
+  ];
+  const impactFields = canvas.impactModel ? [
+    canvas.impactModel.issue,
+    canvas.impactModel.participants,
+    canvas.impactModel.activities,
+    canvas.impactModel.outputs,
+    canvas.impactModel.shortTermOutcomes,
+    canvas.impactModel.mediumTermOutcomes,
+    canvas.impactModel.longTermOutcomes,
+    canvas.impactModel.impact,
+  ] : [];
+
+  const hasAnyContent = [...mainSections, ...impactFields].some(s => s && s.trim().length > 0);
+
+  if (!hasAnyContent) {
+    return `This is a brand new canvas - all sections are empty.
+
+The user is just getting started with their Social Lean Canvas. Your task is to:
+1. Welcome them warmly and learn about their social venture idea
+2. Ask about the problem they want to solve and who they want to help
+3. Once you understand their idea, use the update_purpose tool to capture their purpose
+
+Start with a natural, friendly conversation. Do NOT list all the sections or overwhelm them with structure - just ask about their idea and let the conversation flow naturally.`;
   }
 
   const sections: string[] = [];

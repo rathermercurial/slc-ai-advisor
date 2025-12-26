@@ -1,5 +1,6 @@
 import { useState, useEffect, Component, ReactNode } from 'react';
 import { Canvas, Chat } from './components';
+import { CanvasProvider } from './context';
 
 /**
  * Error boundary to catch and display React errors
@@ -143,31 +144,33 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="app">
-        <header className="app-header">
-          <h1>SLC AI Advisor</h1>
-          <div className="app-header-actions">
-            <button
-              className="theme-toggle"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? 'Dark' : 'Light'}
-            </button>
-          </div>
-        </header>
+      <CanvasProvider>
+        <div className="app">
+          <header className="app-header">
+            <h1>SLC AI Advisor</h1>
+            <div className="app-header-actions">
+              <button
+                className="theme-toggle"
+                onClick={toggleTheme}
+                title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                {theme === 'light' ? 'Dark' : 'Light'}
+              </button>
+            </div>
+          </header>
 
-        <main className="app-main">
-          <div className="layout-canvas">
-            <Canvas canvasId={canvasId} />
-          </div>
-          <div className="layout-chat">
-            <ErrorBoundary>
-              <Chat canvasId={canvasId} />
-            </ErrorBoundary>
-          </div>
-        </main>
-      </div>
+          <main className="app-main">
+            <div className="layout-canvas">
+              <Canvas canvasId={canvasId} />
+            </div>
+            <div className="layout-chat">
+              <ErrorBoundary>
+                <Chat canvasId={canvasId} />
+              </ErrorBoundary>
+            </div>
+          </main>
+        </div>
+      </CanvasProvider>
     </ErrorBoundary>
   );
 }

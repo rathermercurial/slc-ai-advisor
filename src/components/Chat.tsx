@@ -1,22 +1,36 @@
-import { useState, useRef, useEffect, FormEvent } from 'react';
+import { useState, useRef, useEffect, FormEvent, ChangeEvent, KeyboardEvent } from 'react';
 import { useAgent } from 'agents/react';
 import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
 import { ConnectionStatus } from './ConnectionStatus';
 import { StatusBar } from './StatusBar';
+import { ToolInvocationCard } from './ToolInvocationCard';
+import { useCanvasContext, type AgentState } from '../context';
 
 interface ChatProps {
   canvasId: string;
 }
 
 /**
- * Agent state synced from SLCAgent
+ * Message part types from the Agents SDK
  */
-interface AgentState {
-  status: 'idle' | 'thinking' | 'searching' | 'updating' | 'error';
-  statusMessage: string;
-  currentCanvasId: string | null;
+interface TextPart {
+  type: 'text';
+  text: string;
 }
+
+interface ToolInvocationPart {
+  type: 'tool-invocation';
+  toolInvocation: {
+    toolCallId: string;
+    toolName: string;
+    args: Record<string, unknown>;
+    state: 'pending' | 'call' | 'result' | 'partial-call';
+    result?: unknown;
+  };
+}
+
+type MessagePart = TextPart | ToolInvocationPart | { type: string };
 
 /**
  * Extract text content from a UIMessage
@@ -31,24 +45,59 @@ function getMessageText(message: { parts?: Array<{ type: string; text?: string }
 }
 
 /**
+ * Check if message has tool invocations
+ */
+function hasToolInvocations(message: { parts?: MessagePart[] }): boolean {
+  if (!message.parts) return false;
+  return message.parts.some((part) => part.type === 'tool-invocation');
+}
+
+/**
+ * Convert SDK tool state to card state
+ */
+function getToolCardState(sdkState: string): 'pending' | 'executing' | 'complete' | 'error' {
+  switch (sdkState) {
+    case 'pending':
+    case 'partial-call':
+      return 'pending';
+    case 'call':
+      return 'executing';
+    case 'result':
+      return 'complete';
+    default:
+      return 'pending';
+  }
+}
+
+/**
  * Chat interface using Cloudflare Agents SDK
  *
  * Connects to SLCAgent via WebSocket for real-time streaming responses.
- * Agent state (status updates) syncs automatically via the agents SDK.
+ * Agent state (status updates + canvas) syncs automatically via the agents SDK.
+ * Canvas state is pushed to CanvasContext for the Canvas component to consume.
  */
 export function Chat({ canvasId }: ChatProps) {
   const [input, setInput] = useState('');
-  const [agentState, setAgentState] = useState<AgentState | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Get canvas context to push agent state updates
+  const { updateFromAgent, setConnected, agentStatus, agentStatusMessage } = useCanvasContext();
 
   // Connect to agent via WebSocket
   const agent = useAgent<AgentState>({
     agent: 'slc-agent',
     name: canvasId,
     onStateUpdate: (state) => {
-      setAgentState(state);
+      // Push state to context (includes canvas sync)
+      updateFromAgent(state);
     },
   });
+
+  // Track connection status in context
+  useEffect(() => {
+    setConnected(agent.readyState === 1);
+  }, [agent.readyState, setConnected]);
 
   // Chat state from agent
   const {
@@ -71,12 +120,41 @@ export function Chat({ canvasId }: ChatProps) {
   // The canvasId is passed as the agent 'name', so the agent instance
   // is already scoped to this canvas. No need to call setCanvas.
 
+  // Adjust textarea height based on content (max 200px)
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    adjustTextareaHeight();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter sends message, Shift+Enter adds newline
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (input.trim() && !isLoading) {
+        handleSubmit(e as unknown as FormEvent);
+      }
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput('');
+
+    // Reset textarea height after send
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     // Send message via the agent chat
     await sendMessage({ text: userMessage });
@@ -90,8 +168,8 @@ export function Chat({ canvasId }: ChatProps) {
       </div>
 
       {/* Agent status bar (when not idle) */}
-      {agentState && agentState.status !== 'idle' && (
-        <StatusBar status={agentState.status} message={agentState.statusMessage} />
+      {agentStatus !== 'idle' && (
+        <StatusBar status={agentStatus} message={agentStatusMessage} />
       )}
 
       {/* Messages */}
@@ -100,7 +178,9 @@ export function Chat({ canvasId }: ChatProps) {
         {messages.length === 0 && !isLoading && (
           <div className="chat-message assistant">
             <ReactMarkdown>
-              {`Hello! I'm your Social Lean Canvas advisor. I'll help you build your canvas by exploring your venture's purpose, customers, solution, and impact. What would you like to work on first?`}
+              {`Welcome! I'm here to help you build your Social Lean Canvas.
+
+Tell me about your social venture idea - what problem are you trying to solve, and who are you trying to help?`}
             </ReactMarkdown>
           </div>
         )}
@@ -109,7 +189,28 @@ export function Chat({ canvasId }: ChatProps) {
         {messages.map((message) => (
           <div key={message.id} className={`chat-message ${message.role}`}>
             {message.role === 'assistant' ? (
-              <ReactMarkdown>{getMessageText(message)}</ReactMarkdown>
+              <>
+                {/* Render text parts */}
+                <ReactMarkdown>{getMessageText(message)}</ReactMarkdown>
+                {/* Render tool invocations */}
+                {hasToolInvocations(message as { parts?: MessagePart[] }) &&
+                  (message.parts as MessagePart[])
+                    .filter((part): part is ToolInvocationPart => part.type === 'tool-invocation')
+                    .map((part) => (
+                      <ToolInvocationCard
+                        key={part.toolInvocation.toolCallId}
+                        toolName={part.toolInvocation.toolName}
+                        toolCallId={part.toolInvocation.toolCallId}
+                        parameters={part.toolInvocation.args}
+                        state={getToolCardState(part.toolInvocation.state)}
+                        result={
+                          part.toolInvocation.result
+                            ? { success: true, message: String(part.toolInvocation.result) }
+                            : undefined
+                        }
+                      />
+                    ))}
+              </>
             ) : (
               getMessageText(message)
             )}
@@ -136,13 +237,15 @@ export function Chat({ canvasId }: ChatProps) {
       {/* Input form */}
       <div className="chat-input-container">
         <form className="chat-input-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            className="chat-input"
+          <textarea
+            ref={textareaRef}
+            className="chat-input chat-textarea"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your canvas..."
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about your canvas... (Shift+Enter for newline)"
             disabled={isLoading || agent.readyState !== 1}
+            rows={1}
           />
           <button
             type="submit"

@@ -247,6 +247,28 @@ body {
   color: #22c55e;
 }
 
+.canvas-section-status.error {
+  color: #ef4444;
+}
+
+.canvas-section.saving {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.canvas-section.has-error {
+  border-color: #ef4444;
+}
+
+.canvas-section-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+}
+
 .canvas-section-model {
   font-size: 0.6rem;
   font-weight: 600;
@@ -355,6 +377,37 @@ body {
   opacity: 0.9;
 }
 
+/* AI-triggered update animation */
+@keyframes sectionFlash {
+  0% {
+    box-shadow: 0 0 0 2px var(--slc-accent);
+    background-color: rgba(0, 160, 176, 0.15);
+  }
+  100% {
+    box-shadow: none;
+    background-color: var(--card-bg);
+  }
+}
+
+.canvas-section.just-updated {
+  animation: sectionFlash 1.5s ease-out;
+}
+
+[data-theme='dark'] .canvas-section.just-updated {
+  animation: sectionFlash 1.5s ease-out;
+}
+
+@keyframes sectionFlashDark {
+  0% {
+    box-shadow: 0 0 0 2px var(--slc-accent);
+    background-color: rgba(0, 160, 176, 0.2);
+  }
+  100% {
+    box-shadow: none;
+    background-color: var(--card-bg);
+  }
+}
+
 /* ============================================
    Chat
    ============================================ */
@@ -442,6 +495,19 @@ body {
 
 .chat-input::placeholder {
   color: var(--text-muted);
+}
+
+/* Dynamic textarea input */
+.chat-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 2.5rem;
+  max-height: 200px;
+  line-height: 1.4;
+}
+
+.chat-textarea:focus {
+  overflow-y: auto;
 }
 
 .chat-send {
@@ -766,4 +832,325 @@ body {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+
+/* ============================================
+   Skeleton Loading States
+   ============================================ */
+
+.slc-canvas.skeleton {
+  pointer-events: none;
+}
+
+.skeleton-block {
+  background: var(--card-bg);
+}
+
+.skeleton-text {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--border-color) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-number {
+  width: 1.5rem;
+  height: 1rem;
+}
+
+.skeleton-title {
+  width: 6rem;
+  height: 1rem;
+}
+
+.skeleton-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.skeleton-line {
+  display: block;
+  height: 0.875rem;
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--border-color) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================
+   Canvas Error State
+   ============================================ */
+
+.canvas-error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-error {
+  color: #e53e3e;
+  text-align: center;
+}
+
+.canvas-error-retry {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.canvas-error-retry:hover {
+  background: var(--accent-hover);
+}
+
+/* ============================================
+   Responsive / Mobile Layout
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Stack canvas and chat vertically */
+  .app-main {
+    flex-direction: column;
+  }
+
+  .layout-canvas {
+    flex: none;
+    width: 100%;
+    height: 55vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem;
+  }
+
+  .layout-chat {
+    flex: none;
+    width: 100%;
+    height: 45vh;
+  }
+
+  /* Reduce canvas gap on mobile */
+  .slc-canvas {
+    gap: 1px;
+  }
+
+  .slc-row {
+    gap: 1px;
+  }
+
+  .slc-col {
+    gap: 1px;
+  }
+
+  /* Smaller section padding */
+  .canvas-section {
+    padding: 0.5rem;
+  }
+
+  .canvas-section-header {
+    gap: 0.25rem;
+    font-size: 0.65rem;
+  }
+
+  .canvas-section-number {
+    font-size: 0.7rem;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .canvas-section-model {
+    font-size: 0.5rem;
+    padding: 0.1rem 0.25rem;
+  }
+
+  .canvas-section-content {
+    font-size: 0.75rem;
+  }
+
+  /* Reduce row heights on mobile */
+  .slc-row-top {
+    min-height: 80px;
+  }
+
+  .slc-row-middle {
+    min-height: 180px;
+  }
+
+  .slc-row-bottom {
+    min-height: 60px;
+  }
+
+  /* Chat adjustments */
+  .chat-header {
+    padding: 0.5rem;
+  }
+
+  .chat-messages {
+    padding: 0.5rem;
+  }
+
+  .chat-message {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .chat-input-container {
+    padding: 0.5rem;
+  }
+
+  .chat-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .chat-send {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* Header adjustments */
+  .app-header {
+    padding: 0.5rem 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   Tool Invocation Cards
+   ============================================ */
+
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border-left: 3px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.tool-card--pending {
+  border-left-color: #f59e0b;
+  opacity: 0.8;
+}
+
+.tool-card--executing {
+  border-left-color: #3b82f6;
+}
+
+.tool-card--complete {
+  border-left-color: #22c55e;
+}
+
+.tool-card--error {
+  border-left-color: #ef4444;
+}
+
+.tool-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tool-card-icon {
+  font-size: 1rem;
+}
+
+.tool-card-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.tool-card-status {
+  margin-left: auto;
+  font-size: 0.875rem;
+}
+
+.tool-card-status--complete {
+  color: #22c55e;
+}
+
+.tool-card-status--error {
+  color: #ef4444;
+}
+
+.tool-card-status--executing {
+  color: #3b82f6;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.tool-card-description {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.tool-card-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .layout-canvas {
+    height: 50vh;
+  }
+
+  .layout-chat {
+    height: 50vh;
+  }
+
+  /* Stack middle columns on very small screens */
+  .slc-row-middle {
+    flex-wrap: wrap;
+  }
+
+  .slc-col {
+    flex: 1 1 calc(50% - 1px);
+    min-width: calc(50% - 1px);
+  }
+
+  .slc-col-double {
+    flex: 1 1 100%;
+  }
 }

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { CanvasSection } from './CanvasSection';
+import { CanvasSkeleton } from './CanvasSkeleton';
 import { ImpactPanel } from './ImpactPanel';
 import {
   type CanvasSectionId,
@@ -7,6 +8,7 @@ import {
   createEmptySections,
   createEmptyImpactModel,
 } from '../types/canvas';
+import { useCanvasContext } from '../context';
 
 interface CanvasProps {
   canvasId: string;
@@ -41,9 +43,23 @@ const SECTION_HELPER_TEXT: Record<CanvasSectionId, string> = {
 /**
  * The Social Lean Canvas with official layout.
  * Layout matches socialleancanvas.com
+ *
+ * Uses CanvasContext for real-time sync with agent updates.
+ * Maintains local state for sections being edited to prevent
+ * remote updates from disrupting user input.
  */
 export function Canvas({ canvasId }: CanvasProps) {
-  const [sections, setSections] = useState(() =>
+  // Get synced state from context (updated by Chat via agent state sync)
+  const {
+    canvas: syncedCanvas,
+    editingSections,
+    setEditing,
+    saveSection,
+    saveImpactModel,
+  } = useCanvasContext();
+
+  // Local state for immediate UI updates
+  const [localSections, setLocalSections] = useState<Record<CanvasSectionId, string>>(() =>
     createEmptySections(canvasId).reduce(
       (acc, section) => {
         acc[section.sectionKey] = section.content;
@@ -53,7 +69,7 @@ export function Canvas({ canvasId }: CanvasProps) {
     )
   );
 
-  const [impactModel, setImpactModel] = useState<ImpactModel>(() =>
+  const [localImpactModel, setLocalImpactModel] = useState<ImpactModel>(() =>
     createEmptyImpactModel(canvasId)
   );
 
@@ -61,7 +77,11 @@ export function Canvas({ canvasId }: CanvasProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Load canvas state from backend on mount
+  // Track recently updated sections for visual feedback
+  const [recentlyUpdated, setRecentlyUpdated] = useState<Set<CanvasSectionId>>(new Set());
+  const prevSyncedRef = useRef<string | null>(null);
+
+  // Initial load from backend (fallback if agent hasn't synced yet)
   useEffect(() => {
     async function loadCanvas() {
       try {
@@ -75,12 +95,12 @@ export function Canvas({ canvasId }: CanvasProps) {
             for (const section of data.sections) {
               sectionsMap[section.sectionKey as CanvasSectionId] = section.content || '';
             }
-            setSections(sectionsMap);
+            setLocalSections(sectionsMap);
           }
 
           // Update impact model from backend
           if (data.impactModel) {
-            setImpactModel(data.impactModel);
+            setLocalImpactModel(data.impactModel);
           }
         } else {
           setLoadError('Failed to load canvas data');
@@ -96,66 +116,89 @@ export function Canvas({ canvasId }: CanvasProps) {
     loadCanvas();
   }, [canvasId]);
 
-  const handleSectionSave = useCallback(async (sectionKey: CanvasSectionId, content: string) => {
-    // Update local state immediately for responsiveness
-    setSections((prev) => ({
-      ...prev,
-      [sectionKey]: content,
-    }));
+  // Merge synced canvas with local state
+  // Only update sections that are NOT being edited locally
+  useEffect(() => {
+    if (!syncedCanvas || syncedCanvas.updatedAt === prevSyncedRef.current) return;
 
-    // Persist to backend
-    try {
-      const response = await fetch(`/api/canvas/${canvasId}/section/${sectionKey}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
+    prevSyncedRef.current = syncedCanvas.updatedAt;
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Failed to save section:', error);
+    // Find which sections changed
+    const updatedSectionKeys = new Set<CanvasSectionId>();
+
+    setLocalSections(prev => {
+      const merged = { ...prev };
+      for (const section of syncedCanvas.sections) {
+        const key = section.sectionKey as CanvasSectionId;
+        // Only update if not being edited AND content actually changed
+        if (!editingSections.has(key) && prev[key] !== section.content) {
+          merged[key] = section.content;
+          updatedSectionKeys.add(key);
+        }
       }
-    } catch (err) {
-      console.error('Failed to save section:', err);
+      return merged;
+    });
+
+    // Update impact model if not being edited
+    if (!editingSections.has('impact')) {
+      setLocalImpactModel(syncedCanvas.impactModel);
     }
-  }, [canvasId]);
+
+    // Mark updated sections for visual feedback
+    if (updatedSectionKeys.size > 0) {
+      setRecentlyUpdated(updatedSectionKeys);
+      // Clear after animation
+      setTimeout(() => setRecentlyUpdated(new Set()), 1500);
+    }
+  }, [syncedCanvas, editingSections]);
+
+  const handleSectionSave = useCallback(async (sectionKey: CanvasSectionId, content: string) => {
+    // Persist via context - returns success/failure
+    const result = await saveSection(sectionKey, content, canvasId);
+
+    if (result.success) {
+      // Update local state only on successful save
+      setLocalSections((prev) => ({
+        ...prev,
+        [sectionKey]: content,
+      }));
+      // Clear editing state
+      setEditing(sectionKey, false);
+    }
+
+    return result;
+  }, [canvasId, saveSection, setEditing]);
+
+  const handleSectionFocus = useCallback((sectionKey: CanvasSectionId) => {
+    setEditing(sectionKey, true);
+  }, [setEditing]);
 
   const handleImpactSave = useCallback(async (updatedImpact: ImpactModel) => {
     // Update local state immediately for responsiveness
-    setImpactModel(updatedImpact);
+    setLocalImpactModel(updatedImpact);
     setShowImpactPanel(false);
 
-    // Persist to backend
-    try {
-      const response = await fetch(`/api/canvas/${canvasId}/impact`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedImpact),
-      });
+    // Clear editing state
+    setEditing('impact', false);
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Failed to save impact model:', error);
-      }
-    } catch (err) {
-      console.error('Failed to save impact model:', err);
-    }
-  }, [canvasId]);
+    // Persist via context
+    await saveImpactModel(updatedImpact, canvasId);
+  }, [canvasId, saveImpactModel, setEditing]);
 
-  // Show loading or error state
-  if (isLoading || loadError) {
+  // Show loading skeleton or error state
+  if (isLoading) {
+    return <CanvasSkeleton />;
+  }
+
+  if (loadError) {
     return (
-      <div className="slc-canvas" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {loadError ? (
-          <div style={{ color: 'var(--color-error, #e53e3e)', textAlign: 'center' }}>
-            <p>{loadError}</p>
-            <button onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
-              Retry
-            </button>
-          </div>
-        ) : (
-          <div>Loading canvas...</div>
-        )}
+      <div className="slc-canvas canvas-error-container">
+        <div className="canvas-error">
+          <p>{loadError}</p>
+          <button type="button" className="canvas-error-retry" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -167,26 +210,31 @@ export function Canvas({ canvasId }: CanvasProps) {
         <div className="slc-row slc-row-top">
           <CanvasSection
             sectionKey="purpose"
-            content={sections.purpose || ''}
+            content={localSections.purpose || ''}
             onSave={(content) => handleSectionSave('purpose', content)}
+            onFocus={() => handleSectionFocus('purpose')}
             helperText={SECTION_HELPER_TEXT.purpose}
+            isUpdating={recentlyUpdated.has('purpose')}
           />
           <div
-            className={`canvas-section ${impactModel.impact ? 'completed' : ''}`}
-            onClick={() => setShowImpactPanel(true)}
+            className={`canvas-section ${localImpactModel.impact ? 'completed' : ''} ${recentlyUpdated.has('impact') ? 'just-updated' : ''}`}
+            onClick={() => {
+              setEditing('impact', true);
+              setShowImpactPanel(true);
+            }}
           >
             <div className="canvas-section-header">
               <span className="canvas-section-number">11</span>
               <span className="canvas-section-title">IMPACT</span>
-              <span className={`canvas-section-status ${impactModel.impact ? 'complete' : ''}`}>
-                {impactModel.impact ? '✓' : '○'}
+              <span className={`canvas-section-status ${localImpactModel.impact ? 'complete' : ''}`}>
+                {localImpactModel.impact ? '✓' : '○'}
               </span>
               <span className="canvas-section-model model-impact">impact</span>
             </div>
             <div
-              className={`canvas-section-content ${!impactModel.impact ? 'helper' : ''}`}
+              className={`canvas-section-content ${!localImpactModel.impact ? 'helper' : ''}`}
             >
-              {impactModel.impact || SECTION_HELPER_TEXT.impact}
+              {localImpactModel.impact || SECTION_HELPER_TEXT.impact}
             </div>
           </div>
         </div>
@@ -197,9 +245,11 @@ export function Canvas({ canvasId }: CanvasProps) {
           <div className="slc-col slc-col-double">
             <CanvasSection
               sectionKey="jobsToBeDone"
-              content={sections.jobsToBeDone || ''}
+              content={localSections.jobsToBeDone || ''}
               onSave={(content) => handleSectionSave('jobsToBeDone', content)}
+              onFocus={() => handleSectionFocus('jobsToBeDone')}
               helperText={SECTION_HELPER_TEXT.jobsToBeDone}
+              isUpdating={recentlyUpdated.has('jobsToBeDone')}
             />
           </div>
 
@@ -207,15 +257,19 @@ export function Canvas({ canvasId }: CanvasProps) {
           <div className="slc-col slc-col-stacked">
             <CanvasSection
               sectionKey="solution"
-              content={sections.solution || ''}
+              content={localSections.solution || ''}
               onSave={(content) => handleSectionSave('solution', content)}
+              onFocus={() => handleSectionFocus('solution')}
               helperText={SECTION_HELPER_TEXT.solution}
+              isUpdating={recentlyUpdated.has('solution')}
             />
             <CanvasSection
               sectionKey="keyMetrics"
-              content={sections.keyMetrics || ''}
+              content={localSections.keyMetrics || ''}
               onSave={(content) => handleSectionSave('keyMetrics', content)}
+              onFocus={() => handleSectionFocus('keyMetrics')}
               helperText={SECTION_HELPER_TEXT.keyMetrics}
+              isUpdating={recentlyUpdated.has('keyMetrics')}
             />
           </div>
 
@@ -223,11 +277,11 @@ export function Canvas({ canvasId }: CanvasProps) {
           <div className="slc-col slc-col-double">
             <CanvasSection
               sectionKey="valueProposition"
-              content={sections.valueProposition || ''}
-              onSave={(content) =>
-                handleSectionSave('valueProposition', content)
-              }
+              content={localSections.valueProposition || ''}
+              onSave={(content) => handleSectionSave('valueProposition', content)}
+              onFocus={() => handleSectionFocus('valueProposition')}
               helperText={SECTION_HELPER_TEXT.valueProposition}
+              isUpdating={recentlyUpdated.has('valueProposition')}
             />
           </div>
 
@@ -235,15 +289,19 @@ export function Canvas({ canvasId }: CanvasProps) {
           <div className="slc-col slc-col-stacked">
             <CanvasSection
               sectionKey="advantage"
-              content={sections.advantage || ''}
+              content={localSections.advantage || ''}
               onSave={(content) => handleSectionSave('advantage', content)}
+              onFocus={() => handleSectionFocus('advantage')}
               helperText={SECTION_HELPER_TEXT.advantage}
+              isUpdating={recentlyUpdated.has('advantage')}
             />
             <CanvasSection
               sectionKey="channels"
-              content={sections.channels || ''}
+              content={localSections.channels || ''}
               onSave={(content) => handleSectionSave('channels', content)}
+              onFocus={() => handleSectionFocus('channels')}
               helperText={SECTION_HELPER_TEXT.channels}
+              isUpdating={recentlyUpdated.has('channels')}
             />
           </div>
 
@@ -251,9 +309,11 @@ export function Canvas({ canvasId }: CanvasProps) {
           <div className="slc-col slc-col-double">
             <CanvasSection
               sectionKey="customers"
-              content={sections.customers || ''}
+              content={localSections.customers || ''}
               onSave={(content) => handleSectionSave('customers', content)}
+              onFocus={() => handleSectionFocus('customers')}
               helperText={SECTION_HELPER_TEXT.customers}
+              isUpdating={recentlyUpdated.has('customers')}
             />
           </div>
         </div>
@@ -262,22 +322,26 @@ export function Canvas({ canvasId }: CanvasProps) {
         <div className="slc-row slc-row-bottom">
           <CanvasSection
             sectionKey="costs"
-            content={sections.costs || ''}
+            content={localSections.costs || ''}
             onSave={(content) => handleSectionSave('costs', content)}
+            onFocus={() => handleSectionFocus('costs')}
             helperText={SECTION_HELPER_TEXT.costs}
+            isUpdating={recentlyUpdated.has('costs')}
           />
           <CanvasSection
             sectionKey="revenue"
-            content={sections.revenue || ''}
+            content={localSections.revenue || ''}
             onSave={(content) => handleSectionSave('revenue', content)}
+            onFocus={() => handleSectionFocus('revenue')}
             helperText={SECTION_HELPER_TEXT.revenue}
+            isUpdating={recentlyUpdated.has('revenue')}
           />
         </div>
       </div>
 
       {showImpactPanel && (
         <ImpactPanel
-          impactModel={impactModel}
+          impactModel={localImpactModel}
           onSave={handleImpactSave}
           onClose={() => setShowImpactPanel(false)}
         />

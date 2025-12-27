@@ -9,14 +9,15 @@
  * - GET /api/canvas/:id - Get full canvas state
  * - PUT /api/canvas/:id/section/:key - Update section
  * - GET /api/canvas/:id/model/:model - Get model view
- * - GET /api/canvas/:id/venture-profile - Get dimensions
- * - PUT /api/canvas/:id/venture-profile - Update dimension
+ * - GET /api/canvas/:id/venture-profile - Get venture properties
+ * - PUT /api/canvas/:id/venture-profile - Update venture property
+ * - GET /api/canvas/:id/properties-for-filtering - Get filtered properties
  * - GET /api/canvas/:id/export/:format - Export canvas
  */
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
-import type { VentureDimensions } from '../../src/types/venture';
+import type { VentureProperties } from '../../src/types/venture';
 
 /**
  * UUID validation regex
@@ -24,9 +25,9 @@ import type { VentureDimensions } from '../../src/types/venture';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Valid venture dimension keys
+ * Valid venture property keys
  */
-const VALID_DIMENSIONS: (keyof VentureDimensions)[] = [
+const VALID_PROPERTIES: (keyof VentureProperties)[] = [
   'ventureStage',
   'impactAreas',
   'impactMechanisms',
@@ -165,26 +166,26 @@ export async function handleCanvasRoute(
       return jsonResponse(profile, 200, requestId);
     }
 
-    // PUT /api/canvas/:id/venture-profile - Update dimension
+    // PUT /api/canvas/:id/venture-profile - Update property
     if (parts.length === 4 && parts[3] === 'venture-profile' && request.method === 'PUT') {
       const body = await request.json().catch(() => ({})) as {
-        dimension?: keyof VentureDimensions;
+        property?: keyof VentureProperties;
         value?: string | string[] | null;
         confidence?: number;
         confirmed?: boolean;
       };
 
-      if (!body.dimension) {
-        return jsonResponse({ error: 'dimension is required' }, 400, requestId);
+      if (!body.property) {
+        return jsonResponse({ error: 'property is required' }, 400, requestId);
       }
 
-      // Validate dimension key
-      if (!VALID_DIMENSIONS.includes(body.dimension)) {
-        return jsonResponse({ error: `Invalid dimension: ${body.dimension}` }, 400, requestId);
+      // Validate property key
+      if (!VALID_PROPERTIES.includes(body.property)) {
+        return jsonResponse({ error: `Invalid property: ${body.property}` }, 400, requestId);
       }
 
-      await stub.updateVentureDimension(
-        body.dimension,
+      await stub.updateVentureProperty(
+        body.property,
         body.value ?? null,
         body.confidence,
         body.confirmed
@@ -194,10 +195,10 @@ export async function handleCanvasRoute(
       return jsonResponse(profile, 200, requestId);
     }
 
-    // GET /api/canvas/:id/dimensions-for-filtering - Get filtered dimensions
-    if (parts.length === 4 && parts[3] === 'dimensions-for-filtering' && request.method === 'GET') {
-      const dimensions = await stub.getDimensionsForFiltering();
-      return jsonResponse(dimensions, 200, requestId);
+    // GET /api/canvas/:id/properties-for-filtering - Get filtered properties
+    if (parts.length === 4 && parts[3] === 'properties-for-filtering' && request.method === 'GET') {
+      const properties = await stub.getPropertiesForFiltering();
+      return jsonResponse(properties, 200, requestId);
     }
 
     // GET /api/canvas/:id/export/:format - Export canvas

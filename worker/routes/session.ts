@@ -10,6 +10,7 @@
  */
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
+import { createLogger, createMetrics } from '../observability';
 
 /**
  * UUID validation regex
@@ -21,8 +22,11 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  */
 export async function handleSessionRoute(
   request: Request,
-  env: Env
+  env: Env,
+  requestId?: string
 ): Promise<Response> {
+  const logger = createLogger('session-routes', requestId);
+  const metrics = createMetrics(env.SLC_ANALYTICS);
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean);
   // parts: ['api', 'session', ...rest]
@@ -42,6 +46,8 @@ export async function handleSessionRoute(
 
       // Initialize the canvas by calling getFullCanvas (this triggers ensureInitialized)
       await stub.getFullCanvas();
+
+      metrics.trackEvent('session_created', { sessionId });
 
       return jsonResponse({
         sessionId,
@@ -79,7 +85,7 @@ export async function handleSessionRoute(
           });
         }
       } catch (error) {
-        console.error('Session check error:', error);
+        logger.error('Session check error', error);
         return jsonResponse({ error: 'Failed to check session' }, 500);
       }
 
@@ -88,7 +94,7 @@ export async function handleSessionRoute(
 
     return jsonResponse({ error: 'Not found' }, 404);
   } catch (error) {
-    console.error('Session route error:', error);
+    logger.error('Session route error', error);
     return jsonResponse(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       500

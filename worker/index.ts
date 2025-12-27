@@ -54,7 +54,7 @@ export default {
 
         // Session routes
         if (url.pathname.startsWith('/api/session')) {
-          return handleSessionRoute(request, env);
+          return handleSessionRoute(request, env, requestId);
         }
 
         // Canvas routes

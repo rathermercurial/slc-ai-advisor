@@ -16,6 +16,7 @@ import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
 import { formatCanvasContext, buildSystemPrompt } from './prompts';
 import { ANTHROPIC_TOOLS, executeToolWithBroadcast } from './anthropic-tools';
+import { createLogger, createMetrics, type Logger, type Metrics } from '../observability';
 
 /**
  * Agent state that syncs to connected clients
@@ -45,11 +46,32 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   };
 
   /**
+   * Get logger for this agent instance
+   * Uses canvasId (this.name) as request ID for correlation
+   */
+  private getLogger(): Logger {
+    return createLogger('SLCAgent', this.name || 'unknown');
+  }
+
+  /**
+   * Get metrics tracker for this agent instance
+   */
+  private getMetrics(): Metrics {
+    return createMetrics(this.env.SLC_ANALYTICS);
+  }
+
+  /**
    * Handle errors - logs and updates state
    */
   onError(connection: Connection, error: Error): void {
-    console.error('[SLCAgent] onError:', error.message);
-    console.error('[SLCAgent] onError stack:', error.stack);
+    const logger = this.getLogger();
+    const metrics = this.getMetrics();
+    logger.error('Agent error', error, { connectionId: connection.id });
+    metrics.trackEvent('error', {
+      sessionId: this.name,
+      errorType: error.name,
+      success: false,
+    });
     this.setStatus('error', error.message);
   }
 
@@ -82,6 +104,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     const canvasId = this.name;
     if (!canvasId) return;
 
+    const logger = this.getLogger();
     try {
       const stub = this.getCanvasStub(canvasId);
       const canvas = await stub.getFullCanvas();
@@ -90,9 +113,9 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
         canvas,
         canvasUpdatedAt: canvas.updatedAt,
       });
-      console.log('[SLCAgent] Canvas state broadcasted to clients');
+      logger.info('Canvas state broadcasted to clients');
     } catch (error) {
-      console.error('[SLCAgent] Failed to broadcast canvas:', error);
+      logger.error('Failed to broadcast canvas', error);
     }
   }
 
@@ -102,8 +125,10 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
    */
   private async getCanvasContext(): Promise<string> {
     const canvasId = this.name;
+    const logger = this.getLogger();
+
     if (!canvasId) {
-      console.error('[SLCAgent] No canvas ID available');
+      logger.warn('No canvas ID available');
       return formatCanvasContext(null);
     }
 
@@ -133,7 +158,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
         impactModel: canvas.impactModel,
       });
     } catch (error) {
-      console.error('[SLCAgent] Failed to get canvas context:', error);
+      logger.error('Failed to get canvas context', error);
       return formatCanvasContext(null);
     }
   }
@@ -157,12 +182,19 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<ToolSet>
   ): Promise<Response | undefined> {
-    console.log('[SLCAgent] onChatMessage called');
-    console.log('[SLCAgent] Agent name (canvasId):', this.name);
-    console.log('[SLCAgent] Message count:', this.messages.length);
-    console.log('[SLCAgent] CF_ACCOUNT_ID:', this.env.CF_ACCOUNT_ID ? 'set' : 'NOT SET');
-    console.log('[SLCAgent] CF_GATEWAY_ID:', this.env.CF_GATEWAY_ID ? 'set' : 'NOT SET');
-    console.log('[SLCAgent] ANTHROPIC_API_KEY:', this.env.ANTHROPIC_API_KEY ? 'set' : 'NOT SET');
+    const logger = this.getLogger();
+    const metrics = this.getMetrics();
+    const sessionId = this.name || 'unknown';
+
+    logger.info('Chat message received', {
+      canvasId: this.name,
+      messageCount: this.messages.length,
+      hasAccountId: !!this.env.CF_ACCOUNT_ID,
+      hasGatewayId: !!this.env.CF_GATEWAY_ID,
+      hasApiKey: !!this.env.ANTHROPIC_API_KEY,
+    });
+
+    metrics.trackEvent('message_received', { sessionId });
 
     this.setStatus('thinking', 'Processing your message...');
 
@@ -195,11 +227,12 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
           content: this.getMessageText(m),
         }));
 
-      console.log('[SLCAgent] Sending', anthropicMessages.length, 'messages to Anthropic');
+      logger.info('Sending messages to Anthropic', { messageCount: anthropicMessages.length });
 
       // Use Vercel AI SDK utilities to create UI message stream
       const textPartId = crypto.randomUUID();
       const toolContext = this; // For tool execution
+      const messageTimer = metrics.startTimer('message_sent', { sessionId });
 
       const uiStream = createUIMessageStream({
         execute: async ({ writer }) => {
@@ -211,7 +244,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
             while (continueLoop && step < maxSteps) {
               step++;
-              console.log(`[SLCAgent] Step ${step}/${maxSteps}`);
+              logger.info('Processing step', { step, maxSteps });
 
               // Create streaming response with tools
               const stream = client.messages.stream({
@@ -246,7 +279,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
                 } else if (event.type === 'message_delta') {
                   // Check stop reason
                   if (event.delta.stop_reason === 'tool_use') {
-                    console.log('[SLCAgent] Tool use detected');
+                    logger.info('Tool use detected');
                   }
                 }
               }
@@ -265,13 +298,13 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
               );
 
               if (toolUseBlocks.length > 0) {
-                console.log(`[SLCAgent] Executing ${toolUseBlocks.length} tool(s)`);
+                logger.info('Executing tools', { count: toolUseBlocks.length });
 
                 // Build tool results
                 const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
                 for (const toolBlock of toolUseBlocks) {
-                  console.log(`[SLCAgent] Executing tool: ${toolBlock.name}`);
+                  const toolTimer = logger.startTimer(`tool:${toolBlock.name}`);
                   try {
                     const result = await executeToolWithBroadcast(
                       {
@@ -286,10 +319,23 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
                       tool_use_id: toolBlock.id,
                       content: JSON.stringify(result),
                     });
-                    console.log(`[SLCAgent] Tool ${toolBlock.name} succeeded`);
+                    const durationMs = toolTimer.end({ success: true });
+                    metrics.trackEvent('tool_executed', {
+                      sessionId,
+                      toolName: toolBlock.name,
+                      success: true,
+                      durationMs,
+                    });
                   } catch (error) {
                     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-                    console.error(`[SLCAgent] Tool ${toolBlock.name} failed:`, errorMsg);
+                    const durationMs = toolTimer.end({ success: false, error: errorMsg });
+                    logger.error(`Tool ${toolBlock.name} failed`, error);
+                    metrics.trackEvent('tool_executed', {
+                      sessionId,
+                      toolName: toolBlock.name,
+                      success: false,
+                      durationMs,
+                    });
                     toolResults.push({
                       type: 'tool_result',
                       tool_use_id: toolBlock.id,
@@ -316,15 +362,21 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
                 continueLoop = false;
               }
 
-              console.log(`[SLCAgent] Step ${step} complete, text length: ${fullText.length}`);
+              logger.info('Step complete', { step, textLength: fullText.length });
             }
 
             // Note: Don't manually write 'finish' - createUIMessageStream handles it
             // when the execute function completes successfully
-            console.log('[SLCAgent] Stream finished');
+            messageTimer(); // End message_sent timer
+            logger.info('Stream finished');
             this.setStatus('idle', '');
           } catch (error) {
-            console.error('[SLCAgent] Stream error:', error);
+            logger.error('Stream error', error);
+            metrics.trackEvent('error', {
+              sessionId,
+              errorType: 'StreamError',
+              success: false,
+            });
             writer.write({
               type: 'error',
               errorText: error instanceof Error ? error.message : 'Unknown error',
@@ -338,8 +390,12 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       return createUIMessageStreamResponse({ stream: uiStream });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[SLCAgent] Chat error:', error);
-      console.error('[SLCAgent] Error stack:', error instanceof Error ? error.stack : 'no stack');
+      logger.error('Chat error', error);
+      metrics.trackEvent('error', {
+        sessionId,
+        errorType: error instanceof Error ? error.name : 'Unknown',
+        success: false,
+      });
       this.setStatus('error', errorMessage);
       throw error;
     }

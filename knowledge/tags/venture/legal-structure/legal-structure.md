@@ -3,7 +3,7 @@ title: Legal Structure Tags
 aliases:
   - '#legal-structure'
 tags:
-  - venture/dimension
+  - venture/property
   - venture/legal-structure
 ---
 
@@ -44,7 +44,7 @@ This section defines all tags for categorizing ventures by their legal organizat
 
 ## Required Combinations
 
-- Must include `venture-type` when using legal structure tags
+- Must include `venture-properties` when using legal structure tags
 - Must include `legal-structure` parent tag
 - Often combined with funding source tags (some structures limit funding options)
 - May combine with impact mechanism tags to show purpose-structure alignment
@@ -53,13 +53,13 @@ This section defines all tags for categorizing ventures by their legal organizat
 
 ```yaml
 # Nonprofit structure
-tags: [venture-type, legal-structure, charity]
+tags: [venture-properties, legal-structure, charity]
 
 # Hybrid structure
-tags: [venture-type, legal-structure, benefit-corporation]
+tags: [venture-properties, legal-structure, benefit-corporation]
 
 # Cooperative model
-tags: [venture-type, legal-structure, cooperative]
+tags: [venture-properties, legal-structure, cooperative]
 ```
 
 ## Tag Definitions

@@ -3,7 +3,7 @@ title: Industry Tags
 aliases:
   - '#industry'
 tags:
-  - venture/dimension
+  - venture/property
   - venture/industry
 ---
 
@@ -57,7 +57,7 @@ This section defines all tags for categorizing ventures by their primary industr
 
 ## Required Combinations
 
-- Must include `venture-type` when using industry tags
+- Must include `venture-properties` when using industry tags
 - Must include `industry` parent tag
 - Often combined with impact area tags to show industry-impact alignment
 
@@ -65,13 +65,13 @@ This section defines all tags for categorizing ventures by their primary industr
 
 ```yaml
 # Single industry focus
-tags: [venture-type, industry, healthcare]
+tags: [venture-properties, industry, healthcare]
 
 # Cross-sector venture
-tags: [venture-type, industry, clean-energy, manufacturing]
+tags: [venture-properties, industry, clean-energy, manufacturing]
 
 # Industry with impact alignment
-tags: [venture-type, industry, agriculture, impact-area, sdg-02-zero-hunger]
+tags: [venture-properties, industry, agriculture, impact-area, sdg-02-zero-hunger]
 ```
 
 ## Tag Definitions

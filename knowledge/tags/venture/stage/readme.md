@@ -1,28 +1,58 @@
 ---
-title: Venture Stage Model Tag Definition
-last_updated: 2025-06-29
-source:
-tags: [design, admin]
+title: Venture Stage Dimension
+last_updated: 2025-12-26
+tags:
+  - venture/dimension
+  - design
+aliases:
+  - '#stage'
+  - '#venture/stage'
 ---
 
-# Venture Stage Model Framework
+# Venture Stage Dimension
 
-The venture stage model is a foundational framework for understanding how social enterprises evolve through distinct phases of development, each with unique characteristics, priorities, challenges, and success metrics.
+> ⚡ **This is a Venture Dimension**
+>
+> Stage is currently the **only** venture dimension. Unlike venture properties (which accept open-ended tag values), dimensions have:
+>
+> | Characteristic | Stage Dimension |
+> |----------------|------------------|
+> | Valid values | Exactly 4: idea, early, growth, scale |
+> | Mutual exclusivity | Yes - one stage at a time |
+> | Assessment criteria | Defined transition criteria below |
+> | Non-canonical values | Not allowed |
+>
+> See [Venture Properties](../readme.md) for the full properties vs. dimensions ontology.
 
-## **Framework Overview**
+## Valid Stage Values
+
+| Tag | Aliases | Description |
+|-----|---------|-------------|
+| `idea-stage` | `stage/idea` | Concept development and problem validation |
+| `early-stage` | `stage/early` | Solution validation and initial operations |
+| `growth-stage` | `stage/growth` | Scaling operations and expanding impact |
+| `scale-stage` | `stage/scale` | Systemic impact and sustainable operations |
+
+A venture is in **exactly one stage** at any time. These are the only valid values.
+
+---
+
+## Framework Overview
 
 The Social Lean Canvas approach recognizes four distinct venture development stages, each requiring different strategic focus, resource allocation, and measurement approaches.
 
-### **Stage Progression**
+### Stage Progression
 ```
 Idea Stage → Early Stage → Growth Stage → Scale Stage
 ```
 
 Each stage represents a fundamental shift in venture priorities, capabilities, and operating context.
 
-## **Stage Definitions**
+---
 
-### **Idea Stage**
+## Stage Definitions
+
+### Idea Stage
 **Focus**: Concept development and problem validation
 - **Primary Goal**: Validate that a significant problem exists
 - **Key Activities**: Problem research, stakeholder discovery, concept testing
@@ -31,7 +61,7 @@ Each stage represents a fundamental shift in venture priorities, capabilities, a
 - **Duration**: 3-12 months typically
 - **Resources**: Minimal, primarily time and research
 
-### **Early Stage**  
+### Early Stage  
 **Focus**: Solution validation and initial operations
 - **Primary Goal**: Prove the solution works and creates value
 - **Key Activities**: Solution development, pilot programs, early customer acquisition
@@ -40,7 +70,7 @@ Each stage represents a fundamental shift in venture priorities, capabilities, a
 - **Duration**: 6-24 months typically
 - **Resources**: Seed funding, small team, basic infrastructure
 
-### **Growth Stage**
+### Growth Stage
 **Focus**: Scaling operations and expanding impact
 - **Primary Goal**: Achieve sustainable growth and proven impact
 - **Key Activities**: Process optimization, team building, market expansion
@@ -49,7 +79,7 @@ Each stage represents a fundamental shift in venture priorities, capabilities, a
 - **Duration**: 1-3 years typically
 - **Resources**: Growth capital, established team, systematic operations
 
-### **Scale Stage**
+### Scale Stage
 **Focus**: Systemic impact and sustainable operations
 - **Primary Goal**: Achieve widespread impact and long-term sustainability
 - **Key Activities**: Market leadership, systemic influence, knowledge sharing
@@ -58,65 +88,80 @@ Each stage represents a fundamental shift in venture priorities, capabilities, a
 - **Duration**: Ongoing
 - **Resources**: Significant capital, mature organization, established partnerships
 
-## **Stage Characteristics**
+---
 
-### **Problem Understanding**
-- **Idea**: Problem hypothesis and validation
-- **Early**: Problem confirmation and solution fit
-- **Growth**: Problem solution at scale
-- **Scale**: Problem addressed systemically
+## Stage Transition Criteria
 
-### **Customer Development**
-- **Idea**: Customer discovery and validation
-- **Early**: Early adopter engagement
-- **Growth**: Mainstream market penetration
-- **Scale**: Market leadership and influence
+These criteria define when a venture has completed one stage and is ready to progress. They serve as the assessment framework for determining stage.
 
-### **Impact Development**
-- **Idea**: Theory of change development
-- **Early**: Initial impact evidence
-- **Growth**: Proven impact measurement
-- **Scale**: Systemic impact demonstration
-
-### **Economic Model Evolution**
-- **Idea**: Revenue model hypothesis
-- **Early**: Initial revenue validation
-- **Growth**: Sustainable business model
-- **Scale**: Optimized and diversified revenue
-
-## **Stage Transition Criteria**
-
-### **Idea → Early Stage**
-✅ Problem clearly defined and validated
-✅ Target customers identified and engaged
-✅ Initial solution concept developed
-✅ Theory of change articulated
+### Idea → Early Stage
+✅ Problem clearly defined and validated  
+✅ Target customers identified and engaged  
+✅ Initial solution concept developed  
+✅ Theory of change articulated  
 ✅ Basic team and resources secured
 
-### **Early → Growth Stage**
-✅ Solution effectiveness demonstrated
-✅ Product-market fit achieved
-✅ Initial impact evidence collected
-✅ Revenue model validated
+### Early → Growth Stage
+✅ Solution effectiveness demonstrated  
+✅ Product-market fit achieved  
+✅ Initial impact evidence collected  
+✅ Revenue model validated  
 ✅ Operational processes established
 
-### **Growth → Scale Stage**
-✅ Sustainable growth demonstrated
-✅ Impact at scale proven
-✅ Financial sustainability achieved
-✅ Market position established
+### Growth → Scale Stage
+✅ Sustainable growth demonstrated  
+✅ Impact at scale proven  
+✅ Financial sustainability achieved  
+✅ Market position established  
 ✅ Organizational maturity reached
 
-## **Canvas Evolution Across Stages**
+---
 
-### **Canvas Completeness by Stage**
+## Stage Characteristics
+
+### Problem Understanding
+| Stage | Characteristic |
+|-------|----------------|
+| Idea | Problem hypothesis and validation |
+| Early | Problem confirmation and solution fit |
+| Growth | Problem solution at scale |
+| Scale | Problem addressed systemically |
+
+### Customer Development
+| Stage | Characteristic |
+|-------|----------------|
+| Idea | Customer discovery and validation |
+| Early | Early adopter engagement |
+| Growth | Mainstream market penetration |
+| Scale | Market leadership and influence |
+
+### Impact Development
+| Stage | Characteristic |
+|-------|----------------|
+| Idea | Theory of change development |
+| Early | Initial impact evidence |
+| Growth | Proven impact measurement |
+| Scale | Systemic impact demonstration |
+
+### Economic Model Evolution
+| Stage | Characteristic |
+|-------|----------------|
+| Idea | Revenue model hypothesis |
+| Early | Initial revenue validation |
+| Growth | Sustainable business model |
+| Scale | Optimized and diversified revenue |
+
+---
+
+## Canvas Evolution Across Stages
+
+### Canvas Completeness by Stage
 - **Idea**: Purpose, Issue, basic Customer segments
 - **Early**: + Solution, Activities, early Metrics
 - **Growth**: + Revenue model, Impact measurement, Channels
 - **Scale**: Complete canvas with optimization and ecosystem connections
 
-### **Stage-Specific Canvas Focus**
-Each stage requires different emphasis on canvas sections:
+### Stage-Specific Canvas Focus
 
 **Idea Stage Priority:**
 1. Purpose (why does this matter?)
@@ -142,65 +187,57 @@ Each stage requires different emphasis on canvas sections:
 3. Financial Model (how do we optimize resources?)
 4. Ecosystem connections (how do we influence the field?)
 
-## **Common Transition Challenges**
+---
 
-### **Idea to Early Transition**
+## Common Transition Challenges
+
+### Idea to Early Transition
 - **Resource Gap**: Moving from concept to implementation
 - **Team Building**: Assembling initial capabilities
 - **Solution Development**: Translating ideas into reality
 - **Stakeholder Management**: Engaging early supporters
 
-### **Early to Growth Transition**
+### Early to Growth Transition
 - **Scaling Operations**: Moving beyond pilot programs
 - **Financial Sustainability**: Achieving consistent revenue
 - **Team Expansion**: Building organizational capabilities
 - **Impact Measurement**: Proving effectiveness at scale
 
-### **Growth to Scale Transition**
+### Growth to Scale Transition
 - **Market Leadership**: Establishing dominant position
 - **Systemic Influence**: Moving beyond direct impact
 - **Organizational Maturity**: Developing institutional capabilities
 - **Knowledge Transfer**: Sharing learnings with the field
 
-## **Application Guidelines**
+---
 
-### **For Content Creators**
+## Tagging Usage
+
+### For Content Creators
 - Use stage tags to indicate applicable venture phases
-- Consider stage-specific needs when developing guidance
+- A single stage tag = content specific to that stage
+- Multiple stage tags = content spanning stages (rare)
 - Address transition challenges explicitly
-- Provide stage-appropriate examples and case studies
 
-### **For Venture Builders**
-- Assess current stage honestly using transition criteria
-- Focus resources on stage-appropriate priorities
-- Plan for next-stage requirements and transitions
-- Use stage model for strategic decision-making
+### For Vectorize Indexing
+Stage can be stored as a flat tag without a dedicated metadata field:
+```yaml
+tags:
+  - growth-stage           # Valid
+  - stage/growth           # Also valid (hierarchical form)
+```
 
-### **For LLM Processing**
+Both forms are equivalent for retrieval. The indexing script should normalize to the canonical form (`growth-stage`).
+
+### For LLM Processing
 - Stage tags enable developmentally appropriate responses
-- Multiple stage tags indicate broad applicability
 - Stage progression informs sequencing of guidance
-- Transition challenges guide support recommendations
-
-## **Related Frameworks**
-
-### **Integration with Other Models**
-- **Startup Stages**: Similar progression with social impact focus
-- **Nonprofit Development**: Aligned with organizational lifecycle
-- **Social Innovation**: Consistent with scaling impact approaches
-- **Systems Change**: Supports movement from intervention to influence
-
-### **Measurement Alignment**
-- **Impact Measurement**: Stage-appropriate metrics and evidence
-- **Financial Performance**: Stage-relevant sustainability indicators
-- **Organizational Development**: Capability building across stages
-- **Market Development**: Customer and stakeholder evolution
-
-This venture stage model provides the foundational framework for understanding social enterprise development, enabling stage-appropriate guidance, resource allocation, and strategic decision-making throughout the venture lifecycle.
+- Transition criteria guide support recommendations
 
 ---
 
 ## Usage Criteria
+
 Apply this tag to content that:
 - Explains the venture stage model framework
 - Discusses stage transitions and characteristics
@@ -211,19 +248,12 @@ Apply this tag to content that:
 - Content covers multiple venture stages or stage transitions
 - Stage model framework and methodology
 - Cross-stage comparison and analysis
-- Venture evolution and progression approaches
 
 ### Never Include When
 - Content is specific to only one stage (use specific stage tag instead)
 - General business development content not tied to stage model
-- Content about venture types rather than stages
+- Content about venture properties rather than stages
 
 ### Required Combinations
 - Often combined with specific stage tags when content spans multiple stages
 - May include canvas section tags when discussing stage-specific canvas approaches
-
-### Content Examples
-- Venture stage model framework explanations
-- Stage transition criteria and processes
-- Cross-stage canvas evolution analysis
-- Venture progression methodologies

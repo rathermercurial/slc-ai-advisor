@@ -33,11 +33,13 @@ Concept definitions that become Vectorize metadata:
 
 - **canvas/** - Section concepts (purpose, customers, jobsToBeDone, valueProposition, solution, channels, revenue, costs, keyMetrics, advantage, impact)
 - **model/** - Model groupings (customer, economic, impact)
-- **venture/** - Dimension taxonomies for the Selection Matrix
-  - `stage/` - Venture stages (idea, early, growth, scale)
+- **venture/** - Venture properties and dimensions for the Selection Matrix
+  - `stage/` - ⚡ **Dimension** - Venture stages (idea, early, growth, scale) - strictly validated
   - `impact-area/` - SDG alignment and IRIS+ themes
   - `industry/` - Sector classification
   - `impact-mechanism/`, `legal-structure/`, `revenue-source/`, `funding-source/`
+
+See [tags/venture/readme.md](tags/venture/readme.md) for the properties vs. dimensions distinction.
 
 ### Attachments (`/attachments/`)
 
@@ -52,10 +54,20 @@ Every content file has YAML frontmatter for Vectorize indexing:
 title: "Patagonia - Social Lean Canvas"
 last_updated: 2025-07-02
 tags:
-  canvas-sections: [customer-model, economic-model, impact-model]
-  content: [canvas-example, case-study]
-  venture-stage: [scale-stage]
-  venture-type: [industry/apparel, legal-structure/trust, ...]
+  # Content type
+  - canvas-example
+  - case-study
+  # Canvas sections covered
+  - customer-model
+  - economic-model
+  - impact-model
+  # Venture dimension (exactly one)
+  - scale-stage
+  # Venture properties (multiple allowed)
+  - industry/apparel
+  - legal-structure/trust
+  - impact-area/sdg-12-responsible-consumption-and-production
+  - revenue-source/product-sales
 ---
 ```
 

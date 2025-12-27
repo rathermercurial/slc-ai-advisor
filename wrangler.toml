@@ -8,6 +8,9 @@ compatibility_flags = ["nodejs_compat"]
 # Worker entry point (API routes)
 main = "./worker/index.ts"
 
+# Enable workers.dev subdomain (required for preview URLs)
+workers_dev = true
+
 # Enable preview URLs for non-production branch builds
 # See: https://developers.cloudflare.com/workers/configuration/previews/
 preview_urls = true

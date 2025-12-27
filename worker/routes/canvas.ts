@@ -18,6 +18,7 @@
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
 import type { VentureProperties } from '../../src/types/venture';
+import { createLogger, createMetrics } from '../observability';
 
 /**
  * UUID validation regex
@@ -50,6 +51,8 @@ export async function handleCanvasRoute(
   env: Env,
   requestId?: string
 ): Promise<Response> {
+  const logger = createLogger('canvas-routes', requestId);
+  const metrics = createMetrics(env.SLC_ANALYTICS);
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean);
   // parts: ['api', 'canvas', ...rest]
@@ -61,6 +64,8 @@ export async function handleCanvasRoute(
       const stub = getCanvasStub(env, canvasId);
 
       const canvas = await stub.getFullCanvas();
+
+      metrics.trackEvent('canvas_created', { sessionId: canvasId });
 
       return jsonResponse({
         canvasId,
@@ -108,6 +113,11 @@ export async function handleCanvasRoute(
       }
 
       const result = await stub.updateSection(sectionKey as CanvasSectionId, body.content);
+
+      if (result.success) {
+        metrics.trackEvent('canvas_updated', { sessionId: canvasId, section: sectionKey });
+      }
+
       // Return 422 Unprocessable Entity for validation failures
       const status = result.success ? 200 : 422;
       return jsonResponse(result, status, requestId);
@@ -245,7 +255,7 @@ export async function handleCanvasRoute(
 
     return jsonResponse({ error: 'Not found' }, 404, requestId);
   } catch (error) {
-    console.error('Canvas route error:', error);
+    logger.error('Canvas route error', error);
     return jsonResponse(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       500,

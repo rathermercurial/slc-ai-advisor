@@ -215,12 +215,14 @@ const SECTION_TO_MODEL: Record<CanvasSectionId, Model | null> = {
 };
 ```
 
-### Venture Dimensions
+### Venture Properties
 
 ```typescript
-// Venture dimensions (7 total) for Selection Matrix filtering
-interface VentureDimensions {
-  ventureStage: string | null;      // idea | early | growth | scale
+// Venture properties for Selection Matrix filtering
+// Note: Only ventureStage is a "dimension" (pre-defined, mutually exclusive values)
+// All others are "properties" (open-ended, descriptive tags)
+interface VentureProperties {
+  ventureStage: string | null;      // idea-stage | early-stage | growth-stage | scale-stage
   impactAreas: string[];            // 34 tags (SDG + IRIS+)
   impactMechanisms: string[];       // 10 tags
   legalStructure: string | null;    // 11 tags
@@ -232,9 +234,9 @@ interface VentureDimensions {
 // Venture profile with inference tracking
 interface VentureProfile {
   sessionId: string;
-  dimensions: VentureDimensions;
-  confidence: Partial<Record<keyof VentureDimensions, number>>;
-  confirmed: Partial<Record<keyof VentureDimensions, boolean>>;
+  properties: VentureProperties;
+  confidence: Partial<Record<keyof VentureProperties, number>>;
+  confirmed: Partial<Record<keyof VentureProperties, boolean>>;
   createdAt: string;
   updatedAt: string;
 }

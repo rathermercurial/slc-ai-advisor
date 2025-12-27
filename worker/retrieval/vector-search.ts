@@ -13,7 +13,7 @@
  */
 
 import type { CanvasSectionId, Model } from '../../src/types/canvas';
-import type { VentureDimensions } from '../../src/types/venture';
+import type { VentureProperties } from '../../src/types/venture';
 
 /**
  * Represents the user's query intent
@@ -40,19 +40,27 @@ export interface RetrievedDocument {
     canvas_section?: string;
     venture_model?: string;
     venture_stage?: string;
-    primary_impact_area?: string;
-    primary_industry?: string;
-    program?: string;
+    tags?: string;
     [key: string]: unknown;
   };
 }
 
 /**
+ * Build range filter for prefix matching on tags field
+ */
+function buildTagRangeFilter(tag: string): { $gte: string; $lte: string } {
+  return { $gte: tag, $lte: tag + '\uffff' };
+}
+
+/**
  * Build Vectorize query options with Selection Matrix filters
+ *
+ * Uses namespace for program filtering (not metadata field).
+ * Uses range queries for tag-based filtering.
  */
 export function buildVectorizeQuery(
   program: string,
-  dimensions: Partial<VentureDimensions>,
+  properties: Partial<VentureProperties>,
   intent: QueryIntent
 ): {
   topK: number;
@@ -79,30 +87,29 @@ export function buildVectorizeQuery(
     filter.venture_model = intent.targetModel;
   }
 
-  // Venture dimension filters (from profile, not canvas content)
-  if (dimensions.ventureStage) {
-    filter.venture_stage = dimensions.ventureStage;
+  // Venture property filters
+  // Stage is the only dimension - exact match
+  if (properties.ventureStage) {
+    filter.venture_stage = properties.ventureStage;
   }
 
-  // For arrays, use $in operator if Vectorize supports it
-  // For Demo, we'll use the first value if present
-  if (dimensions.impactAreas && dimensions.impactAreas.length > 0) {
-    filter.primary_impact_area = dimensions.impactAreas[0];
+  // Range query for tags field (prefix matching)
+  // Note: Only one range filter per query - prioritize by specificity
+  // Order: impactAreas > industries > others
+  if (properties.impactAreas && properties.impactAreas.length > 0) {
+    filter.tags = buildTagRangeFilter(properties.impactAreas[0]);
+  } else if (properties.industries && properties.industries.length > 0) {
+    filter.tags = buildTagRangeFilter(properties.industries[0]);
   }
 
-  if (dimensions.industries && dimensions.industries.length > 0) {
-    filter.primary_industry = dimensions.industries[0];
-  }
-
-  // Add program filter only for non-default programs
-  // "generic" is the default namespace and doesn't need filtering
-  if (program && program !== 'generic') {
-    filter.program = program;
-  }
+  // Use namespace for program filtering (not metadata field)
+  // "generic" is the default namespace
+  const namespace = program && program !== 'generic' ? program : undefined;
 
   return {
     topK: 5,
     returnMetadata: 'all',
+    namespace,
     filter: Object.keys(filter).length > 0 ? filter : undefined,
   };
 }
@@ -185,7 +192,7 @@ export async function searchKnowledgeBase(
   env: Env,
   query: string,
   program: string,
-  dimensions: Partial<VentureDimensions>,
+  properties: Partial<VentureProperties>,
   intent: QueryIntent
 ): Promise<RetrievedDocument[]> {
   // Check if required bindings are available
@@ -214,11 +221,11 @@ export async function searchKnowledgeBase(
 
   // Step 2: Query Vectorize
   try {
-    const options = buildVectorizeQuery(program, dimensions, intent);
+    const options = buildVectorizeQuery(program, properties, intent);
     const results = await env.VECTORIZE.query(vector, options);
 
     if (!results.matches || results.matches.length === 0) {
-      // Try without dimension filters
+      // Try without property filters
       const fallbackOptions = buildVectorizeQuery(program, {}, intent);
       const fallbackResults = await env.VECTORIZE.query(vector, fallbackOptions);
 
@@ -250,9 +257,7 @@ function formatMatch(match: VectorizeMatch): RetrievedDocument {
       canvas_section: match.metadata?.canvas_section as string,
       venture_model: match.metadata?.venture_model as string,
       venture_stage: match.metadata?.venture_stage as string,
-      primary_impact_area: match.metadata?.primary_impact_area as string,
-      primary_industry: match.metadata?.primary_industry as string,
-      program: match.metadata?.program as string,
+      tags: match.metadata?.tags as string,
     },
   };
 }

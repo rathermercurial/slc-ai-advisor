@@ -235,7 +235,7 @@ interface QueryIntent {
 
 function buildVectorizeQuery(
   program: string,
-  dimensions: VentureDimensions,  // From venture profile
+  properties: VentureProperties,  // From venture profile
   intent: QueryIntent
 ): VectorizeQueryOptions {
   const filter: Record<string, any> = {};

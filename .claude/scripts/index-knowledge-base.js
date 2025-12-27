@@ -104,43 +104,46 @@ function generateDocumentId(filePath) {
   return `${program}:${hash}`;
 }
 
+/**
+ * Map frontmatter to Vectorize metadata
+ *
+ * Schema (4 indexed fields):
+ * - content_type: 'example' | 'methodology'
+ * - canvas_section: section identifier
+ * - venture_stage: the only dimension (exact match)
+ * - tags: sorted, space-separated venture properties
+ *
+ * Program filtering uses Vectorize namespace, not metadata field.
+ */
 function mapFrontmatterToMetadata(filePath, frontmatter) {
   const tags = frontmatter.tags || [];
   const relativePath = getRelativePath(filePath);
-  const pathParts = relativePath.split('/');
 
   const metadata = {
     title: frontmatter.title || path.basename(filePath, '.md'),
     file_path: relativePath,  // Store original path for reference
   };
 
-  // 1. program: Extract from path knowledge/programs/{program}/...
-  metadata.program = pathParts[0] || 'default';
-
-  // 2. content_type: Check for example markers
+  // 1. content_type: Check for example markers
   const isExample = tags.some(t => EXAMPLE_TAGS.includes(t));
   metadata.content_type = isExample ? 'example' : 'methodology';
 
-  // 3. venture_stage: First match from stage tags
+  // 2. venture_stage: First match from stage tags (the only dimension)
   const stage = tags.find(t => VENTURE_STAGES.includes(t));
   if (stage) metadata.venture_stage = stage;
 
-  // 4. canvas_section: First match from section tags
+  // 3. canvas_section: First match from section tags
   const section = tags.find(t => CANVAS_SECTIONS.includes(t));
   if (section) metadata.canvas_section = section;
 
-  // 5. venture_model: Derive from canvas_section
-  if (section && SECTION_TO_MODEL[section]) {
-    metadata.venture_model = SECTION_TO_MODEL[section];
+  // 4. tags: Aggregate all other venture properties into sorted, space-separated string
+  // Exclude stage, section, and example markers (already captured in dedicated fields)
+  const venturePropertyTags = tags
+    .filter(t => !VENTURE_STAGES.includes(t) && !CANVAS_SECTIONS.includes(t) && !EXAMPLE_TAGS.includes(t))
+    .sort();
+  if (venturePropertyTags.length > 0) {
+    metadata.tags = venturePropertyTags.join(' ');
   }
-
-  // 6. primary_impact_area: First match from impact area tags
-  const impactArea = tags.find(t => IMPACT_AREAS.includes(t));
-  if (impactArea) metadata.primary_impact_area = impactArea;
-
-  // 7. primary_industry: First match from industry tags
-  const industry = tags.find(t => INDUSTRIES.includes(t));
-  if (industry) metadata.primary_industry = industry;
 
   return metadata;
 }
@@ -241,8 +244,8 @@ async function processFile(filePath, config, verbose) {
       console.log(`   ID: ${documentId}`);
       console.log(`   Content Type: ${metadata.content_type}`);
       if (metadata.venture_stage) console.log(`   Stage: ${metadata.venture_stage}`);
-      if (metadata.primary_impact_area) console.log(`   Impact Area: ${metadata.primary_impact_area}`);
-      if (metadata.primary_industry) console.log(`   Industry: ${metadata.primary_industry}`);
+      if (metadata.canvas_section) console.log(`   Section: ${metadata.canvas_section}`);
+      if (metadata.tags) console.log(`   Tags: ${metadata.tags.substring(0, 60)}${metadata.tags.length > 60 ? '...' : ''}`);
     }
 
     return {

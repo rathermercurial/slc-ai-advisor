@@ -30,11 +30,11 @@ import {
   CANVAS_SECTION_LABELS,
 } from '../../src/types/canvas';
 import {
-  type VentureDimensions,
+  type VentureProperties,
   type VentureProfile,
   type DimensionConfidence,
   type DimensionConfirmed,
-  createEmptyDimensions,
+  createEmptyProperties,
   createEmptyConfidence,
   createEmptyConfirmed,
 } from '../../src/types/venture';
@@ -583,7 +583,7 @@ export class CanvasDO extends DurableObject<Env> {
       }>(`SELECT * FROM venture_profile WHERE id = 'profile'`)
       .one()!;
 
-    const dimensions: VentureDimensions = {
+    const properties: VentureProperties = {
       ventureStage: row.venture_stage,
       impactAreas: JSON.parse(row.impact_areas),
       impactMechanisms: JSON.parse(row.impact_mechanisms),
@@ -606,7 +606,7 @@ export class CanvasDO extends DurableObject<Env> {
     return {
       id: this.ctx.id.toString(),
       sessionId: this.ctx.id.toString(),
-      dimensions,
+      properties,
       confidence,
       confirmed,
       createdAt: row.created_at,
@@ -615,10 +615,10 @@ export class CanvasDO extends DurableObject<Env> {
   }
 
   /**
-   * Update a venture dimension
+   * Update a venture property
    */
-  async updateVentureDimension(
-    dimension: keyof VentureDimensions,
+  async updateVentureProperty(
+    property: keyof VentureProperties,
     value: string | string[] | null,
     confidence?: number,
     confirmed?: boolean
@@ -630,21 +630,21 @@ export class CanvasDO extends DurableObject<Env> {
     // Get current profile
     const profile = await this.getVentureProfile();
 
-    // Update dimension value
+    // Update property value
     if (Array.isArray(value)) {
-      (profile.dimensions[dimension] as string[]) = value;
+      (profile.properties[property] as string[]) = value;
     } else {
-      (profile.dimensions[dimension] as string | null) = value;
+      (profile.properties[property] as string | null) = value;
     }
 
     // Update confidence if provided
     if (confidence !== undefined) {
-      profile.confidence[dimension] = confidence;
+      profile.confidence[property] = confidence;
     }
 
     // Update confirmed if provided
     if (confirmed !== undefined) {
-      profile.confirmed[dimension] = confirmed;
+      profile.confirmed[property] = confirmed;
     }
 
     // Update using explicit column updates (no string interpolation for SQL safety)
@@ -652,7 +652,7 @@ export class CanvasDO extends DurableObject<Env> {
     const confJson = JSON.stringify(profile.confidence);
     const confirmedJson = JSON.stringify(profile.confirmed);
 
-    switch (dimension) {
+    switch (property) {
       case 'ventureStage':
         sql.exec(`UPDATE venture_profile SET venture_stage = ?, confidence_json = ?, confirmed_json = ?, updated_at = ? WHERE id = 'profile'`, dbValue, confJson, confirmedJson, now);
         break;
@@ -678,43 +678,43 @@ export class CanvasDO extends DurableObject<Env> {
   }
 
   /**
-   * Get dimensions that meet the confidence threshold for filtering
+   * Get properties that meet the confidence threshold for filtering
    */
-  async getDimensionsForFiltering(): Promise<Partial<VentureDimensions>> {
+  async getPropertiesForFiltering(): Promise<Partial<VentureProperties>> {
     const profile = await this.getVentureProfile();
-    const result: Partial<VentureDimensions> = {};
+    const result: Partial<VentureProperties> = {};
 
-    const dims = profile.dimensions;
+    const props = profile.properties;
     const conf = profile.confidence;
     const confirmed = profile.confirmed;
 
-    // Only include dimensions that are confirmed or meet confidence threshold
-    if ((conf.ventureStage >= CONFIDENCE_THRESHOLD || confirmed.ventureStage) && dims.ventureStage) {
-      result.ventureStage = dims.ventureStage;
+    // Only include properties that are confirmed or meet confidence threshold
+    if ((conf.ventureStage >= CONFIDENCE_THRESHOLD || confirmed.ventureStage) && props.ventureStage) {
+      result.ventureStage = props.ventureStage;
     }
 
-    if ((conf.impactAreas >= CONFIDENCE_THRESHOLD || confirmed.impactAreas) && dims.impactAreas.length > 0) {
-      result.impactAreas = dims.impactAreas;
+    if ((conf.impactAreas >= CONFIDENCE_THRESHOLD || confirmed.impactAreas) && props.impactAreas.length > 0) {
+      result.impactAreas = props.impactAreas;
     }
 
-    if ((conf.impactMechanisms >= CONFIDENCE_THRESHOLD || confirmed.impactMechanisms) && dims.impactMechanisms.length > 0) {
-      result.impactMechanisms = dims.impactMechanisms;
+    if ((conf.impactMechanisms >= CONFIDENCE_THRESHOLD || confirmed.impactMechanisms) && props.impactMechanisms.length > 0) {
+      result.impactMechanisms = props.impactMechanisms;
     }
 
-    if ((conf.legalStructure >= CONFIDENCE_THRESHOLD || confirmed.legalStructure) && dims.legalStructure) {
-      result.legalStructure = dims.legalStructure;
+    if ((conf.legalStructure >= CONFIDENCE_THRESHOLD || confirmed.legalStructure) && props.legalStructure) {
+      result.legalStructure = props.legalStructure;
     }
 
-    if ((conf.revenueSources >= CONFIDENCE_THRESHOLD || confirmed.revenueSources) && dims.revenueSources.length > 0) {
-      result.revenueSources = dims.revenueSources;
+    if ((conf.revenueSources >= CONFIDENCE_THRESHOLD || confirmed.revenueSources) && props.revenueSources.length > 0) {
+      result.revenueSources = props.revenueSources;
     }
 
-    if ((conf.fundingSources >= CONFIDENCE_THRESHOLD || confirmed.fundingSources) && dims.fundingSources.length > 0) {
-      result.fundingSources = dims.fundingSources;
+    if ((conf.fundingSources >= CONFIDENCE_THRESHOLD || confirmed.fundingSources) && props.fundingSources.length > 0) {
+      result.fundingSources = props.fundingSources;
     }
 
-    if ((conf.industries >= CONFIDENCE_THRESHOLD || confirmed.industries) && dims.industries.length > 0) {
-      result.industries = dims.industries;
+    if ((conf.industries >= CONFIDENCE_THRESHOLD || confirmed.industries) && props.industries.length > 0) {
+      result.industries = props.industries;
     }
 
     return result;

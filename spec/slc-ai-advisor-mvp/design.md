@@ -413,9 +413,9 @@ function buildVectorizeFilter(
     filters.content_type = { $eq: 'canvas-example' };
   }
 
-  // Filter by venture stage
-  if (profile.dimensions.ventureStage) {
-    filters.venture_stage = { $eq: profile.dimensions.ventureStage };
+  // Filter by venture stage (the only dimension)
+  if (profile.properties.ventureStage) {
+    filters.venture_stage = { $eq: profile.properties.ventureStage };
   }
 
   // Filter by canvas section
@@ -428,14 +428,13 @@ function buildVectorizeFilter(
     filters.venture_model = { $eq: intent.targetModel };
   }
 
-  // Filter by impact areas
-  if (profile.dimensions.impactAreas.length > 0) {
-    filters.primary_impact_area = { $in: profile.dimensions.impactAreas };
-  }
-
-  // Filter by industries
-  if (profile.dimensions.industries.length > 0) {
-    filters.primary_industry = { $in: profile.dimensions.industries };
+  // Filter by tags (impact areas, industries, etc.) via range query
+  if (profile.properties.impactAreas.length > 0) {
+    const tag = profile.properties.impactAreas[0];
+    filters.tags = { $gte: tag, $lte: tag + '\uffff' };
+  } else if (profile.properties.industries.length > 0) {
+    const tag = profile.properties.industries[0];
+    filters.tags = { $gte: tag, $lte: tag + '\uffff' };
   }
 
   return { namespace: program, filters };
@@ -525,15 +524,13 @@ wrangler vectorize create-metadata-index slc-knowledge-base \
 wrangler vectorize create-metadata-index slc-knowledge-base \
   --type string --property-name canvas_section
 wrangler vectorize create-metadata-index slc-knowledge-base \
-  --type string --property-name primary_impact_area
-wrangler vectorize create-metadata-index slc-knowledge-base \
-  --type string --property-name primary_industry
+  --type string --property-name tags
 ```
 
 ### Internal
 - **Existing components:**
   - Knowledge base (markdown files in `knowledge/`)
-  - 138-tag taxonomy (7 dimensions)
+  - 138-tag taxonomy (1 dimension + 6 properties)
   - Venture examples with YAML frontmatter
 
 ## Alternatives Considered

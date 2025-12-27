@@ -123,10 +123,10 @@ The system has three distinct concepts that must be kept separate:
 - `initSession(id: string, program: string)` - Create session with empty canvas
 - `getSession()` - Get session metadata (program, currentSection, timestamps)
 
-**CRUD Methods - Venture Dimensions (for Selection Matrix):**
-- `getVentureProfile()` - Get all 7 dimensions with confidence scores
-- `updateVentureDimension(dimension, value, confidence)` - Update single dimension
-- `getDimensionsForFiltering()` - Get confirmed/high-confidence dimensions for KB queries
+**CRUD Methods - Venture Properties (for Selection Matrix):**
+- `getVentureProfile()` - Get all 7 properties with confidence scores
+- `updateVentureProperty(property, value, confidence)` - Update single property
+- `getPropertiesForFiltering()` - Get confirmed/high-confidence properties for KB queries
 
 **CRUD Methods - Canvas Sections (individual content):**
 - `getAllCanvasSections()` - Get all 11 sections (10 standard + impact summary)
@@ -256,12 +256,13 @@ function buildVectorizeQuery(
     filter.venture_model = intent.targetModel;
   }
 
-  // Venture dimension filters (from profile, not canvas content)
-  if (dimensions.ventureStage) {
-    filter.venture_stage = dimensions.ventureStage;
+  // Venture property filters (from profile, not canvas content)
+  if (properties.ventureStage) {
+    filter.venture_stage = properties.ventureStage;
   }
-  if (dimensions.industries.length > 0) {
-    filter.primary_industry = { $in: dimensions.industries };
+  // Range query for tags field
+  if (properties.industries && properties.industries.length > 0) {
+    filter.tags = { $gte: properties.industries[0], $lte: properties.industries[0] + '\uffff' };
   }
 
   return {

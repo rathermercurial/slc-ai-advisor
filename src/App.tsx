@@ -107,16 +107,34 @@ function AppContent({
     return 'idea';
   });
 
+  // Chat panel collapsed state
+  const [chatCollapsed, setChatCollapsed] = useState(() => {
+    const saved = localStorage.getItem('chatCollapsed');
+    return saved === 'true';
+  });
+
+  // Profile panel visibility
+  const [showProfile, setShowProfile] = useState(false);
+
+  // Sidebar width in pixels (stored in localStorage)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('sidebarWidth');
+    return saved ? parseInt(saved, 10) : 220;
+  });
+
   // Persist split percentage
   const handleResize = useCallback((percentage: number) => {
     setSplitPercentage(percentage);
     localStorage.setItem('canvasSplitPercentage', String(percentage));
   }, []);
 
-  // Double-click to reset split
-  const handleResizerDoubleClick = useCallback(() => {
-    setSplitPercentage(60);
-    localStorage.setItem('canvasSplitPercentage', '60');
+  // Handle sidebar resize (in pixels, then convert to percentage of window width)
+  const handleSidebarResize = useCallback((percentage: number) => {
+    // Convert percentage to pixels based on window width
+    const newWidth = Math.round((percentage / 100) * window.innerWidth);
+    const clampedWidth = Math.max(180, Math.min(400, newWidth));
+    setSidebarWidth(clampedWidth);
+    localStorage.setItem('sidebarWidth', String(clampedWidth));
   }, []);
 
   // Handle venture name change
@@ -141,6 +159,20 @@ function AppContent({
     setVentureStage(stage);
     localStorage.setItem(`ventureStage-${canvasId}`, stage);
   }, [canvasId]);
+
+  // Toggle chat panel
+  const handleChatToggle = useCallback(() => {
+    setChatCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('chatCollapsed', String(next));
+      return next;
+    });
+  }, []);
+
+  // Toggle profile panel
+  const handleProfileClick = useCallback(() => {
+    setShowProfile((prev) => !prev);
+  }, []);
 
   // Calculate progress from filled canvas sections
   const calculateProgress = useCallback((): number => {
@@ -256,6 +288,7 @@ function AppContent({
           progress={progress}
           onNameChange={handleNameChange}
           onStageChange={handleStageChange}
+          onProfileClick={handleProfileClick}
         />
         <div className="app-header-actions">
           <button
@@ -287,23 +320,36 @@ function AppContent({
       </header>
 
       <main className="app-main">
-        <Sidebar />
+        <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
+          <Sidebar />
+          <Resizer
+            direction="horizontal"
+            onResize={handleSidebarResize}
+            minPercentage={10}
+            maxPercentage={25}
+          />
+        </div>
         <div className="layout-content">
-          <div className="layout-canvas" style={{ flex: `0 0 ${splitPercentage}%` }}>
+          <div className="layout-canvas" style={{ flex: chatCollapsed ? 1 : `0 0 ${splitPercentage}%` }}>
             <Canvas canvasId={canvasId} />
           </div>
-          <div onDoubleClick={handleResizerDoubleClick}>
+          {!chatCollapsed && (
             <Resizer
               direction="horizontal"
               onResize={handleResize}
               minPercentage={30}
               maxPercentage={70}
             />
-          </div>
-          <div className="layout-chat" style={{ flex: `0 0 ${100 - splitPercentage}%` }}>
-            <ErrorBoundary>
-              <Chat canvasId={canvasId} threadId={threadId} />
-            </ErrorBoundary>
+          )}
+          <div className={`layout-chat ${chatCollapsed ? 'collapsed' : ''}`} style={{ flex: chatCollapsed ? 'none' : `0 0 ${100 - splitPercentage}%` }}>
+            <div className="chat-collapse-toggle" onClick={handleChatToggle} title={chatCollapsed ? 'Expand chat' : 'Collapse chat'}>
+              <span aria-hidden="true">{chatCollapsed ? '◀' : '▶'}</span>
+            </div>
+            {!chatCollapsed && (
+              <ErrorBoundary>
+                <Chat canvasId={canvasId} threadId={threadId} />
+              </ErrorBoundary>
+            )}
           </div>
         </div>
       </main>
@@ -314,6 +360,32 @@ function AppContent({
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {showProfile && (
+        <div className="profile-overlay" onClick={() => setShowProfile(false)}>
+          <div className="profile-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-panel-header">
+              <h3>Venture Profile</h3>
+              <button className="profile-close-btn" onClick={() => setShowProfile(false)} aria-label="Close">×</button>
+            </div>
+            <div className="profile-panel-content">
+              <p className="profile-placeholder">
+                Venture profile dimensions will be available once backend support is complete.
+              </p>
+              <div className="profile-dimensions">
+                <div className="profile-dimension">
+                  <span className="profile-dimension-label">Stage</span>
+                  <span className="profile-dimension-value">{ventureStage}</span>
+                </div>
+                <div className="profile-dimension">
+                  <span className="profile-dimension-label">Progress</span>
+                  <span className="profile-dimension-value">{progress}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

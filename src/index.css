@@ -267,6 +267,44 @@ body {
   overflow: hidden;
   min-height: 0;
   min-width: 0;
+  position: relative;
+}
+
+.layout-chat.collapsed {
+  width: 32px;
+  min-width: 32px;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+}
+
+.chat-collapse-toggle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 10px;
+  transition: all var(--transition-fast);
+  z-index: 10;
+}
+
+.chat-collapse-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.layout-chat.collapsed .chat-collapse-toggle {
+  left: 4px;
 }
 
 /* ============================================
@@ -1667,14 +1705,27 @@ body {
    Sidebar
    ============================================ */
 
-.sidebar {
-  width: 240px;
+.sidebar-wrapper {
+  display: flex;
   flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar {
+  flex: 1;
+  min-width: 0;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.sidebar-wrapper .resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 
 .sidebar-collapsed {
@@ -1997,9 +2048,15 @@ body {
    ============================================ */
 
 .resizer {
+  position: relative;
   flex-shrink: 0;
   background: var(--border-color);
   transition: background var(--transition-fast);
+}
+
+.resizer-wrapper {
+  display: flex;
+  align-items: stretch;
 }
 
 .resizer:hover,
@@ -2308,4 +2365,98 @@ body {
 
 .canvas-section.just-updated {
   animation: glowPulse 1.5s ease-out, sectionFlash 1.5s ease-out;
+}
+
+/* ============================================
+   Profile Panel Overlay
+   ============================================ */
+
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.profile-panel {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.profile-panel-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.profile-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.profile-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.profile-panel-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.profile-placeholder {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-dimension {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.profile-dimension-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.profile-dimension-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
 }

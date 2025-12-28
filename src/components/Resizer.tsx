@@ -10,12 +10,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface ResizerProps {
   /** Direction of resize: horizontal splits left/right, vertical splits top/bottom */
   direction?: 'horizontal' | 'vertical';
-  /** Callback with new size as percentage (0-100) */
-  onResize: (percentage: number) => void;
+  /** Callback with new size as percentage (0-100) or pixels if pixelMode is true */
+  onResize: (value: number) => void;
   /** Minimum percentage for the first panel */
   minPercentage?: number;
   /** Maximum percentage for the first panel */
   maxPercentage?: number;
+  /** Use pixel values instead of percentages (for fixed-width panels) */
+  pixelMode?: boolean;
+  /** Minimum pixels (only used in pixelMode) */
+  minPixels?: number;
+  /** Maximum pixels (only used in pixelMode) */
+  maxPixels?: number;
 }
 
 export function Resizer({
@@ -23,6 +29,9 @@ export function Resizer({
   onResize,
   minPercentage = 30,
   maxPercentage = 70,
+  pixelMode = false,
+  minPixels = 100,
+  maxPixels = 500,
 }: ResizerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -41,41 +50,64 @@ export function Resizer({
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const container = containerRef.current?.parentElement;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      let percentage: number;
-
-      if (direction === 'horizontal') {
-        percentage = ((e.clientX - rect.left) / rect.width) * 100;
+      if (pixelMode) {
+        // Pixel mode: use absolute position from viewport edge
+        let pixels: number;
+        if (direction === 'horizontal') {
+          pixels = e.clientX;
+        } else {
+          pixels = e.clientY;
+        }
+        pixels = Math.max(minPixels, Math.min(maxPixels, pixels));
+        onResize(pixels);
       } else {
-        percentage = ((e.clientY - rect.top) / rect.height) * 100;
-      }
+        // Percentage mode: calculate relative to parent container
+        const container = containerRef.current?.parentElement;
+        if (!container) return;
 
-      // Clamp to min/max
-      percentage = Math.max(minPercentage, Math.min(maxPercentage, percentage));
-      onResize(percentage);
+        const rect = container.getBoundingClientRect();
+        let percentage: number;
+
+        if (direction === 'horizontal') {
+          percentage = ((e.clientX - rect.left) / rect.width) * 100;
+        } else {
+          percentage = ((e.clientY - rect.top) / rect.height) * 100;
+        }
+
+        percentage = Math.max(minPercentage, Math.min(maxPercentage, percentage));
+        onResize(percentage);
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       const touch = e.touches[0];
       if (!touch) return;
 
-      const container = containerRef.current?.parentElement;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      let percentage: number;
-
-      if (direction === 'horizontal') {
-        percentage = ((touch.clientX - rect.left) / rect.width) * 100;
+      if (pixelMode) {
+        let pixels: number;
+        if (direction === 'horizontal') {
+          pixels = touch.clientX;
+        } else {
+          pixels = touch.clientY;
+        }
+        pixels = Math.max(minPixels, Math.min(maxPixels, pixels));
+        onResize(pixels);
       } else {
-        percentage = ((touch.clientY - rect.top) / rect.height) * 100;
-      }
+        const container = containerRef.current?.parentElement;
+        if (!container) return;
 
-      percentage = Math.max(minPercentage, Math.min(maxPercentage, percentage));
-      onResize(percentage);
+        const rect = container.getBoundingClientRect();
+        let percentage: number;
+
+        if (direction === 'horizontal') {
+          percentage = ((touch.clientX - rect.left) / rect.width) * 100;
+        } else {
+          percentage = ((touch.clientY - rect.top) / rect.height) * 100;
+        }
+
+        percentage = Math.max(minPercentage, Math.min(maxPercentage, percentage));
+        onResize(percentage);
+      }
     };
 
     const handleMouseUp = () => {
@@ -99,7 +131,7 @@ export function Resizer({
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, direction, minPercentage, maxPercentage, onResize]);
+  }, [isDragging, direction, minPercentage, maxPercentage, pixelMode, minPixels, maxPixels, onResize]);
 
   return (
     <div

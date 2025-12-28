@@ -128,13 +128,10 @@ function AppContent({
     localStorage.setItem('canvasSplitPercentage', String(percentage));
   }, []);
 
-  // Handle sidebar resize (in pixels, then convert to percentage of window width)
-  const handleSidebarResize = useCallback((percentage: number) => {
-    // Convert percentage to pixels based on window width
-    const newWidth = Math.round((percentage / 100) * window.innerWidth);
-    const clampedWidth = Math.max(180, Math.min(400, newWidth));
-    setSidebarWidth(clampedWidth);
-    localStorage.setItem('sidebarWidth', String(clampedWidth));
+  // Handle sidebar resize (direct pixel values)
+  const handleSidebarResize = useCallback((pixels: number) => {
+    setSidebarWidth(pixels);
+    localStorage.setItem('sidebarWidth', String(pixels));
   }, []);
 
   // Handle venture name change
@@ -325,8 +322,9 @@ function AppContent({
           <Resizer
             direction="horizontal"
             onResize={handleSidebarResize}
-            minPercentage={10}
-            maxPercentage={25}
+            pixelMode
+            minPixels={180}
+            maxPixels={400}
           />
         </div>
         <div className="layout-content">

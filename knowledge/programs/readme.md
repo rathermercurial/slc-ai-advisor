@@ -7,7 +7,7 @@ Learning programs for the Social Lean Canvas. Each program becomes a **Vectorize
 | Program | Files | Description |
 |---------|-------|-------------|
 | `generic/` | ~100 | Core SLC methodology (default for all users) |
-| `p2p/` | ~36 | Person-to-Person program (extends generic) |
+| `p2p/` | ~36 | Pivot-to-Purpose program (extends generic) |
 
 ## Directory Structure
 

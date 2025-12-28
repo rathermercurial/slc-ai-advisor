@@ -98,6 +98,10 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating }: ImpactMod
         <div className="impact-inline-row">
           {row1.map((field, i) => renderField(field, i === 0, i === row1.length - 1))}
         </div>
+        {/* Arrow connecting Outputs to Short-term Outcomes */}
+        <div className="impact-inline-connector">
+          <span className="impact-inline-arrow vertical">↓</span>
+        </div>
         <div className="impact-inline-row">
           {row2.map((field, i) => renderField(field, i === 0, i === row2.length - 1))}
         </div>

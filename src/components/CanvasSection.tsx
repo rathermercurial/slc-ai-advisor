@@ -142,15 +142,14 @@ export function CanvasSection({
   return (
     <div
       className={`canvas-section ${className} ${isEditing ? 'editing' : ''} ${completed ? 'completed' : ''} ${isUpdating ? 'just-updated' : ''} ${saveState === 'saving' ? 'saving' : ''} ${saveState === 'error' ? 'has-error' : ''}`}
+      data-model={model || undefined}
       onClick={handleClick}
     >
       <div className="canvas-section-header">
-        <span className="canvas-section-number">{sectionNumber}</span>
         <span className="canvas-section-title">{label.toUpperCase()}</span>
         <span className={`canvas-section-status ${statusClass}`}>
           {getStatusIndicator()}
         </span>
-        {model && <span className={`canvas-section-model model-${model}`}>{model}</span>}
       </div>
 
       {/* Error message */}
@@ -178,8 +177,9 @@ export function CanvasSection({
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleCancel}
               disabled={saveState === 'saving'}
+              title="Cancel (Esc)"
             >
-              Cancel
+              ✕
             </button>
             <button
               type="button"
@@ -187,8 +187,9 @@ export function CanvasSection({
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleSave}
               disabled={saveState === 'saving'}
+              title="Save (Cmd+Enter)"
             >
-              {saveState === 'saving' ? 'Saving...' : 'Save'}
+              {saveState === 'saving' ? '⏳' : '✓'}
             </button>
           </div>
         </>
@@ -199,6 +200,9 @@ export function CanvasSection({
           {isEmpty ? helperText : displayContent}
         </div>
       )}
+
+      {/* Section number - positioned bottom-right via CSS */}
+      <span className="canvas-section-number">{sectionNumber}</span>
     </div>
   );
 }

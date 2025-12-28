@@ -80,6 +80,12 @@ export function Canvas({ canvasId }: CanvasProps) {
   const [recentlyUpdated, setRecentlyUpdated] = useState<Set<CanvasSectionId>>(new Set());
   const prevSyncedRef = useRef<string | null>(null);
 
+  // Impact Model expanded/collapsed state (collapsed by default)
+  const [impactExpanded, setImpactExpanded] = useState(() => {
+    const saved = localStorage.getItem('impactModelExpanded');
+    return saved === 'true';
+  });
+
   // Initial load from backend (fallback if agent hasn't synced yet)
   useEffect(() => {
     async function loadCanvas() {
@@ -190,6 +196,15 @@ export function Canvas({ canvasId }: CanvasProps) {
     await saveImpactModel(updatedImpact, canvasId);
   }, [canvasId, saveImpactModel, setEditing]);
 
+  // Toggle Impact Model expansion
+  const handleImpactToggle = useCallback(() => {
+    setImpactExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem('impactModelExpanded', String(next));
+      return next;
+    });
+  }, []);
+
   // Show loading skeleton or error state
   if (isLoading) {
     return <CanvasSkeleton />;
@@ -211,7 +226,7 @@ export function Canvas({ canvasId }: CanvasProps) {
   return (
     <>
       <div className="slc-canvas">
-        {/* Top Row: Purpose only (Impact Model is below) */}
+        {/* Top Row: Purpose + Impact Summary */}
         <div className="slc-row slc-row-top">
           <CanvasSection
             sectionKey="purpose"
@@ -221,6 +236,27 @@ export function Canvas({ canvasId }: CanvasProps) {
             helperText={SECTION_HELPER_TEXT.purpose}
             isUpdating={recentlyUpdated.has('purpose')}
           />
+          <CanvasSection
+            sectionKey="impact"
+            content={localImpactModel.impact || ''}
+            onSave={async (content) => {
+              const updated = { ...localImpactModel, impact: content };
+              await handleImpactSave(updated);
+              return { success: true };
+            }}
+            onFocus={() => setEditing('impact', true)}
+            helperText={SECTION_HELPER_TEXT.impact}
+            isUpdating={recentlyUpdated.has('impact')}
+          />
+          <button
+            type="button"
+            className={`impact-toggle-btn ${impactExpanded ? 'expanded' : ''}`}
+            onClick={handleImpactToggle}
+            title={impactExpanded ? 'Collapse Impact Model' : 'Expand Impact Model'}
+            aria-expanded={impactExpanded}
+          >
+            {impactExpanded ? '▲' : '▼'}
+          </button>
         </div>
 
         {/* Middle Section: 5-column layout with varying heights */}
@@ -323,12 +359,14 @@ export function Canvas({ canvasId }: CanvasProps) {
         </div>
       </div>
 
-      {/* Impact Model - Inline 2x4 grid below canvas */}
-      <ImpactModelInline
-        impactModel={localImpactModel}
-        onSave={handleImpactSave}
-        isUpdating={recentlyUpdated.has('impact')}
-      />
+      {/* Impact Model - Collapsible 2x4 grid below canvas */}
+      {impactExpanded && (
+        <ImpactModelInline
+          impactModel={localImpactModel}
+          onSave={handleImpactSave}
+          isUpdating={recentlyUpdated.has('impact')}
+        />
+      )}
     </>
   );
 }

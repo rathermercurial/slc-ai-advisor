@@ -1,5 +1,8 @@
 /* SLC AI Advisor - Styles */
 
+/* Typography - DM Sans */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 /* ============================================
    Design System - CSS Variables
    ============================================ */
@@ -108,11 +111,16 @@ a:focus-visible {
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+  font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     sans-serif;
   line-height: 1.5;
   color: var(--text-primary);
   background: var(--bg-app);
+}
+
+/* Monospace for code/technical content */
+code, .mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* ============================================
@@ -324,17 +332,18 @@ body {
 .slc-canvas {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 12px;
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
+  padding: 0;
+  background: var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .slc-row {
   display: flex;
-  gap: 8px;
+  gap: 2px;
 }
 
 .slc-row-top {
@@ -347,6 +356,35 @@ body {
 
 .slc-row-bottom {
   min-height: 80px;
+}
+
+/* Impact toggle button in top row */
+.impact-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-width: 2rem;
+  background: var(--bg-secondary);
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+}
+
+.impact-toggle-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--accent-color);
+}
+
+.impact-toggle-btn.expanded {
+  background: #a855f7;
+  color: white;
+}
+
+.impact-toggle-btn.expanded:hover {
+  background: #9333ea;
 }
 
 /* Column layouts for middle section */
@@ -375,19 +413,55 @@ body {
 /* Canvas sections */
 .canvas-section {
   background: var(--bg-secondary);
-  padding: 0.75rem;
+  padding: 1rem;
   cursor: pointer;
   flex: 1;
   display: flex;
   flex-direction: column;
   transition: all var(--transition-fast);
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--border-color);
+  border-radius: 0;
+  border: none;
+  border-left: 3px solid transparent;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .canvas-section:hover {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 1px var(--accent-color);
+  background: var(--bg-tertiary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .canvas-section {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .canvas-section:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Model color-coded left edge */
+.canvas-section[data-model="customer"] {
+  border-left-color: #3b82f6;
+}
+
+.canvas-section[data-model="economic"] {
+  border-left-color: #eab308;
+}
+
+.canvas-section[data-model="impact"] {
+  border-left-color: #a855f7;
+}
+
+[data-theme='dark'] .canvas-section[data-model="customer"] {
+  border-left-color: #60a5fa;
+}
+
+[data-theme='dark'] .canvas-section[data-model="economic"] {
+  border-left-color: #facc15;
+}
+
+[data-theme='dark'] .canvas-section[data-model="impact"] {
+  border-left-color: #c084fc;
 }
 
 .canvas-section-header {
@@ -398,6 +472,9 @@ body {
 }
 
 .canvas-section-number {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
   font-size: 0.65rem;
   font-weight: 700;
   color: white;
@@ -408,14 +485,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.canvas-section:hover .canvas-section-number {
+  transform: scale(1.1);
 }
 
 .canvas-section-title {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--slc-accent);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.02em;
   flex: 1;
 }
 
@@ -451,12 +532,7 @@ body {
 }
 
 .canvas-section-model {
-  font-size: 0.6rem;
-  font-weight: 600;
-  padding: 0.125rem 0.375rem;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  display: none; /* Hidden - replaced by left edge color */
 }
 
 .canvas-section-model.model-customer {
@@ -513,49 +589,62 @@ body {
 .canvas-section-edit {
   width: 100%;
   min-height: 60px;
-  padding: 0.5rem;
-  border: 1px solid var(--slc-accent);
-  border-radius: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
   font-family: inherit;
   font-size: 0.8rem;
   line-height: 1.4;
-  resize: vertical;
-  background: var(--bg-primary);
+  resize: none;
+  background: transparent;
   color: var(--text-primary);
   flex: 1;
 }
 
 .canvas-section-edit:focus {
   outline: none;
-  border-color: var(--slc-accent);
-  box-shadow: 0 0 0 2px rgba(0, 160, 176, 0.2);
+}
+
+.canvas-section-edit::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .canvas-section-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
 }
 
 .canvas-section-actions button {
-  padding: 0.25rem 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
   border-radius: 4px;
-  font-size: 0.75rem;
   cursor: pointer;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
 }
 
-.canvas-section-actions button.save {
-  background: var(--slc-accent);
-  border-color: var(--slc-accent);
-  color: white;
+.canvas-section-actions button:first-child:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.canvas-section-actions button.save:hover {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
 }
 
 .canvas-section-actions button:hover {
-  opacity: 0.9;
+  opacity: 1;
 }
 
 /* AI-triggered update animation */
@@ -833,6 +922,19 @@ body {
   font-size: 1rem;
   padding: 0 0.25rem;
   flex-shrink: 0;
+}
+
+/* Connector arrow between rows (Outputs → Short-term) */
+.impact-inline-connector {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: calc(75% + 0.5rem);
+}
+
+.impact-inline-arrow.vertical {
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  padding: 0.25rem 0;
 }
 
 .impact-inline-field {

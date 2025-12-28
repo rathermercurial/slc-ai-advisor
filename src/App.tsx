@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { Canvas, Chat, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast } from './components';
+import { Canvas, Chat, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader } from './components';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
 import { useUndoShortcuts } from './hooks';
@@ -15,6 +15,7 @@ import {
 } from './utils/export';
 import type { CanvasSectionId } from './types/canvas';
 import type { CanvasMeta } from './types/thread';
+import type { VentureStage } from './types/venture';
 
 /**
  * Error boundary to catch and display React errors
@@ -78,6 +79,34 @@ function AppContent({
     return saved ? parseFloat(saved) : 60;
   });
 
+  // Venture name from canvas index
+  const [ventureName, setVentureName] = useState(() => {
+    try {
+      const stored = localStorage.getItem('canvasIndex');
+      if (stored) {
+        const canvases = JSON.parse(stored) as CanvasMeta[];
+        const current = canvases.find((c) => c.id === canvasId);
+        return current?.name || 'Untitled Venture';
+      }
+    } catch (e) {
+      console.warn('Failed to read canvas name:', e);
+    }
+    return 'Untitled Venture';
+  });
+
+  // Venture stage (stored per canvas in localStorage)
+  const [ventureStage, setVentureStage] = useState<VentureStage>(() => {
+    try {
+      const stored = localStorage.getItem(`ventureStage-${canvasId}`);
+      if (stored && ['idea', 'validation', 'growth', 'scale'].includes(stored)) {
+        return stored as VentureStage;
+      }
+    } catch (e) {
+      console.warn('Failed to read venture stage:', e);
+    }
+    return 'idea';
+  });
+
   // Persist split percentage
   const handleResize = useCallback((percentage: number) => {
     setSplitPercentage(percentage);
@@ -89,6 +118,58 @@ function AppContent({
     setSplitPercentage(60);
     localStorage.setItem('canvasSplitPercentage', '60');
   }, []);
+
+  // Handle venture name change
+  const handleNameChange = useCallback((name: string) => {
+    setVentureName(name);
+    try {
+      const stored = localStorage.getItem('canvasIndex');
+      if (stored) {
+        const canvases = JSON.parse(stored) as CanvasMeta[];
+        const updated = canvases.map((c) =>
+          c.id === canvasId ? { ...c, name, updatedAt: new Date().toISOString() } : c
+        );
+        localStorage.setItem('canvasIndex', JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.warn('Failed to save canvas name:', e);
+    }
+  }, [canvasId]);
+
+  // Handle venture stage change
+  const handleStageChange = useCallback((stage: VentureStage) => {
+    setVentureStage(stage);
+    localStorage.setItem(`ventureStage-${canvasId}`, stage);
+  }, [canvasId]);
+
+  // Calculate progress from filled canvas sections
+  const calculateProgress = useCallback((): number => {
+    if (!canvas) return 0;
+    const sectionKeys: CanvasSectionId[] = [
+      'purpose', 'customers', 'jobsToBeDone', 'valueProposition', 'solution',
+      'channels', 'revenue', 'costs', 'keyMetrics', 'advantage'
+    ];
+    let filled = 0;
+    for (const section of canvas.sections) {
+      if (sectionKeys.includes(section.sectionKey as CanvasSectionId) && section.content.trim()) {
+        filled++;
+      }
+    }
+    // Add impact model fields
+    const impactFields = ['issue', 'participants', 'activities', 'outputs',
+      'shortTermOutcomes', 'mediumTermOutcomes', 'longTermOutcomes', 'impact'] as const;
+    let impactFilled = 0;
+    for (const field of impactFields) {
+      if (canvas.impactModel[field]?.trim()) {
+        impactFilled++;
+      }
+    }
+    // Total: 10 sections + 8 impact fields = 18 total
+    const total = sectionKeys.length + impactFields.length;
+    return Math.round(((filled + impactFilled) / total) * 100);
+  }, [canvas]);
+
+  const progress = calculateProgress();
 
   // Register keyboard shortcuts for undo/redo
   useUndoShortcuts({
@@ -169,6 +250,13 @@ function AppContent({
     <div className="app">
       <header className="app-header">
         <h1>SLC AI Advisor</h1>
+        <VentureHeader
+          name={ventureName}
+          stage={ventureStage}
+          progress={progress}
+          onNameChange={handleNameChange}
+          onStageChange={handleStageChange}
+        />
         <div className="app-header-actions">
           <button
             className="header-icon-btn"

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { ConnectionStatus } from './ConnectionStatus';
 import { StatusBar } from './StatusBar';
 import { ToolInvocationCard } from './ToolInvocationCard';
+import { TypingIndicator } from './TypingIndicator';
 import { useCanvasContext, type AgentState } from '../context';
 
 interface ChatProps {
@@ -223,11 +224,7 @@ Tell me about your social venture idea - what problem are you trying to solve, a
         ))}
 
         {/* Loading indicator */}
-        {isLoading && (
-          <div className="chat-message assistant">
-            <span className="typing-indicator">Thinking...</span>
-          </div>
-        )}
+        {isLoading && <TypingIndicator />}
 
         {/* Error message */}
         {error && (

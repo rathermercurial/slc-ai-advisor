@@ -175,30 +175,28 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
     }
   };
 
-  if (collapsed) {
-    return null;
-  }
-
   return (
     <div className="sidebar-section">
       <div className="sidebar-section-header" onClick={onToggleCollapse}>
         <span className="sidebar-section-title">CANVASES</span>
-        <span className="sidebar-section-toggle">-</span>
+        <span className="sidebar-section-toggle">{collapsed ? '+' : '-'}</span>
       </div>
 
-      <div className="sidebar-section-controls">
-        <FilterDropdown value={filter} onChange={setFilter} />
-        <button
-          type="button"
-          className="sidebar-add-btn"
-          onClick={handleCreateCanvas}
-          title="New Canvas"
-        >
-          +
-        </button>
-      </div>
+      {!collapsed && (
+        <>
+          <div className="sidebar-section-controls">
+            <FilterDropdown value={filter} onChange={setFilter} />
+            <button
+              type="button"
+              className="sidebar-add-btn"
+              onClick={handleCreateCanvas}
+              title="New Canvas"
+            >
+              +
+            </button>
+          </div>
 
-      <div className="sidebar-list">
+          <div className="sidebar-list">
         {isLoading ? (
           <div className="sidebar-list-loading">Loading...</div>
         ) : filteredCanvases.length === 0 ? (
@@ -242,7 +240,9 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
             </div>
           ))
         )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -142,7 +142,8 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
     }
   };
 
-  if (collapsed || !canvasId) {
+  // Hide thread section entirely if no canvas selected
+  if (!canvasId) {
     return null;
   }
 
@@ -150,66 +151,70 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
     <div className="sidebar-section">
       <div className="sidebar-section-header" onClick={onToggleCollapse}>
         <span className="sidebar-section-title">THREADS</span>
-        <span className="sidebar-section-toggle">-</span>
+        <span className="sidebar-section-toggle">{collapsed ? '+' : '-'}</span>
       </div>
 
-      <div className="sidebar-section-controls">
-        <FilterDropdown value={filter} onChange={setFilter} />
-        <button
-          type="button"
-          className="sidebar-add-btn"
-          onClick={handleCreateThread}
-          title="New Thread"
-        >
-          +
-        </button>
-      </div>
-
-      <div className="sidebar-list">
-        {isLoading ? (
-          <div className="sidebar-list-loading">Loading...</div>
-        ) : threads.length === 0 ? (
-          <div className="sidebar-list-empty">No threads</div>
-        ) : (
-          threads.map((thread) => (
-            <div
-              key={thread.id}
-              className={`sidebar-list-item ${thread.id === threadId ? 'active' : ''}`}
-              onClick={() => handleThreadClick(thread.id)}
+      {!collapsed && (
+        <>
+          <div className="sidebar-section-controls">
+            <FilterDropdown value={filter} onChange={setFilter} />
+            <button
+              type="button"
+              className="sidebar-add-btn"
+              onClick={handleCreateThread}
+              title="New Thread"
             >
-              <button
-                type="button"
-                className={`sidebar-star-btn ${thread.starred ? 'starred' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleStar(thread.id, thread.starred);
-                }}
-                title={thread.starred ? 'Unstar' : 'Star'}
-              >
-                {thread.starred ? '*' : 'o'}
-              </button>
-              <InlineEdit
-                value={thread.name}
-                onSave={(name) => handleRename(thread.id, name)}
-                className="sidebar-item-name"
-              />
-              {!thread.archived && (
-                <button
-                  type="button"
-                  className="sidebar-archive-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleArchive(thread.id);
-                  }}
-                  title="Archive"
+              +
+            </button>
+          </div>
+
+          <div className="sidebar-list">
+            {isLoading ? (
+              <div className="sidebar-list-loading">Loading...</div>
+            ) : threads.length === 0 ? (
+              <div className="sidebar-list-empty">No threads</div>
+            ) : (
+              threads.map((thread) => (
+                <div
+                  key={thread.id}
+                  className={`sidebar-list-item ${thread.id === threadId ? 'active' : ''}`}
+                  onClick={() => handleThreadClick(thread.id)}
                 >
-                  x
-                </button>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+                  <button
+                    type="button"
+                    className={`sidebar-star-btn ${thread.starred ? 'starred' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleStar(thread.id, thread.starred);
+                    }}
+                    title={thread.starred ? 'Unstar' : 'Star'}
+                  >
+                    {thread.starred ? '*' : 'o'}
+                  </button>
+                  <InlineEdit
+                    value={thread.name}
+                    onSave={(name) => handleRename(thread.id, name)}
+                    className="sidebar-item-name"
+                  />
+                  {!thread.archived && (
+                    <button
+                      type="button"
+                      className="sidebar-archive-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArchive(thread.id);
+                      }}
+                      title="Archive"
+                    >
+                      x
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

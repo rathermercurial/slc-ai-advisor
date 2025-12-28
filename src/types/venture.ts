@@ -6,6 +6,11 @@
  */
 
 /**
+ * Venture stage values matching the Selection Matrix
+ */
+export type VentureStage = 'idea' | 'validation' | 'growth' | 'scale';
+
+/**
  * The 7 venture dimensions used for Selection Matrix filtering
  */
 export interface VentureDimensions {

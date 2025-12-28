@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { Canvas, Chat, ExportMenu, Sidebar, ThemeToggle, Toast } from './components';
+import { Canvas, Chat, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast } from './components';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
 import { useUndoShortcuts } from './hooks';
@@ -71,6 +71,24 @@ function AppContent({
 }) {
   const { canvas, undo, redo, canUndo, canRedo } = useCanvasContext();
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  // Canvas/chat split percentage (stored in localStorage)
+  const [splitPercentage, setSplitPercentage] = useState(() => {
+    const saved = localStorage.getItem('canvasSplitPercentage');
+    return saved ? parseFloat(saved) : 60;
+  });
+
+  // Persist split percentage
+  const handleResize = useCallback((percentage: number) => {
+    setSplitPercentage(percentage);
+    localStorage.setItem('canvasSplitPercentage', String(percentage));
+  }, []);
+
+  // Double-click to reset split
+  const handleResizerDoubleClick = useCallback(() => {
+    setSplitPercentage(60);
+    localStorage.setItem('canvasSplitPercentage', '60');
+  }, []);
 
   // Register keyboard shortcuts for undo/redo
   useUndoShortcuts({
@@ -182,13 +200,23 @@ function AppContent({
 
       <main className="app-main">
         <Sidebar />
-        <div className="layout-canvas">
-          <Canvas canvasId={canvasId} />
-        </div>
-        <div className="layout-chat">
-          <ErrorBoundary>
-            <Chat canvasId={canvasId} threadId={threadId} />
-          </ErrorBoundary>
+        <div className="layout-content">
+          <div className="layout-canvas" style={{ flex: `0 0 ${splitPercentage}%` }}>
+            <Canvas canvasId={canvasId} />
+          </div>
+          <div onDoubleClick={handleResizerDoubleClick}>
+            <Resizer
+              direction="horizontal"
+              onResize={handleResize}
+              minPercentage={30}
+              maxPercentage={70}
+            />
+          </div>
+          <div className="layout-chat" style={{ flex: `0 0 ${100 - splitPercentage}%` }}>
+            <ErrorBoundary>
+              <Chat canvasId={canvasId} threadId={threadId} />
+            </ErrorBoundary>
+          </div>
         </div>
       </main>
 

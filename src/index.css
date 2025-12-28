@@ -243,25 +243,30 @@ body {
 }
 
 /* ============================================
-   Two-Column Layout
+   Two-Column Layout with Resizable Split
    ============================================ */
 
-.layout-canvas {
+.layout-content {
   flex: 1;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.layout-canvas {
   min-width: 0;
   padding: 1rem;
   overflow-y: auto;
-  border-right: 1px solid var(--border-color);
   background: var(--bg-primary);
 }
 
 .layout-chat {
-  flex: 0 0 35%;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
 }
 
 /* ============================================
@@ -1266,19 +1271,27 @@ body {
     flex-direction: column;
   }
 
+  .layout-content {
+    flex-direction: column;
+  }
+
   .layout-canvas {
-    flex: none;
+    flex: none !important;
     width: 100%;
     height: 55vh;
-    border-right: none;
     border-bottom: 1px solid var(--border-color);
     padding: 0.5rem;
   }
 
   .layout-chat {
-    flex: none;
+    flex: none !important;
     width: 100%;
     height: 45vh;
+  }
+
+  /* Hide resizer on mobile */
+  .resizer {
+    display: none;
   }
 
   /* Reduce canvas gap on mobile */

@@ -426,8 +426,11 @@ export class CanvasDO extends DurableObject<Env> {
 
   /**
    * Get overall canvas completion
+   *
+   * Returns completion status with percentage, completed/missing sections,
+   * and suggestions for next steps.
    */
-  private async getOverallCompletion(): Promise<ModelCompletion> {
+  async getOverallCompletion(): Promise<ModelCompletion> {
     const canvas = await this.getFullCanvas();
     const completed = canvas.sections.filter((s) => s.isComplete).map((s) => s.sectionKey);
     const missing = canvas.sections.filter((s) => !s.isComplete).map((s) => s.sectionKey);

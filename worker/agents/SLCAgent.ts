@@ -15,7 +15,12 @@ import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
 import { formatCanvasContext, buildSystemPrompt } from './prompts';
-import { ANTHROPIC_TOOLS, executeToolWithBroadcast } from './anthropic-tools';
+import {
+  ANTHROPIC_TOOLS,
+  ALL_TOOLS,
+  executeToolWithBroadcast,
+  type ExecutorContext,
+} from './tools';
 import { createLogger, createMetrics, type Logger, type Metrics } from '../observability';
 
 /**
@@ -231,8 +236,16 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
       // Use Vercel AI SDK utilities to create UI message stream
       const textPartId = crypto.randomUUID();
-      const toolContext = this; // For tool execution
       const messageTimer = metrics.startTimer('message_sent', { sessionId });
+
+      // Create executor context for tool execution
+      const executorContext: ExecutorContext = {
+        canvasId: this.name || '',
+        canvasStub: this.getCanvasStub(this.name || ''),
+        env: this.env,
+        logger,
+        setStatus: (status, message) => this.setStatus(status, message),
+      };
 
       const uiStream = createUIMessageStream({
         execute: async ({ writer }) => {
@@ -307,12 +320,11 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
                   const toolTimer = logger.startTimer(`tool:${toolBlock.name}`);
                   try {
                     const result = await executeToolWithBroadcast(
-                      {
-                        ...toolContext,
-                        broadcastCanvasUpdate: () => toolContext.broadcastCanvasUpdate(),
-                      },
+                      ALL_TOOLS,
                       toolBlock.name,
-                      toolBlock.input as Record<string, unknown>
+                      toolBlock.input,
+                      executorContext,
+                      () => this.broadcastCanvasUpdate()
                     );
                     toolResults.push({
                       type: 'tool_result',

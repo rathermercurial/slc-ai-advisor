@@ -21,7 +21,7 @@ import { createLogger, createMetrics } from '../observability';
  */
 export interface QueryIntent {
   /** Type of content being sought */
-  type: 'methodology' | 'examples' | 'general';
+  type: 'methodology' | 'examples' | 'reference' | 'general';
   /** Specific section user is working on (most specific filter) */
   targetSection?: CanvasSectionId;
   /** Conceptual grouping for broader context */
@@ -77,6 +77,8 @@ export function buildVectorizeQuery(
     filter.content_type = 'example';
   } else if (intent.type === 'methodology') {
     filter.content_type = 'methodology';
+  } else if (intent.type === 'reference') {
+    filter.content_type = 'reference';
   }
 
   // Section-specific filter (most specific)
@@ -306,7 +308,7 @@ function formatMatch(match: VectorizeMatch): RetrievedDocument {
  */
 export interface ToolSearchOptions {
   query: string;
-  contentType?: 'methodology' | 'example';
+  contentType?: 'methodology' | 'example' | 'reference';
   filters?: {
     stage?: string;
     impactArea?: string;
@@ -334,6 +336,7 @@ export async function searchForTools(
   const intent: QueryIntent = {
     type: contentType === 'methodology' ? 'methodology'
       : contentType === 'example' ? 'examples'
+      : contentType === 'reference' ? 'reference'
       : 'general',
   };
 

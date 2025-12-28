@@ -10,6 +10,7 @@
  * - Economic Model: channels, revenue, costs, advantage
  * - Impact Model: 8-field causality chain (impact section)
  * - Venture Profile: 7-dimensional Selection Matrix data
+ * - Chat Threads: Multiple chat threads per canvas (max 100)
  */
 
 import { DurableObject } from 'cloudflare:workers';
@@ -45,6 +46,40 @@ import {
 const CONFIDENCE_THRESHOLD = 0.7;
 
 /**
+ * Maximum threads per canvas
+ */
+const MAX_THREADS_PER_CANVAS = 100;
+
+/**
+ * Thread filter type
+ */
+type ThreadFilter = 'all' | 'active' | 'starred' | 'archived';
+
+/**
+ * Thread data structure
+ */
+interface Thread {
+  id: string;
+  name: string;
+  starred: boolean;
+  archived: boolean;
+  createdAt: string;
+  lastMessageAt: string | null;
+}
+
+/**
+ * Canvas metadata for list views
+ */
+interface CanvasMeta {
+  id: string;
+  name: string;
+  starred: boolean;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
  * Canvas Durable Object implementation
  */
 export class CanvasDO extends DurableObject<Env> {
@@ -72,15 +107,30 @@ export class CanvasDO extends DurableObject<Env> {
     const sql = this.ctx.storage.sql;
     const now = new Date().toISOString();
 
-    // Canvas metadata
+    // Canvas metadata (with name, starred, archived for list views)
     sql.exec(`
       CREATE TABLE IF NOT EXISTS canvas_meta (
         id TEXT PRIMARY KEY DEFAULT 'canvas',
+        name TEXT NOT NULL DEFAULT 'Untitled Canvas',
         purpose TEXT NOT NULL DEFAULT '',
         key_metrics TEXT NOT NULL DEFAULT '',
         current_section TEXT,
+        starred INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      )
+    `);
+
+    // Chat threads table
+    sql.exec(`
+      CREATE TABLE IF NOT EXISTS chat_threads (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL DEFAULT 'Main',
+        starred INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        last_message_at TEXT
       )
     `);
 
@@ -137,9 +187,18 @@ export class CanvasDO extends DurableObject<Env> {
 
     if (!metaExists) {
       sql.exec(
-        `INSERT INTO canvas_meta (id, purpose, key_metrics, created_at, updated_at)
-         VALUES ('canvas', '', '', ?, ?)`,
+        `INSERT INTO canvas_meta (id, name, purpose, key_metrics, starred, archived, created_at, updated_at)
+         VALUES ('canvas', 'Untitled Canvas', '', '', 0, 0, ?, ?)`,
         now,
+        now
+      );
+
+      // Create default "Main" thread
+      const mainThreadId = crypto.randomUUID();
+      sql.exec(
+        `INSERT INTO chat_threads (id, name, starred, archived, created_at, last_message_at)
+         VALUES (?, 'Main', 0, 0, ?, NULL)`,
+        mainThreadId,
         now
       );
     }
@@ -762,5 +821,281 @@ ${impactExport}
 ---
 *Completion: ${canvas.completionPercentage}%*
 `;
+  }
+
+  // ============================================
+  // Canvas Meta Methods
+  // ============================================
+
+  /**
+   * Get canvas metadata for list views
+   */
+  async getCanvasMeta(): Promise<CanvasMeta> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const row = sql
+      .exec<{
+        name: string;
+        starred: number;
+        archived: number;
+        created_at: string;
+        updated_at: string;
+      }>(`SELECT name, starred, archived, created_at, updated_at FROM canvas_meta WHERE id = 'canvas'`)
+      .one()!;
+
+    return {
+      id: this.ctx.id.toString(),
+      name: row.name,
+      starred: row.starred === 1,
+      archived: row.archived === 1,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  /**
+   * Update canvas metadata
+   */
+  async updateCanvasMeta(updates: Partial<Pick<CanvasMeta, 'name' | 'starred' | 'archived'>>): Promise<CanvasMeta> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    if (updates.name !== undefined) {
+      sql.exec(
+        `UPDATE canvas_meta SET name = ?, updated_at = ? WHERE id = 'canvas'`,
+        updates.name,
+        now
+      );
+    }
+
+    if (updates.starred !== undefined) {
+      sql.exec(
+        `UPDATE canvas_meta SET starred = ?, updated_at = ? WHERE id = 'canvas'`,
+        updates.starred ? 1 : 0,
+        now
+      );
+    }
+
+    if (updates.archived !== undefined) {
+      sql.exec(
+        `UPDATE canvas_meta SET archived = ?, updated_at = ? WHERE id = 'canvas'`,
+        updates.archived ? 1 : 0,
+        now
+      );
+    }
+
+    return this.getCanvasMeta();
+  }
+
+  // ============================================
+  // Thread Methods
+  // ============================================
+
+  /**
+   * Get all threads with optional filtering
+   */
+  async getThreads(filter: ThreadFilter = 'all'): Promise<Thread[]> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    let whereClause = '';
+    switch (filter) {
+      case 'active':
+        whereClause = 'WHERE archived = 0';
+        break;
+      case 'starred':
+        whereClause = 'WHERE starred = 1';
+        break;
+      case 'archived':
+        whereClause = 'WHERE archived = 1';
+        break;
+      default:
+        whereClause = '';
+    }
+
+    const rows = sql
+      .exec<{
+        id: string;
+        name: string;
+        starred: number;
+        archived: number;
+        created_at: string;
+        last_message_at: string | null;
+      }>(`SELECT * FROM chat_threads ${whereClause} ORDER BY last_message_at DESC NULLS LAST, created_at DESC`)
+      .toArray();
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      starred: row.starred === 1,
+      archived: row.archived === 1,
+      createdAt: row.created_at,
+      lastMessageAt: row.last_message_at,
+    }));
+  }
+
+  /**
+   * Get a single thread by ID
+   */
+  async getThread(threadId: string): Promise<Thread | null> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const row = sql
+      .exec<{
+        id: string;
+        name: string;
+        starred: number;
+        archived: number;
+        created_at: string;
+        last_message_at: string | null;
+      }>(`SELECT * FROM chat_threads WHERE id = ?`, threadId)
+      .toArray()[0];
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      name: row.name,
+      starred: row.starred === 1,
+      archived: row.archived === 1,
+      createdAt: row.created_at,
+      lastMessageAt: row.last_message_at,
+    };
+  }
+
+  /**
+   * Create a new thread
+   */
+  async createThread(name?: string): Promise<Thread> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    // Check thread limit
+    const countResult = sql
+      .exec<{ count: number }>(`SELECT COUNT(*) as count FROM chat_threads`)
+      .one()!;
+
+    if (countResult.count >= MAX_THREADS_PER_CANVAS) {
+      throw new Error(`Maximum of ${MAX_THREADS_PER_CANVAS} threads per canvas reached`);
+    }
+
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    const threadName = name || this.generateThreadName();
+
+    sql.exec(
+      `INSERT INTO chat_threads (id, name, starred, archived, created_at, last_message_at)
+       VALUES (?, ?, 0, 0, ?, NULL)`,
+      id,
+      threadName,
+      now
+    );
+
+    return {
+      id,
+      name: threadName,
+      starred: false,
+      archived: false,
+      createdAt: now,
+      lastMessageAt: null,
+    };
+  }
+
+  /**
+   * Generate thread name based on existing threads
+   */
+  private generateThreadName(): string {
+    const sql = this.ctx.storage.sql;
+    const countResult = sql
+      .exec<{ count: number }>(`SELECT COUNT(*) as count FROM chat_threads WHERE name LIKE 'Chat %'`)
+      .one()!;
+
+    return `Chat ${countResult.count + 2}`;
+  }
+
+  /**
+   * Update thread properties
+   */
+  async updateThread(threadId: string, updates: Partial<Pick<Thread, 'name' | 'starred' | 'archived'>>): Promise<Thread> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    // Check thread exists
+    const existing = await this.getThread(threadId);
+    if (!existing) {
+      throw new Error(`Thread ${threadId} not found`);
+    }
+
+    if (updates.name !== undefined) {
+      sql.exec(
+        `UPDATE chat_threads SET name = ? WHERE id = ?`,
+        updates.name,
+        threadId
+      );
+    }
+
+    if (updates.starred !== undefined) {
+      sql.exec(
+        `UPDATE chat_threads SET starred = ? WHERE id = ?`,
+        updates.starred ? 1 : 0,
+        threadId
+      );
+    }
+
+    if (updates.archived !== undefined) {
+      sql.exec(
+        `UPDATE chat_threads SET archived = ? WHERE id = ?`,
+        updates.archived ? 1 : 0,
+        threadId
+      );
+    }
+
+    return (await this.getThread(threadId))!;
+  }
+
+  /**
+   * Archive a thread (soft delete)
+   */
+  async archiveThread(threadId: string): Promise<void> {
+    await this.updateThread(threadId, { archived: true });
+  }
+
+  /**
+   * Update thread's last message timestamp
+   */
+  async touchThread(threadId: string): Promise<void> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    sql.exec(
+      `UPDATE chat_threads SET last_message_at = ? WHERE id = ?`,
+      now,
+      threadId
+    );
+  }
+
+  /**
+   * Get the default (Main) thread ID
+   */
+  async getDefaultThreadId(): Promise<string> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    // Get the first non-archived thread (prefer Main)
+    const row = sql
+      .exec<{ id: string }>(`SELECT id FROM chat_threads WHERE archived = 0 ORDER BY name = 'Main' DESC, created_at ASC LIMIT 1`)
+      .toArray()[0];
+
+    if (row) {
+      return row.id;
+    }
+
+    // No thread exists, create Main
+    const thread = await this.createThread('Main');
+    return thread.id;
   }
 }

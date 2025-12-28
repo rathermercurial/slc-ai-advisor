@@ -7,16 +7,27 @@
  * Routes:
  * - POST /api/canvas - Create new canvas
  * - GET /api/canvas/:id - Get full canvas state
+ * - PATCH /api/canvas/:id - Update canvas meta (name, starred, archived)
  * - PUT /api/canvas/:id/section/:key - Update section
  * - GET /api/canvas/:id/model/:model - Get model view
  * - GET /api/canvas/:id/venture-profile - Get dimensions
  * - PUT /api/canvas/:id/venture-profile - Update dimension
  * - GET /api/canvas/:id/export/:format - Export canvas
+ * - GET /api/canvas/:id/threads - List threads (with filter query param)
+ * - POST /api/canvas/:id/threads - Create new thread
+ * - PATCH /api/canvas/:id/threads/:threadId - Update thread (name, starred, archived)
  */
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
 import type { VentureDimensions } from '../../src/types/venture';
+
+/**
+ * Thread filter type
+ */
+type ThreadFilter = 'all' | 'active' | 'starred' | 'archived';
+
+const VALID_THREAD_FILTERS: ThreadFilter[] = ['all', 'active', 'starred', 'archived'];
 
 /**
  * UUID validation regex
@@ -85,6 +96,18 @@ export async function handleCanvasRoute(
     if (parts.length === 3 && request.method === 'GET') {
       const canvas = await stub.getFullCanvas();
       return jsonResponse(canvas, 200, requestId);
+    }
+
+    // PATCH /api/canvas/:id - Update canvas meta (name, starred, archived)
+    if (parts.length === 3 && request.method === 'PATCH') {
+      const body = await request.json().catch(() => ({})) as {
+        name?: string;
+        starred?: boolean;
+        archived?: boolean;
+      };
+
+      const meta = await stub.updateCanvasMeta(body);
+      return jsonResponse(meta, 200, requestId);
     }
 
     // PUT /api/canvas/:id/section/:key - Update section
@@ -240,6 +263,85 @@ export async function handleCanvasRoute(
       await stub.setCurrentSection(body.section ?? null);
 
       return jsonResponse({ success: true }, 200, requestId);
+    }
+
+    // GET /api/canvas/:id/meta - Get canvas metadata
+    if (parts.length === 4 && parts[3] === 'meta' && request.method === 'GET') {
+      const meta = await stub.getCanvasMeta();
+      return jsonResponse(meta, 200, requestId);
+    }
+
+    // GET /api/canvas/:id/threads - List threads
+    if (parts.length === 4 && parts[3] === 'threads' && request.method === 'GET') {
+      const filterParam = url.searchParams.get('filter') || 'all';
+      const filter = VALID_THREAD_FILTERS.includes(filterParam as ThreadFilter)
+        ? (filterParam as ThreadFilter)
+        : 'all';
+
+      const threads = await stub.getThreads(filter);
+      return jsonResponse(threads, 200, requestId);
+    }
+
+    // POST /api/canvas/:id/threads - Create new thread
+    if (parts.length === 4 && parts[3] === 'threads' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({})) as { name?: string };
+
+      try {
+        const thread = await stub.createThread(body.name);
+        return jsonResponse(thread, 201, requestId);
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Maximum')) {
+          return jsonResponse({ error: error.message }, 400, requestId);
+        }
+        throw error;
+      }
+    }
+
+    // GET /api/canvas/:id/threads/default - Get default thread ID
+    if (parts.length === 5 && parts[3] === 'threads' && parts[4] === 'default' && request.method === 'GET') {
+      const threadId = await stub.getDefaultThreadId();
+      return jsonResponse({ threadId }, 200, requestId);
+    }
+
+    // GET /api/canvas/:id/threads/:threadId - Get single thread
+    if (parts.length === 5 && parts[3] === 'threads' && request.method === 'GET') {
+      const threadId = parts[4];
+
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      const thread = await stub.getThread(threadId);
+      if (!thread) {
+        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
+      }
+
+      return jsonResponse(thread, 200, requestId);
+    }
+
+    // PATCH /api/canvas/:id/threads/:threadId - Update thread
+    if (parts.length === 5 && parts[3] === 'threads' && request.method === 'PATCH') {
+      const threadId = parts[4];
+
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      const body = await request.json().catch(() => ({})) as {
+        name?: string;
+        starred?: boolean;
+        archived?: boolean;
+      };
+
+      try {
+        const thread = await stub.updateThread(threadId, body);
+        return jsonResponse(thread, 200, requestId);
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('not found')) {
+          return jsonResponse({ error: error.message }, 404, requestId);
+        }
+        throw error;
+      }
     }
 
     return jsonResponse({ error: 'Not found' }, 404, requestId);

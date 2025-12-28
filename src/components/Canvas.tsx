@@ -84,6 +84,13 @@ export function Canvas({ canvasId }: CanvasProps) {
   // Initial load from backend (fallback if agent hasn't synced yet)
   useEffect(() => {
     async function loadCanvas() {
+    // DEV MODE: Use empty canvas without backend
+    if (import.meta.env.VITE_FRONTEND_ONLY === 'true') {
+      setIsLoading(false);
+      return;
+    }
+    // 
+
       try {
         const response = await fetch(`/api/canvas/${canvasId}`);
         if (response.ok) {

@@ -1,6 +1,17 @@
 export { Canvas } from './Canvas';
+export { CanvasList } from './CanvasList';
 export { CanvasSection } from './CanvasSection';
 export { Chat } from './Chat';
 export { ConnectionStatus } from './ConnectionStatus';
+export { ExportMenu } from './ExportMenu';
+export { FilterDropdown } from './FilterDropdown';
 export { ImpactPanel } from './ImpactPanel';
+export { InlineEdit } from './InlineEdit';
+export { Resizer } from './Resizer';
+export { Sidebar } from './Sidebar';
 export { StatusBar } from './StatusBar';
+export { ThemeToggle } from './ThemeToggle';
+export { ThreadList } from './ThreadList';
+export { Toast } from './Toast';
+export { TypingIndicator } from './TypingIndicator';
+export { VentureHeader } from './VentureHeader';

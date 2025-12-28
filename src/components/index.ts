@@ -5,6 +5,7 @@ export { Chat } from './Chat';
 export { ConnectionStatus } from './ConnectionStatus';
 export { ExportMenu } from './ExportMenu';
 export { FilterDropdown } from './FilterDropdown';
+export { ImpactModelInline } from './ImpactModelInline';
 export { ImpactPanel } from './ImpactPanel';
 export { InlineEdit } from './InlineEdit';
 export { Resizer } from './Resizer';

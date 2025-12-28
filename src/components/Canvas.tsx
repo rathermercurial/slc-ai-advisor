@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CanvasSection } from './CanvasSection';
 import { CanvasSkeleton } from './CanvasSkeleton';
-import { ImpactPanel } from './ImpactPanel';
+import { ImpactModelInline } from './ImpactModelInline';
 import {
   type CanvasSectionId,
   type ImpactModel,
@@ -73,7 +73,6 @@ export function Canvas({ canvasId }: CanvasProps) {
     createEmptyImpactModel(canvasId)
   );
 
-  const [showImpactPanel, setShowImpactPanel] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -183,7 +182,6 @@ export function Canvas({ canvasId }: CanvasProps) {
   const handleImpactSave = useCallback(async (updatedImpact: ImpactModel) => {
     // Update local state immediately for responsiveness
     setLocalImpactModel(updatedImpact);
-    setShowImpactPanel(false);
 
     // Clear editing state
     setEditing('impact', false);
@@ -213,7 +211,7 @@ export function Canvas({ canvasId }: CanvasProps) {
   return (
     <>
       <div className="slc-canvas">
-        {/* Top Row: Purpose & Impact */}
+        {/* Top Row: Purpose only (Impact Model is below) */}
         <div className="slc-row slc-row-top">
           <CanvasSection
             sectionKey="purpose"
@@ -223,27 +221,6 @@ export function Canvas({ canvasId }: CanvasProps) {
             helperText={SECTION_HELPER_TEXT.purpose}
             isUpdating={recentlyUpdated.has('purpose')}
           />
-          <div
-            className={`canvas-section ${localImpactModel.impact ? 'completed' : ''} ${recentlyUpdated.has('impact') ? 'just-updated' : ''}`}
-            onClick={() => {
-              setEditing('impact', true);
-              setShowImpactPanel(true);
-            }}
-          >
-            <div className="canvas-section-header">
-              <span className="canvas-section-number">11</span>
-              <span className="canvas-section-title">IMPACT</span>
-              <span className={`canvas-section-status ${localImpactModel.impact ? 'complete' : ''}`}>
-                {localImpactModel.impact ? '✓' : '○'}
-              </span>
-              <span className="canvas-section-model model-impact">impact</span>
-            </div>
-            <div
-              className={`canvas-section-content ${!localImpactModel.impact ? 'helper' : ''}`}
-            >
-              {localImpactModel.impact || SECTION_HELPER_TEXT.impact}
-            </div>
-          </div>
         </div>
 
         {/* Middle Section: 5-column layout with varying heights */}
@@ -346,13 +323,12 @@ export function Canvas({ canvasId }: CanvasProps) {
         </div>
       </div>
 
-      {showImpactPanel && (
-        <ImpactPanel
-          impactModel={localImpactModel}
-          onSave={handleImpactSave}
-          onClose={() => setShowImpactPanel(false)}
-        />
-      )}
+      {/* Impact Model - Inline 2x4 grid below canvas */}
+      <ImpactModelInline
+        impactModel={localImpactModel}
+        onSave={handleImpactSave}
+        isUpdating={recentlyUpdated.has('impact')}
+      />
     </>
   );
 }

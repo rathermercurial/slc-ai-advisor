@@ -734,7 +734,188 @@ body {
 }
 
 /* ============================================
-   Impact Panel (Slide-in)
+   Impact Model Inline (2x4 Grid)
+   ============================================ */
+
+.impact-inline {
+  max-width: 1000px;
+  margin: 1rem auto 0;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--border-color);
+}
+
+.impact-inline-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.impact-inline-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.impact-inline-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.impact-inline-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.impact-inline-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.impact-inline-field-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.impact-inline-arrow {
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 0 0.25rem;
+  flex-shrink: 0;
+}
+
+.impact-inline-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.impact-inline-field:hover {
+  border-color: var(--accent-color);
+}
+
+.impact-inline-field.editing {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.impact-inline-field.has-content {
+  background: var(--bg-secondary);
+}
+
+.impact-inline-field.updating {
+  animation: sectionGlow 0.5s ease;
+}
+
+/* Issue field - amber accent */
+.impact-inline-field.field-issue {
+  border-left: 4px solid #f59e0b;
+}
+
+.impact-inline-field.field-issue .impact-inline-label {
+  color: #f59e0b;
+}
+
+/* Impact field - teal accent */
+.impact-inline-field.field-impact {
+  border-right: 4px solid var(--accent-color);
+}
+
+.impact-inline-field.field-impact .impact-inline-label {
+  color: var(--accent-color);
+}
+
+.impact-inline-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.impact-inline-content {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  min-height: 2.5rem;
+  max-height: 4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.impact-inline-content .placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.impact-inline-input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.impact-inline-input:focus {
+  outline: none;
+}
+
+.impact-inline-input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .impact-inline {
+    margin: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .impact-inline-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .impact-inline-field-wrapper {
+    flex-direction: column;
+  }
+
+  .impact-inline-arrow {
+    transform: rotate(90deg);
+    padding: 0.25rem 0;
+  }
+
+  .impact-inline-field {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   Impact Panel (Slide-in) - DEPRECATED
    ============================================ */
 
 .impact-panel-overlay {

@@ -927,6 +927,11 @@ code, .mono {
   overflow-y: auto;
 }
 
+.chat-textarea:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+
 .chat-send {
   padding: 0.5rem;
   width: 2.25rem;
@@ -2037,6 +2042,14 @@ code, .mono {
 }
 
 .sidebar-section-header {
+  /* Button reset */
+  background: none;
+  border: none;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  /* Layout */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -2216,6 +2229,33 @@ code, .mono {
   display: flex;
   align-items: center;
   min-width: 0;
+}
+
+.inline-edit-text {
+  /* Button reset */
+  background: none;
+  border: none;
+  padding: 0.125rem 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  /* Layout */
+  flex: 1;
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 2px;
+}
+
+.inline-edit-text:hover {
+  background: var(--bg-primary);
+}
+
+.inline-edit-text:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
 }
 
 .inline-edit-display {

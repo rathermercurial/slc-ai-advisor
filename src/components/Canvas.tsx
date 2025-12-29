@@ -160,7 +160,14 @@ export function Canvas({ canvasId, hoveredModel: externalHoveredModel, onHovered
       try {
         const response = await fetch(`/api/canvas/${canvasId}`);
         if (response.ok) {
-          const data = await response.json();
+          let data;
+          try {
+            data = await response.json();
+          } catch (parseError) {
+            console.error('Failed to parse canvas JSON:', parseError);
+            setLoadError('Invalid response from server');
+            return;
+          }
 
           // Update sections from backend
           if (data.sections) {

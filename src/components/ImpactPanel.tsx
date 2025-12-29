@@ -53,7 +53,11 @@ export function ImpactPanel({ impactModel, onSave, onClose }: ImpactPanelProps) 
       <aside className="impact-panel">
         <header className="impact-panel-header">
           <h2>Impact Model</h2>
-          <button className="impact-panel-close" onClick={onClose}>
+          <button
+            className="impact-panel-close"
+            onClick={onClose}
+            aria-label="Close impact panel"
+          >
             &times;
           </button>
         </header>

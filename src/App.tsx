@@ -76,7 +76,6 @@ function AppContent({
   theme: Theme;
   toggleTheme: () => void;
 }) {
-  console.log('[AppContent] Rendering with threadId:', threadId);
   const { canvas, undo, redo, canUndo, canRedo, isConnected, isGenerating } = useCanvasContext();
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -463,7 +462,6 @@ function AppContent({
  */
 function CanvasRoute({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => void }) {
   const { canvasId, threadId } = useParams<{ canvasId: string; threadId?: string }>();
-  console.log('[CanvasRoute] useParams threadId:', threadId);
   const navigate = useNavigate();
   const [defaultThreadId, setDefaultThreadId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -517,7 +515,6 @@ function CanvasRoute({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => 
   }
 
   const activeThreadId = threadId || defaultThreadId;
-  console.log('[CanvasRoute] activeThreadId:', activeThreadId, '(from URL:', threadId, ', default:', defaultThreadId, ')');
 
   return (
     <ErrorBoundary>

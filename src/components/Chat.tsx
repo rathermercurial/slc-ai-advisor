@@ -87,7 +87,6 @@ function getToolCardState(sdkState: string): 'pending' | 'executing' | 'complete
  * Canvas state is pushed to CanvasContext for the Canvas component to consume.
  */
 export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
-  console.log('[Chat] Component rendering with props:', { canvasId, threadId });
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -98,7 +97,6 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   // Agent name includes threadId for multi-thread support
   // Format: canvasId or canvasId--threadId (using -- to avoid PartySocket routing issues with /)
   const agentName = threadId ? `${canvasId}--${threadId}` : canvasId;
-  console.log('[Chat] Connecting to agent:', agentName);
 
   // Connect to agent via WebSocket
   const agent = useAgent<AgentState>({

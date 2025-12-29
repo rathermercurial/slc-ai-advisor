@@ -62,10 +62,7 @@ export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: Threa
   }, [editingId]);
 
   const handleThreadClick = (id: string) => {
-    console.log('[ThreadList] handleThreadClick called', { id, canvasId, currentThreadId: threadId });
-    const url = `/canvas/${canvasId}/chat/${id}`;
-    console.log('[ThreadList] Navigating to:', url);
-    navigate(url);
+    navigate(`/canvas/${canvasId}/chat/${id}`);
   };
 
   const startEditing = (id: string, currentName: string) => {
@@ -246,12 +243,7 @@ export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: Threa
                 <div
                   key={thread.id}
                   className={`sidebar-list-item ${thread.id === threadId ? 'active' : ''}`}
-                  onClick={() => {
-                    console.log('[ThreadList] Row clicked', { threadId: thread.id, editingId });
-                    if (editingId !== thread.id) {
-                      handleThreadClick(thread.id);
-                    }
-                  }}
+                  onClick={() => editingId !== thread.id && handleThreadClick(thread.id)}
                 >
                   <button
                     type="button"

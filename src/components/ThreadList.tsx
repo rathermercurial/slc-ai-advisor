@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Star, Archive, ArchiveRestore } from 'lucide-react';
 import { InlineEdit } from './InlineEdit';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import type { Thread } from '../types/thread';
@@ -32,10 +33,12 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/canvas/${canvasId}/threads?filter=${filter}`);
-      if (response.ok) {
-        const data = await response.json();
-        setThreads(data);
+      if (!response.ok) {
+        console.error('Failed to load threads:', response.status);
+        return;
       }
+      const data = await response.json();
+      setThreads(data);
     } catch (err) {
       console.error('Failed to load threads:', err);
     } finally {
@@ -61,11 +64,14 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
         body: JSON.stringify({ name }),
       });
 
-      if (response.ok) {
-        setThreads((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, name } : t))
-        );
+      if (!response.ok) {
+        console.error('Failed to rename thread:', response.status);
+        return;
       }
+
+      setThreads((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, name } : t))
+      );
     } catch (err) {
       console.error('Failed to rename thread:', err);
     }
@@ -81,11 +87,14 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
         body: JSON.stringify({ starred: !starred }),
       });
 
-      if (response.ok) {
-        setThreads((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, starred: !starred } : t))
-        );
+      if (!response.ok) {
+        console.error('Failed to toggle star:', response.status);
+        return;
       }
+
+      setThreads((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, starred: !starred } : t))
+      );
     } catch (err) {
       console.error('Failed to toggle star:', err);
     }
@@ -101,20 +110,23 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
         body: JSON.stringify({ archived: true }),
       });
 
-      if (response.ok) {
-        // If archiving current thread, navigate to first remaining thread
-        if (id === threadId) {
-          const remaining = threads.filter((t) => t.id !== id && !t.archived);
-          if (remaining.length > 0) {
-            navigate(`/canvas/${canvasId}/chat/${remaining[0].id}`);
-          } else {
-            navigate(`/canvas/${canvasId}`);
-          }
-        }
-
-        // Reload threads
-        loadThreads();
+      if (!response.ok) {
+        console.error('Failed to archive thread:', response.status);
+        return;
       }
+
+      // If archiving current thread, navigate to first remaining thread
+      if (id === threadId) {
+        const remaining = threads.filter((t) => t.id !== id && !t.archived);
+        if (remaining.length > 0) {
+          navigate(`/canvas/${canvasId}/chat/${remaining[0].id}`);
+        } else {
+          navigate(`/canvas/${canvasId}`);
+        }
+      }
+
+      // Reload threads
+      loadThreads();
     } catch (err) {
       console.error('Failed to archive thread:', err);
     }
@@ -130,13 +142,16 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
         body: JSON.stringify({}),
       });
 
-      if (response.ok) {
-        const newThread = await response.json();
-        setThreads((prev) => [newThread, ...prev]);
-
-        // Navigate to new thread
-        navigate(`/canvas/${canvasId}/chat/${newThread.id}`);
+      if (!response.ok) {
+        console.error('Failed to create thread:', response.status);
+        return;
       }
+
+      const newThread = await response.json();
+      setThreads((prev) => [newThread, ...prev]);
+
+      // Navigate to new thread
+      navigate(`/canvas/${canvasId}/chat/${newThread.id}`);
     } catch (err) {
       console.error('Failed to create thread:', err);
     }
@@ -149,15 +164,22 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
 
   return (
     <div className="sidebar-section">
-      <div className="sidebar-section-header" onClick={onToggleCollapse}>
+      <button
+        type="button"
+        className="sidebar-section-header"
+        onClick={onToggleCollapse}
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Expand threads section' : 'Collapse threads section'}
+      >
+        <span className="sidebar-section-toggle">
+          {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+        </span>
         <span className="sidebar-section-title">THREADS</span>
-        <span className="sidebar-section-toggle">{collapsed ? '+' : '-'}</span>
-      </div>
+      </button>
 
       {!collapsed && (
         <>
           <div className="sidebar-section-controls">
-            <FilterDropdown value={filter} onChange={setFilter} />
             <button
               type="button"
               className="sidebar-add-btn"
@@ -166,6 +188,7 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
             >
               +
             </button>
+            <FilterDropdown value={filter} onChange={setFilter} />
           </div>
 
           <div className="sidebar-list">
@@ -188,15 +211,16 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                       handleToggleStar(thread.id, thread.starred);
                     }}
                     title={thread.starred ? 'Unstar' : 'Star'}
+                    aria-label={thread.starred ? 'Unstar thread' : 'Star thread'}
                   >
-                    {thread.starred ? '*' : 'o'}
+                    <Star size={14} fill={thread.starred ? 'currentColor' : 'none'} />
                   </button>
                   <InlineEdit
                     value={thread.name}
                     onSave={(name) => handleRename(thread.id, name)}
                     className="sidebar-item-name"
                   />
-                  {!thread.archived && (
+                  {!thread.archived ? (
                     <button
                       type="button"
                       className="sidebar-archive-btn"
@@ -205,8 +229,22 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                         handleArchive(thread.id);
                       }}
                       title="Archive"
+                      aria-label="Archive thread"
                     >
-                      x
+                      <Archive size={14} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="sidebar-unarchive-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Implement unarchive
+                      }}
+                      title="Restore from archive"
+                      aria-label="Restore thread from archive"
+                    >
+                      <ArchiveRestore size={14} />
                     </button>
                   )}
                 </div>

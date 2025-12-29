@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasList } from './CanvasList';
 import { ThreadList } from './ThreadList';
 
@@ -47,8 +48,9 @@ export function Sidebar() {
           className="sidebar-expand-btn"
           onClick={handleToggleSidebar}
           title="Expand sidebar"
+          aria-label="Expand sidebar"
         >
-          &gt;
+          <ChevronRight size={16} />
         </button>
       </div>
     );
@@ -62,8 +64,9 @@ export function Sidebar() {
           className="sidebar-collapse-btn"
           onClick={handleToggleSidebar}
           title="Collapse sidebar"
+          aria-label="Collapse sidebar"
         >
-          &lt;
+          <ChevronLeft size={16} />
         </button>
       </div>
 

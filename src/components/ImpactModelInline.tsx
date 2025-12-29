@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { ArrowRight, ArrowLeft, ArrowDown } from 'lucide-react';
 import {
   type ImpactModel,
   type ImpactModelField,
@@ -9,20 +10,43 @@ interface ImpactModelInlineProps {
   impactModel: ImpactModel;
   onSave: (impactModel: ImpactModel) => void;
   isUpdating?: boolean;
+  isHighlighted?: boolean;
+  /** Auto-focus first field when mounted */
+  autoFocusFirst?: boolean;
 }
+
+// Tab order for Impact Model fields (boustrophedon: left-to-right then right-to-left)
+const FIELD_TAB_ORDER: ImpactModelField[] = [
+  'issue',
+  'participants',
+  'activities',
+  'outputs',
+  'shortTermOutcomes',
+  'mediumTermOutcomes',
+  'longTermOutcomes',
+  'impact',
+];
 
 /**
  * Inline Impact Model display with 2 rows of 4 fields.
  * Shows the causality chain: Issue → Participants → Activities → Outputs
  *                            Short-term → Medium-term → Long-term → Impact
  */
-export function ImpactModelInline({ impactModel, onSave, isUpdating }: ImpactModelInlineProps) {
+export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlighted, autoFocusFirst }: ImpactModelInlineProps) {
   const [editingField, setEditingField] = useState<ImpactModelField | null>(null);
   const [draft, setDraft] = useState<ImpactModel>(impactModel);
 
-  // Row definitions
+  // Row definitions - row 2 is reversed for boustrophedon flow (right, then down, then left)
   const row1: ImpactModelField[] = ['issue', 'participants', 'activities', 'outputs'];
-  const row2: ImpactModelField[] = ['shortTermOutcomes', 'mediumTermOutcomes', 'longTermOutcomes', 'impact'];
+  const row2: ImpactModelField[] = ['impact', 'longTermOutcomes', 'mediumTermOutcomes', 'shortTermOutcomes'];
+
+  // Auto-focus first field when opened
+  useEffect(() => {
+    if (autoFocusFirst) {
+      setEditingField('issue');
+      setDraft(impactModel);
+    }
+  }, [autoFocusFirst, impactModel]);
 
   const handleFieldClick = useCallback((field: ImpactModelField) => {
     setEditingField(field);
@@ -44,39 +68,72 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating }: ImpactMod
     setEditingField(null);
   }, [editingField, draft, impactModel, onSave]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, currentField: ImpactModelField) => {
     if (e.key === 'Escape') {
       setEditingField(null);
       setDraft(impactModel);
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleFieldBlur();
-    }
-  }, [handleFieldBlur, impactModel]);
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      // Save current field if changed
+      if (draft[currentField] !== impactModel[currentField]) {
+        onSave(draft);
+      }
 
-  const renderField = (field: ImpactModelField, isFirst: boolean, _isLast: boolean) => {
+      const currentIndex = FIELD_TAB_ORDER.indexOf(currentField);
+      if (e.shiftKey) {
+        // Shift+Tab - go to previous field
+        if (currentIndex > 0) {
+          const prevField = FIELD_TAB_ORDER[currentIndex - 1];
+          setEditingField(prevField);
+        } else {
+          // At first field, exit editing
+          setEditingField(null);
+        }
+      } else {
+        // Tab - go to next field
+        if (currentIndex < FIELD_TAB_ORDER.length - 1) {
+          const nextField = FIELD_TAB_ORDER[currentIndex + 1];
+          setEditingField(nextField);
+        } else {
+          // At last field, exit editing
+          setEditingField(null);
+        }
+      }
+    }
+  }, [handleFieldBlur, impactModel, draft, onSave]);
+
+  const renderField = (field: ImpactModelField, isFirst: boolean, _isLast: boolean, arrowDirection: 'right' | 'left' = 'right') => {
     const isEditing = editingField === field;
     const hasContent = !!impactModel[field];
-    const isIssue = field === 'issue';
-    const isImpact = field === 'impact';
 
     return (
       <div key={field} className="impact-inline-field-wrapper">
-        {!isFirst && <span className="impact-inline-arrow">→</span>}
+        {!isFirst && (
+          <span className="impact-inline-arrow">
+            {arrowDirection === 'right' ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+          </span>
+        )}
         <div
-          className={`impact-inline-field ${isEditing ? 'editing' : ''} ${hasContent ? 'has-content' : ''} ${isIssue ? 'field-issue' : ''} ${isImpact ? 'field-impact' : ''} ${isUpdating ? 'updating' : ''}`}
+          className={`impact-inline-field ${isEditing ? 'editing' : ''} ${hasContent ? 'has-content' : ''} ${isUpdating ? 'updating' : ''}`}
           onClick={() => !isEditing && handleFieldClick(field)}
         >
-          <label className="impact-inline-label">{IMPACT_MODEL_LABELS[field]}</label>
+          <label className="impact-inline-label" htmlFor={`impact-field-${field}`}>
+            {IMPACT_MODEL_LABELS[field]}
+          </label>
           {isEditing ? (
             <textarea
+              id={`impact-field-${field}`}
               className="impact-inline-input"
               value={draft[field]}
               onChange={(e) => handleFieldChange(field, e.target.value)}
               onBlur={handleFieldBlur}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e) => handleKeyDown(e, field)}
               autoFocus
               placeholder={getPlaceholder(field)}
+              aria-label={IMPACT_MODEL_LABELS[field]}
             />
           ) : (
             <div className="impact-inline-content">
@@ -89,21 +146,22 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating }: ImpactMod
   };
 
   return (
-    <div className="impact-inline">
+    <div className={`impact-inline ${isHighlighted ? 'highlighted' : ''}`}>
       <div className="impact-inline-header">
         <span className="impact-inline-title">Impact Model</span>
-        <span className="impact-inline-subtitle">Causality Chain</span>
       </div>
       <div className="impact-inline-grid">
         <div className="impact-inline-row">
-          {row1.map((field, i) => renderField(field, i === 0, i === row1.length - 1))}
+          {row1.map((field, i) => renderField(field, i === 0, i === row1.length - 1, 'right'))}
         </div>
-        {/* Arrow connecting Outputs to Short-term Outcomes */}
+        {/* Arrow connecting Outputs (box 4) to Short-term Outcomes (box 5) */}
         <div className="impact-inline-connector">
-          <span className="impact-inline-arrow vertical">↓</span>
+          <span className="impact-inline-arrow vertical">
+            <ArrowDown size={16} />
+          </span>
         </div>
-        <div className="impact-inline-row">
-          {row2.map((field, i) => renderField(field, i === 0, i === row2.length - 1))}
+        <div className="impact-inline-row row-reversed">
+          {row2.map((field, i) => renderField(field, i === 0, i === row2.length - 1, 'left'))}
         </div>
       </div>
     </div>

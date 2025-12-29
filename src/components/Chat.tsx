@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, FormEvent, ChangeEvent, KeyboardEvent } fr
 import { useAgent } from 'agents/react';
 import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
+import { ArrowUp, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
 import { StatusBar } from './StatusBar';
 import { ToolInvocationCard } from './ToolInvocationCard';
@@ -228,7 +229,7 @@ Tell me about your social venture idea - what problem are you trying to solve, a
 
         {/* Error message */}
         {error && (
-          <div className="chat-message error">
+          <div className="chat-message error" role="alert">
             Error: {error.message}
           </div>
         )}
@@ -245,16 +246,17 @@ Tell me about your social venture idea - what problem are you trying to solve, a
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about your canvas... (Shift+Enter for newline)"
+            placeholder="(Shift+Enter for new line)"
             disabled={isLoading || agent.readyState !== 1}
             rows={1}
+            aria-label="Type a message"
           />
           <button
             type="submit"
             className="chat-send"
             disabled={isLoading || !input.trim() || agent.readyState !== 1}
           >
-            {isLoading ? 'Sending...' : 'Send'}
+            {isLoading ? <Loader2 size={18} className="spin" /> : <ArrowUp size={18} />}
           </button>
         </form>
       </div>

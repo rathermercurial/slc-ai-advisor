@@ -10,6 +10,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { Download } from 'lucide-react';
 
 export interface ExportMenuProps {
   onCopy: () => void;
@@ -72,9 +73,9 @@ export function ExportMenu({
         disabled={disabled}
         aria-haspopup="true"
         aria-expanded={isOpen}
+        aria-label="Export canvas"
       >
-        Export
-        <span className="export-menu-caret">{isOpen ? '\u25B4' : '\u25BE'}</span>
+        <Download size={18} />
       </button>
 
       {isOpen && (

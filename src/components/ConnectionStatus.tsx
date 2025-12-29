@@ -4,24 +4,28 @@
  * Displays the current connection state of the agent WebSocket.
  */
 
+import { Wifi, WifiOff, Loader2 } from 'lucide-react';
+
 interface ConnectionStatusProps {
   readyState: number;
 }
 
-const STATUS_CONFIG: Record<number, { label: string; className: string }> = {
-  0: { label: 'Connecting...', className: 'connecting' },
-  1: { label: 'Connected', className: 'connected' },
-  2: { label: 'Closing', className: 'closing' },
-  3: { label: 'Disconnected', className: 'disconnected' },
-};
-
 export function ConnectionStatus({ readyState }: ConnectionStatusProps) {
-  const status = STATUS_CONFIG[readyState] || { label: 'Unknown', className: 'unknown' };
+  const connected = readyState === 1;
+  const connecting = readyState === 0;
 
   return (
-    <div className={`connection-status connection-${status.className}`}>
-      <span className="connection-dot" aria-hidden="true" />
-      <span className="connection-label">{status.label}</span>
-    </div>
+    <span
+      className={`connection-status ${connected ? 'connected' : ''}`}
+      aria-label={connected ? 'Connected' : connecting ? 'Connecting' : 'Disconnected'}
+    >
+      {connecting ? (
+        <Loader2 size={16} className="spin" />
+      ) : connected ? (
+        <Wifi size={16} />
+      ) : (
+        <WifiOff size={16} />
+      )}
+    </span>
   );
 }

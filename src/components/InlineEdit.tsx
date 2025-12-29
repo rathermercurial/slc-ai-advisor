@@ -64,6 +64,13 @@ export function InlineEdit({ value, onSave, placeholder = 'Untitled', className 
     setIsEditing(false);
   };
 
+  const handleTextKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsEditing(true);
+    }
+  };
+
   if (isEditing) {
     return (
       <input
@@ -75,17 +82,21 @@ export function InlineEdit({ value, onSave, placeholder = 'Untitled', className 
         onKeyDown={handleKeyDown}
         className={`inline-edit-input ${className}`}
         placeholder={placeholder}
+        aria-label="Edit name"
       />
     );
   }
 
   return (
-    <span
+    <button
+      type="button"
       onClick={handleClick}
+      onKeyDown={handleTextKeyDown}
       className={`inline-edit-text ${className}`}
       title="Click to edit"
+      aria-label={`Edit ${value || placeholder}`}
     >
       {value || placeholder}
-    </span>
+    </button>
   );
 }

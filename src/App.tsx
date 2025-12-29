@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { Canvas, Chat, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader } from './components';
+import { ChevronLeft, ChevronRight, Undo2, Redo2 } from 'lucide-react';
+import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader } from './components';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
 import { useUndoShortcuts } from './hooks';
@@ -70,7 +71,7 @@ function AppContent({
   theme: 'light' | 'dark';
   toggleTheme: () => void;
 }) {
-  const { canvas, undo, redo, canUndo, canRedo } = useCanvasContext();
+  const { canvas, undo, redo, canUndo, canRedo, isConnected } = useCanvasContext();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // Canvas/chat split percentage (stored in localStorage)
@@ -94,6 +95,26 @@ function AppContent({
     return 'Untitled Venture';
   });
 
+  // Listen for name changes from sidebar
+  useEffect(() => {
+    const handleCanvasIndexUpdate = () => {
+      try {
+        const stored = localStorage.getItem('canvasIndex');
+        if (stored) {
+          const canvases = JSON.parse(stored) as CanvasMeta[];
+          const current = canvases.find((c) => c.id === canvasId);
+          if (current && current.name !== ventureName) {
+            setVentureName(current.name);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to sync canvas name:', e);
+      }
+    };
+    window.addEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
+    return () => window.removeEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
+  }, [canvasId, ventureName]);
+
   // Venture stage (stored per canvas in localStorage)
   const [ventureStage, setVentureStage] = useState<VentureStage>(() => {
     try {
@@ -115,6 +136,9 @@ function AppContent({
 
   // Profile panel visibility
   const [showProfile, setShowProfile] = useState(false);
+
+  // Model indicator (lifted from Canvas for header display)
+  const [hoveredModel, setHoveredModel] = useState<string | null>(null);
 
   // Sidebar width in pixels (stored in localStorage)
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -145,6 +169,8 @@ function AppContent({
           c.id === canvasId ? { ...c, name, updatedAt: new Date().toISOString() } : c
         );
         localStorage.setItem('canvasIndex', JSON.stringify(updated));
+        // Dispatch event for same-tab sync (CanvasList listens for this)
+        window.dispatchEvent(new Event('canvasIndexUpdated'));
       }
     } catch (e) {
       console.warn('Failed to save canvas name:', e);
@@ -278,16 +304,20 @@ function AppContent({
   return (
     <div className="app">
       <header className="app-header">
-        <h1>SLC AI Advisor</h1>
-        <VentureHeader
-          name={ventureName}
-          stage={ventureStage}
-          progress={progress}
-          onNameChange={handleNameChange}
-          onStageChange={handleStageChange}
-          onProfileClick={handleProfileClick}
-        />
-        <div className="app-header-actions">
+        <div className="app-header-left">
+          <h1>SLC AI Advisor</h1>
+        </div>
+        <div className="app-header-center">
+          <VentureHeader
+            name={ventureName}
+            progress={progress}
+            onNameChange={handleNameChange}
+            showProfile={showProfile}
+            onProfileClick={handleProfileClick}
+            modelIndicator={hoveredModel}
+          />
+        </div>
+        <div className="app-header-right">
           <button
             className="header-icon-btn"
             onClick={undo}
@@ -295,7 +325,7 @@ function AppContent({
             title="Undo (Cmd+Z)"
             aria-label="Undo"
           >
-            <span aria-hidden="true">&#8630;</span>
+            <Undo2 size={18} />
           </button>
           <button
             className="header-icon-btn"
@@ -304,7 +334,7 @@ function AppContent({
             title="Redo (Cmd+Shift+Z)"
             aria-label="Redo"
           >
-            <span aria-hidden="true">&#8631;</span>
+            <Redo2 size={18} />
           </button>
           <ExportMenu
             onCopy={handleCopyToClipboard}
@@ -312,6 +342,7 @@ function AppContent({
             onExportMarkdown={handleExportMarkdown}
             disabled={!canvas}
           />
+          <ConnectionStatus readyState={isConnected ? 1 : 0} />
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </div>
       </header>
@@ -329,7 +360,43 @@ function AppContent({
         </div>
         <div className="layout-content">
           <div className="layout-canvas" style={{ flex: chatCollapsed ? 1 : `0 0 ${splitPercentage}%` }}>
-            <Canvas canvasId={canvasId} />
+            {showProfile && (
+              <div className="profile-inline">
+                <div className="profile-inline-header">
+                  <span className="profile-inline-title">Venture Profile</span>
+                  <button className="profile-inline-close" onClick={() => setShowProfile(false)} aria-label="Close">×</button>
+                </div>
+                <div className="profile-inline-content">
+                  <p className="profile-placeholder">
+                    Venture profile dimensions will be available once backend support is complete.
+                  </p>
+                  <div className="profile-dimensions">
+                    <div className="profile-dimension">
+                      <span className="profile-dimension-label">Stage</span>
+                      <select
+                        className="profile-stage-select"
+                        value={ventureStage}
+                        onChange={(e) => handleStageChange(e.target.value as VentureStage)}
+                      >
+                        <option value="idea">Idea</option>
+                        <option value="validation">Validation</option>
+                        <option value="growth">Growth</option>
+                        <option value="scale">Scale</option>
+                      </select>
+                    </div>
+                    <div className="profile-dimension">
+                      <span className="profile-dimension-label">Progress</span>
+                      <span className="profile-dimension-value">{progress}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <Canvas
+              canvasId={canvasId}
+              hoveredModel={hoveredModel}
+              onHoveredModelChange={setHoveredModel}
+            />
           </div>
           {!chatCollapsed && (
             <Resizer
@@ -341,7 +408,7 @@ function AppContent({
           )}
           <div className={`layout-chat ${chatCollapsed ? 'collapsed' : ''}`} style={{ flex: chatCollapsed ? 'none' : `0 0 ${100 - splitPercentage}%` }}>
             <div className="chat-collapse-toggle" onClick={handleChatToggle} title={chatCollapsed ? 'Expand chat' : 'Collapse chat'}>
-              <span aria-hidden="true">{chatCollapsed ? '◀' : '▶'}</span>
+              {chatCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
             </div>
             {!chatCollapsed && (
               <ErrorBoundary>
@@ -358,32 +425,6 @@ function AppContent({
           type={toast.type}
           onClose={() => setToast(null)}
         />
-      )}
-
-      {showProfile && (
-        <div className="profile-overlay" onClick={() => setShowProfile(false)}>
-          <div className="profile-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="profile-panel-header">
-              <h3>Venture Profile</h3>
-              <button className="profile-close-btn" onClick={() => setShowProfile(false)} aria-label="Close">×</button>
-            </div>
-            <div className="profile-panel-content">
-              <p className="profile-placeholder">
-                Venture profile dimensions will be available once backend support is complete.
-              </p>
-              <div className="profile-dimensions">
-                <div className="profile-dimension">
-                  <span className="profile-dimension-label">Stage</span>
-                  <span className="profile-dimension-value">{ventureStage}</span>
-                </div>
-                <div className="profile-dimension">
-                  <span className="profile-dimension-label">Progress</span>
-                  <span className="profile-dimension-value">{progress}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

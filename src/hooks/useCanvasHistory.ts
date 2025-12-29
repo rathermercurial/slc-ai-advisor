@@ -67,8 +67,30 @@ function loadHistory(canvasId: string): HistoryState | null {
   try {
     const stored = localStorage.getItem(getStorageKey(canvasId));
     if (!stored) return null;
-    return JSON.parse(stored) as HistoryState;
+    const parsed = JSON.parse(stored) as HistoryState;
+
+    // Validate the loaded data
+    if (!parsed || !Array.isArray(parsed.entries) || typeof parsed.currentIndex !== 'number') {
+      console.warn('Invalid history data in localStorage, clearing...');
+      localStorage.removeItem(getStorageKey(canvasId));
+      return null;
+    }
+
+    // Validate entries have required fields
+    const validEntries = parsed.entries.filter(
+      (entry) => entry && typeof entry.type === 'string' && entry.data
+    );
+
+    if (validEntries.length !== parsed.entries.length) {
+      console.warn('Some history entries were invalid, cleaning up...');
+      parsed.entries = validEntries;
+      parsed.currentIndex = Math.min(parsed.currentIndex, validEntries.length - 1);
+    }
+
+    return parsed;
   } catch {
+    // Clear corrupted data
+    localStorage.removeItem(getStorageKey(canvasId));
     return null;
   }
 }
@@ -157,19 +179,26 @@ function applyDiff(base: CanvasSnapshot, diff: CanvasDiff): CanvasSnapshot {
  * Rebuild full snapshot at a given index by applying diffs
  */
 function rebuildSnapshot(entries: HistoryEntry[], targetIndex: number): CanvasSnapshot | null {
+  // Safety check for empty or invalid entries
+  if (!entries || entries.length === 0 || targetIndex < 0 || targetIndex >= entries.length) {
+    return null;
+  }
+
   // Find the nearest full snapshot at or before targetIndex
   let baseIndex = targetIndex;
-  while (baseIndex >= 0 && entries[baseIndex].type !== 'snapshot') {
+  while (baseIndex >= 0 && entries[baseIndex]?.type !== 'snapshot') {
     baseIndex--;
   }
 
-  if (baseIndex < 0) return null;
+  if (baseIndex < 0 || !entries[baseIndex]) return null;
 
   let snapshot = entries[baseIndex].data as CanvasSnapshot;
+  if (!snapshot) return null;
 
   // Apply diffs forward to reach targetIndex
   for (let i = baseIndex + 1; i <= targetIndex; i++) {
     const entry = entries[i];
+    if (!entry) continue;
     if (entry.type === 'diff') {
       snapshot = applyDiff(snapshot, entry.data);
     } else {

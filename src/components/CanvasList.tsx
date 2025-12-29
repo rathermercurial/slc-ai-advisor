@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Star, Archive, ArchiveRestore } from 'lucide-react';
 import { InlineEdit } from './InlineEdit';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import type { CanvasMeta } from '../types/thread';
@@ -46,7 +47,17 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
       }
     };
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+
+    // Listen for same-tab sync (when name changes in header)
+    const handleCanvasIndexUpdate = () => {
+      loadCanvases();
+    };
+    window.addEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
+    };
   }, []);
 
   // Filter canvases
@@ -75,16 +86,21 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
         body: JSON.stringify({ name }),
       });
 
-      if (response.ok) {
-        // Update local state
-        setCanvases((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, name } : c))
-        );
-        // Update localStorage
-        updateCanvasIndex((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, name } : c))
-        );
+      if (!response.ok) {
+        console.error('Failed to rename canvas:', response.status);
+        return;
       }
+
+      // Update local state
+      setCanvases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, name } : c))
+      );
+      // Update localStorage
+      updateCanvasIndex((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, name } : c))
+      );
+      // Dispatch event for header sync
+      window.dispatchEvent(new Event('canvasIndexUpdated'));
     } catch (err) {
       console.error('Failed to rename canvas:', err);
     }
@@ -98,14 +114,17 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
         body: JSON.stringify({ starred: !starred }),
       });
 
-      if (response.ok) {
-        setCanvases((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
-        );
-        updateCanvasIndex((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
-        );
+      if (!response.ok) {
+        console.error('Failed to toggle star:', response.status);
+        return;
       }
+
+      setCanvases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
+      );
+      updateCanvasIndex((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
+      );
     } catch (err) {
       console.error('Failed to toggle star:', err);
     }
@@ -119,14 +138,17 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
         body: JSON.stringify({ archived: true }),
       });
 
-      if (response.ok) {
-        setCanvases((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
-        );
-        updateCanvasIndex((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
-        );
+      if (!response.ok) {
+        console.error('Failed to archive canvas:', response.status);
+        return;
       }
+
+      setCanvases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
+      );
+      updateCanvasIndex((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
+      );
     } catch (err) {
       console.error('Failed to archive canvas:', err);
     }
@@ -140,23 +162,26 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
         body: JSON.stringify({}),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const newCanvas: CanvasMeta = {
-          id: data.canvasId,
-          name: 'Untitled Canvas',
-          starred: false,
-          archived: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        setCanvases((prev) => [newCanvas, ...prev]);
-        updateCanvasIndex((prev) => [newCanvas, ...prev]);
-
-        // Navigate to new canvas
-        navigate(`/canvas/${data.canvasId}`);
+      if (!response.ok) {
+        console.error('Failed to create canvas:', response.status);
+        return;
       }
+
+      const data = await response.json();
+      const newCanvas: CanvasMeta = {
+        id: data.canvasId,
+        name: 'Untitled Canvas',
+        starred: false,
+        archived: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setCanvases((prev) => [newCanvas, ...prev]);
+      updateCanvasIndex((prev) => [newCanvas, ...prev]);
+
+      // Navigate to new canvas
+      navigate(`/canvas/${data.canvasId}`);
     } catch (err) {
       console.error('Failed to create canvas:', err);
     }
@@ -177,15 +202,22 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
 
   return (
     <div className="sidebar-section">
-      <div className="sidebar-section-header" onClick={onToggleCollapse}>
+      <button
+        type="button"
+        className="sidebar-section-header"
+        onClick={onToggleCollapse}
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Expand canvases section' : 'Collapse canvases section'}
+      >
+        <span className="sidebar-section-toggle">
+          {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+        </span>
         <span className="sidebar-section-title">CANVASES</span>
-        <span className="sidebar-section-toggle">{collapsed ? '+' : '-'}</span>
-      </div>
+      </button>
 
       {!collapsed && (
         <>
           <div className="sidebar-section-controls">
-            <FilterDropdown value={filter} onChange={setFilter} />
             <button
               type="button"
               className="sidebar-add-btn"
@@ -194,6 +226,7 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
             >
               +
             </button>
+            <FilterDropdown value={filter} onChange={setFilter} />
           </div>
 
           <div className="sidebar-list">
@@ -216,15 +249,16 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
                   handleToggleStar(canvas.id, canvas.starred);
                 }}
                 title={canvas.starred ? 'Unstar' : 'Star'}
+                aria-label={canvas.starred ? 'Unstar canvas' : 'Star canvas'}
               >
-                {canvas.starred ? '*' : 'o'}
+                <Star size={14} fill={canvas.starred ? 'currentColor' : 'none'} />
               </button>
               <InlineEdit
                 value={canvas.name}
                 onSave={(name) => handleRename(canvas.id, name)}
                 className="sidebar-item-name"
               />
-              {!canvas.archived && (
+              {!canvas.archived ? (
                 <button
                   type="button"
                   className="sidebar-archive-btn"
@@ -233,8 +267,22 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
                     handleArchive(canvas.id);
                   }}
                   title="Archive"
+                  aria-label="Archive canvas"
                 >
-                  x
+                  <Archive size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="sidebar-unarchive-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: Implement unarchive
+                  }}
+                  title="Restore from archive"
+                  aria-label="Restore canvas from archive"
+                >
+                  <ArchiveRestore size={14} />
                 </button>
               )}
             </div>

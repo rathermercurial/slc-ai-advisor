@@ -57,10 +57,10 @@ tag = "v2"
 new_sqlite_classes = ["CanvasDO", "SLCAgent"]
 deleted_classes = ["UserSession"]
 
-# Note: Thread table and canvas_meta column additions (Issue #65) are handled
-# internally by CanvasDO's ensureInitialized() method:
-# - New tables: CREATE TABLE IF NOT EXISTS
-# - New columns: PRAGMA table_info + ALTER TABLE ADD COLUMN
+# Note: SQLite schema evolution is handled in-code using PRAGMA user_version
+# (Cloudflare best practice). See CanvasDO.migrate() method.
+# - Version 1: Base schema (wrangler v2 migration)
+# - Version 2: Multi-canvas/thread support (Issue #65)
 # No wrangler migration tag needed - avoids gradual deployment conflicts.
 
 # AI Binding for embeddings

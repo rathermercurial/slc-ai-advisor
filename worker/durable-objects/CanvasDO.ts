@@ -82,6 +82,107 @@ export class CanvasDO extends DurableObject<Env> {
     this.customerManager = new CustomerModelManager(sql);
     this.economicManager = new EconomicModelManager(sql);
     this.impactManager = new ImpactModelManager(sql);
+
+    // Run migrations before any requests (Cloudflare best practice)
+    // See: https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/
+    ctx.blockConcurrencyWhile(async () => {
+      await this.migrate();
+    });
+  }
+
+  /**
+   * Run schema migrations using PRAGMA user_version
+   * Cloudflare best practice for DO SQLite schema evolution
+   */
+  private async migrate(): Promise<void> {
+    const sql = this.ctx.storage.sql;
+
+    // Get current schema version (0 if never set)
+    const version =
+      sql.exec<{ user_version: number }>('PRAGMA user_version').one()?.user_version ?? 0;
+
+    // Version 1: Base schema (corresponds to wrangler v2 migration)
+    if (version < 1) {
+      sql.exec(`
+        CREATE TABLE IF NOT EXISTS canvas_meta (
+          id TEXT PRIMARY KEY DEFAULT 'canvas',
+          purpose TEXT NOT NULL DEFAULT '',
+          key_metrics TEXT NOT NULL DEFAULT '',
+          current_section TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS canvas_section (
+          section_key TEXT PRIMARY KEY,
+          content TEXT NOT NULL DEFAULT '',
+          is_complete INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS impact_model (
+          id TEXT PRIMARY KEY DEFAULT 'impact',
+          issue TEXT NOT NULL DEFAULT '',
+          participants TEXT NOT NULL DEFAULT '',
+          activities TEXT NOT NULL DEFAULT '',
+          outputs TEXT NOT NULL DEFAULT '',
+          short_term_outcomes TEXT NOT NULL DEFAULT '',
+          medium_term_outcomes TEXT NOT NULL DEFAULT '',
+          long_term_outcomes TEXT NOT NULL DEFAULT '',
+          impact TEXT NOT NULL DEFAULT '',
+          is_complete INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS venture_profile (
+          id TEXT PRIMARY KEY DEFAULT 'profile',
+          venture_stage TEXT,
+          impact_areas TEXT NOT NULL DEFAULT '[]',
+          impact_mechanisms TEXT NOT NULL DEFAULT '[]',
+          legal_structure TEXT,
+          revenue_sources TEXT NOT NULL DEFAULT '[]',
+          funding_sources TEXT NOT NULL DEFAULT '[]',
+          industries TEXT NOT NULL DEFAULT '[]',
+          confidence_json TEXT NOT NULL DEFAULT '{}',
+          confirmed_json TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        PRAGMA user_version = 1;
+      `);
+    }
+
+    // Version 2: Multi-canvas/thread support (Issue #65)
+    if (version < 2) {
+      // Add columns to canvas_meta for multi-canvas support
+      sql.exec(`
+        ALTER TABLE canvas_meta ADD COLUMN name TEXT DEFAULT 'Untitled Canvas';
+        ALTER TABLE canvas_meta ADD COLUMN starred INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE canvas_meta ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;
+      `);
+
+      // Create thread registry table
+      sql.exec(`
+        CREATE TABLE IF NOT EXISTS thread (
+          id TEXT PRIMARY KEY,
+          title TEXT,
+          summary TEXT,
+          starred INTEGER NOT NULL DEFAULT 0,
+          archived INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          last_message_at TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_thread_last_message
+        ON thread(last_message_at DESC)
+        WHERE archived = 0;
+
+        PRAGMA user_version = 2;
+      `);
+    }
+
+    this.initialized = true;
   }
 
   /**
@@ -90,105 +191,10 @@ export class CanvasDO extends DurableObject<Env> {
   private async ensureInitialized(): Promise<void> {
     if (this.initialized) return;
 
+    // Migration already ran in constructor via blockConcurrencyWhile
+    // This method now only handles default record initialization
     const sql = this.ctx.storage.sql;
     const now = new Date().toISOString();
-
-    // Canvas metadata (with name, starred, archived for multi-canvas support)
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS canvas_meta (
-        id TEXT PRIMARY KEY DEFAULT 'canvas',
-        name TEXT DEFAULT 'Untitled Canvas',
-        purpose TEXT NOT NULL DEFAULT '',
-        key_metrics TEXT NOT NULL DEFAULT '',
-        current_section TEXT,
-        starred INTEGER NOT NULL DEFAULT 0,
-        archived INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `);
-
-    // Thread registry (for multi-thread support)
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS thread (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        summary TEXT,
-        starred INTEGER NOT NULL DEFAULT 0,
-        archived INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        last_message_at TEXT NOT NULL
-      )
-    `);
-
-    // Index for thread listing (most recent first, excluding archived)
-    sql.exec(`
-      CREATE INDEX IF NOT EXISTS idx_thread_last_message
-      ON thread(last_message_at DESC)
-      WHERE archived = 0
-    `);
-
-    // Canvas sections (10 standard sections, not impact)
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS canvas_section (
-        section_key TEXT PRIMARY KEY,
-        content TEXT NOT NULL DEFAULT '',
-        is_complete INTEGER NOT NULL DEFAULT 0,
-        updated_at TEXT NOT NULL
-      )
-    `);
-
-    // Impact model (8-field causality chain)
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS impact_model (
-        id TEXT PRIMARY KEY DEFAULT 'impact',
-        issue TEXT NOT NULL DEFAULT '',
-        participants TEXT NOT NULL DEFAULT '',
-        activities TEXT NOT NULL DEFAULT '',
-        outputs TEXT NOT NULL DEFAULT '',
-        short_term_outcomes TEXT NOT NULL DEFAULT '',
-        medium_term_outcomes TEXT NOT NULL DEFAULT '',
-        long_term_outcomes TEXT NOT NULL DEFAULT '',
-        impact TEXT NOT NULL DEFAULT '',
-        is_complete INTEGER NOT NULL DEFAULT 0,
-        updated_at TEXT NOT NULL
-      )
-    `);
-
-    // Venture profile (7 dimensions)
-    sql.exec(`
-      CREATE TABLE IF NOT EXISTS venture_profile (
-        id TEXT PRIMARY KEY DEFAULT 'profile',
-        venture_stage TEXT,
-        impact_areas TEXT NOT NULL DEFAULT '[]',
-        impact_mechanisms TEXT NOT NULL DEFAULT '[]',
-        legal_structure TEXT,
-        revenue_sources TEXT NOT NULL DEFAULT '[]',
-        funding_sources TEXT NOT NULL DEFAULT '[]',
-        industries TEXT NOT NULL DEFAULT '[]',
-        confidence_json TEXT NOT NULL DEFAULT '{}',
-        confirmed_json TEXT NOT NULL DEFAULT '{}',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `);
-
-    // Migrate existing canvas_meta tables (v2 → v3)
-    // SQLite doesn't have ADD COLUMN IF NOT EXISTS, so check and add manually
-    const metaColumns = sql
-      .exec<{ name: string }>(`PRAGMA table_info(canvas_meta)`)
-      .toArray()
-      .map((row) => row.name);
-
-    if (!metaColumns.includes('name')) {
-      sql.exec(`ALTER TABLE canvas_meta ADD COLUMN name TEXT DEFAULT 'Untitled Canvas'`);
-    }
-    if (!metaColumns.includes('starred')) {
-      sql.exec(`ALTER TABLE canvas_meta ADD COLUMN starred INTEGER NOT NULL DEFAULT 0`);
-    }
-    if (!metaColumns.includes('archived')) {
-      sql.exec(`ALTER TABLE canvas_meta ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`);
-    }
 
     // Initialize default records if they don't exist
     // Use .toArray()[0] instead of .one() because .one() throws when no row exists

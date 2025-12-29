@@ -505,6 +505,36 @@ ws://localhost:8787/agents/slc-agent/{threadId}?canvasId={canvasId}
 
 **Protocol:** Uses Cloudflare Agents SDK WebSocket protocol.
 
+**AgentState (synced to clients):**
+```typescript
+{
+  status: 'idle' | 'thinking' | 'searching' | 'updating' | 'error';
+  statusMessage: string;
+  canvas: CanvasState | null;
+  canvasUpdatedAt: string | null;
+  canvasId: string | null;
+  threadId: string | null;
+  // P1: Configuration & State
+  toneProfile: 'beginner' | 'experienced';
+  sessionStatus: 'new' | 'in_progress' | 'paused' | 'complete';
+  sessionStartedAt: string | null;
+  completionPercentage: number;
+}
+```
+
+**Message Metadata (optional):**
+
+Messages can include metadata to configure agent behavior:
+```json
+{
+  "role": "user",
+  "content": "...",
+  "metadata": {
+    "toneProfile": "experienced"  // Override tone for this session
+  }
+}
+```
+
 ---
 
 ## Status Codes

@@ -6,7 +6,7 @@ An AI advisor that helps social entrepreneurs complete their Social Lean Canvas.
 
 The advisor sits alongside the Social Lean Canvas video curriculum. As users work through the program, they can ask questions like "How specific should my value proposition be?" or "What revenue models work for early-stage healthcare ventures?" The advisor retrieves relevant content from a knowledge base of methodology guides and real venture examples.
 
-The key to useful retrieval is the **Selection Matrix**. Rather than pure semantic search (which might return a scale-stage education example when you asked about revenue for an early-stage healthcare venture), the Selection Matrix first filters by venture dimensions—stage, impact area, industry, and others—then performs semantic search within that filtered set. This ensures examples are actually relevant to the user's situation.
+The key to useful retrieval is the **Selection Matrix**. Rather than pure semantic search (which might return a scale-stage education example when you asked about revenue for an early-stage healthcare venture), the Selection Matrix first filters by venture dimensions and other properties then performs semantic search within that filtered set. This ensures examples are actually relevant to the user's situation.
 
 The canvas itself has 11 sections organized into 3 conceptual models:
 

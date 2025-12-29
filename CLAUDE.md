@@ -77,6 +77,7 @@ src/
 worker/
   index.ts          # Entry point, request routing
   agents/           # SLCAgent (AIChatAgent, one per thread)
+  config/           # Configuration (tone-profiles.ts)
   durable-objects/  # CanvasDO (canvas state + thread registry)
   routes/           # API route handlers (canvas.ts, session.ts)
 knowledge/          # Knowledge base
@@ -98,6 +99,8 @@ spec/               # Specification documents
 - Rate limiting: 100 req/min per session
 - Impact Model's `impact` field syncs with impact section content
 - Use parameterized SQL queries (prevent injection)
+- **Tone profiles**: `beginner` (default) or `experienced` - see `worker/config/tone-profiles.ts`
+- **Session lifecycle**: `new` → `in_progress` → `paused`/`complete` - managed by SLCAgent methods
 
 ## Commands
 
@@ -113,6 +116,18 @@ wrangler deploy      # Deploy to Cloudflare
 
 - **spec-driven** - Requirements → Design → Tasks → Implementation workflow
 - **cloudflare** - Cloudflare Workers patterns and documentation
+- **slc-methodology** - Social Lean Canvas methodology (11 sections, 3 models, Impact Model)
+
+## SLC Methodology Skill Files
+
+The slc-methodology skill (`.claude/skills/slc-methodology/`) provides development-time guidance:
+
+| File | Content |
+|------|---------|
+| `SKILL.md` | Entry point, canvas overview, 7 dimensions |
+| `customer-model.md` | Customers, Jobs To Be Done, Value Proposition, Solution |
+| `economic-model.md` | Channels, Revenue, Costs, Advantage |
+| `impact-model.md` | 8-field causality chain (Theory of Change) |
 
 ## Cloudflare Skill Files
 

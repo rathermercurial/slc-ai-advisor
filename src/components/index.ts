@@ -1,6 +1,10 @@
 export { Canvas } from './Canvas';
+export { CanvasList } from './CanvasList';
 export { CanvasSection } from './CanvasSection';
 export { Chat } from './Chat';
 export { ConnectionStatus } from './ConnectionStatus';
 export { ImpactPanel } from './ImpactPanel';
 export { StatusBar } from './StatusBar';
+export { ThreadList } from './ThreadList';
+export type { CanvasInfo } from './CanvasList';
+export type { Thread } from './ThreadList';

@@ -1154,3 +1154,295 @@ body {
     flex: 1 1 100%;
   }
 }
+
+/* ============================================
+   Thread List / Sidebar
+   ============================================ */
+
+.layout-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.thread-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.thread-list-header h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.thread-new-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.thread-new-btn:hover {
+  background: var(--accent-hover);
+}
+
+.thread-new-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.thread-list-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.thread-list-empty {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.thread-item {
+  padding: 0.625rem 1rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.thread-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.thread-item.active {
+  background: var(--bg-tertiary);
+  border-left-color: var(--accent-color);
+}
+
+.thread-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thread-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+.thread-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+}
+
+.thread-action-btn {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.65rem;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.thread-action-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.thread-action-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.thread-edit {
+  width: 100%;
+}
+
+.thread-edit-input {
+  width: 100%;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.thread-edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Sidebar divider between canvas list and thread list */
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.5rem 0;
+}
+
+/* Canvas List Styles */
+.canvas-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 40%;
+  min-height: 120px;
+}
+
+.canvas-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.canvas-list-header h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.canvas-new-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.canvas-new-btn:hover {
+  background: var(--accent-hover);
+}
+
+.canvas-new-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.canvas-list-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.canvas-list-empty {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.canvas-item {
+  padding: 0.625rem 1rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.canvas-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.canvas-item.active {
+  background: var(--bg-tertiary);
+  border-left-color: var(--accent-color);
+}
+
+.canvas-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canvas-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+.canvas-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+}
+
+.canvas-action-btn {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.65rem;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.canvas-action-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.canvas-action-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.canvas-edit {
+  width: 100%;
+}
+
+.canvas-edit-input {
+  width: 100%;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.canvas-edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Responsive: hide sidebar on mobile */
+@media (max-width: 768px) {
+  .layout-sidebar {
+    display: none;
+  }
+}

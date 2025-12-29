@@ -57,6 +57,12 @@ tag = "v2"
 new_sqlite_classes = ["CanvasDO", "SLCAgent"]
 deleted_classes = ["UserSession"]
 
+# Note: SQLite schema evolution is handled in-code using PRAGMA user_version
+# (Cloudflare best practice). See CanvasDO.migrate() method.
+# - Version 1: Base schema (wrangler v2 migration)
+# - Version 2: Multi-canvas/thread support (Issue #65)
+# No wrangler migration tag needed - avoids gradual deployment conflicts.
+
 # AI Binding for embeddings
 [ai]
 binding = "AI"

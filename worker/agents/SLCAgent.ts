@@ -14,7 +14,8 @@ import {
 import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
-import { formatCanvasContext, buildSystemPrompt } from './prompts';
+import { formatCanvasContext, buildSystemPrompt, type ToneProfileId } from './prompts';
+import { DEFAULT_TONE_PROFILE } from '../config/tone-profiles';
 import {
   ANTHROPIC_TOOLS,
   ALL_TOOLS,
@@ -41,6 +42,16 @@ export interface AgentState {
   canvasId: string | null;
   /** Thread ID (this.name) */
   threadId: string | null;
+
+  // P1: Configuration & State additions
+  /** Tone profile for AI communication style */
+  toneProfile: ToneProfileId;
+  /** Session lifecycle status */
+  sessionStatus: 'new' | 'in_progress' | 'paused' | 'complete';
+  /** ISO timestamp when session started */
+  sessionStartedAt: string | null;
+  /** Canvas completion percentage (0-100) */
+  completionPercentage: number;
 }
 
 /**
@@ -59,6 +70,11 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     canvasUpdatedAt: null,
     canvasId: null,
     threadId: null,
+    // P1 defaults - safe default tone prevents race condition
+    toneProfile: DEFAULT_TONE_PROFILE,
+    sessionStatus: 'new',
+    sessionStartedAt: null,
+    completionPercentage: 0,
   };
 
   /**
@@ -157,6 +173,63 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       status,
       statusMessage: message,
     });
+  }
+
+  // ============================================
+  // P1: Session Lifecycle Methods
+  // ============================================
+
+  /**
+   * Initialize or resume session
+   * Called on first message or when resuming from pause
+   */
+  initializeSession(): void {
+    const logger = this.getLogger();
+    if (this.state.sessionStatus === 'new') {
+      logger.info('Initializing new session');
+      this.setState({
+        ...this.state,
+        sessionStatus: 'in_progress',
+        sessionStartedAt: new Date().toISOString(),
+      });
+    } else if (this.state.sessionStatus === 'paused') {
+      logger.info('Resuming paused session');
+      this.setState({ ...this.state, sessionStatus: 'in_progress' });
+    }
+  }
+
+  /**
+   * Pause session (user navigating away)
+   * Preserves state for later resumption
+   */
+  pauseSession(): void {
+    const logger = this.getLogger();
+    logger.info('Pausing session');
+    this.setState({ ...this.state, sessionStatus: 'paused' });
+  }
+
+  /**
+   * Complete session (trigger export, mark done)
+   * Called when canvas is complete or user indicates done
+   */
+  completeSession(): void {
+    const logger = this.getLogger();
+    logger.info('Completing session');
+    this.setState({
+      ...this.state,
+      sessionStatus: 'complete',
+      status: 'idle',
+    });
+  }
+
+  /**
+   * Set tone profile mid-session
+   * Affects subsequent AI responses
+   */
+  setToneProfile(profileId: ToneProfileId): void {
+    const logger = this.getLogger();
+    logger.info('Setting tone profile', { profileId });
+    this.setState({ ...this.state, toneProfile: profileId });
   }
 
   /**
@@ -279,6 +352,18 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
     metrics.trackEvent('message_received', { sessionId });
 
+    // P1: Initialize session on first message
+    this.initializeSession();
+
+    // P1: Check for tone override in message metadata (race condition mitigation)
+    const lastMessage = this.messages[this.messages.length - 1];
+    if (lastMessage?.metadata?.toneProfile) {
+      const requestedTone = lastMessage.metadata.toneProfile as ToneProfileId;
+      if (['beginner', 'experienced'].includes(requestedTone)) {
+        this.setToneProfile(requestedTone);
+      }
+    }
+
     this.setStatus('thinking', 'Processing your message...');
 
     try {
@@ -300,7 +385,13 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
         }
       }
 
-      const systemPrompt = buildSystemPrompt(canvasContext, threadSummaries, threadId);
+      // P1: Pass tone profile to system prompt builder
+      const systemPrompt = buildSystemPrompt(
+        canvasContext,
+        threadSummaries,
+        threadId,
+        this.state.toneProfile
+      );
 
       // Create Anthropic client via AI Gateway (per design.md specification)
       // If CF_AIG_TOKEN is set, the gateway has Authenticated Gateway enabled

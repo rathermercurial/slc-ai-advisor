@@ -4,7 +4,15 @@
  * Templates for AI conversation context.
  */
 
+import {
+  buildToneModifier,
+  DEFAULT_TONE_PROFILE,
+  type ToneProfileId,
+} from '../config/tone-profiles';
+
 export const SYSTEM_PROMPT = `You are an AI advisor helping social entrepreneurs build their Social Lean Canvas.
+
+{toneModifier}
 
 ## Your Role
 - Guide users through the 11 canvas sections
@@ -212,9 +220,14 @@ function formatThreadSummaries(summaries: ThreadSummary[], currentThreadId: stri
 export function buildSystemPrompt(
   canvasContext: string,
   threadSummaries?: ThreadSummary[],
-  currentThreadId?: string
+  currentThreadId?: string,
+  toneProfileId: ToneProfileId = DEFAULT_TONE_PROFILE
 ): string {
-  let prompt = SYSTEM_PROMPT.replace('{canvasContext}', canvasContext);
+  const toneModifier = buildToneModifier(toneProfileId);
+
+  let prompt = SYSTEM_PROMPT
+    .replace('{toneModifier}', toneModifier)
+    .replace('{canvasContext}', canvasContext);
 
   // Add thread summaries if available
   if (threadSummaries && threadSummaries.length > 0 && currentThreadId) {
@@ -226,3 +239,6 @@ export function buildSystemPrompt(
 
   return prompt;
 }
+
+// Re-export for convenience
+export { type ToneProfileId } from '../config/tone-profiles';

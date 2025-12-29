@@ -22,70 +22,120 @@ const STAGES: { value: VentureStage; label: string }[] = [
   { value: 'scale', label: 'Scale' },
 ];
 
+// 11 legal structures
 const LEGAL_STRUCTURES = [
-  'Nonprofit',
-  'For-profit',
-  'B Corp',
+  'Nonprofit 501(c)(3)',
+  'For-profit C-Corp',
+  'For-profit LLC',
+  'B Corporation',
+  'Benefit Corporation',
   'Cooperative',
   'CIC',
+  'Social Enterprise',
+  'L3C',
+  'Fiscal Sponsorship',
   'Hybrid',
-  'Fiscal sponsorship',
 ];
 
+// 34 impact areas: 17 SDGs + 17 IRIS+ themes
 const IMPACT_AREAS = [
-  'Health',
-  'Education',
-  'Environment',
-  'Climate',
-  'Poverty',
-  'Food security',
-  'Clean water',
-  'Housing',
+  // UN SDGs
+  'No Poverty',
+  'Zero Hunger',
+  'Good Health',
+  'Quality Education',
+  'Gender Equality',
+  'Clean Water',
+  'Clean Energy',
+  'Decent Work',
+  'Industry & Innovation',
+  'Reduced Inequalities',
+  'Sustainable Cities',
+  'Responsible Consumption',
+  'Climate Action',
+  'Life Below Water',
+  'Life on Land',
+  'Peace & Justice',
+  'Partnerships',
+  // IRIS+ themes
+  'Agriculture',
+  'Biodiversity',
+  'Ecosystems',
   'Employment',
-  'Financial inclusion',
-  'Gender equality',
-  'Racial equity',
+  'Financial Inclusion',
+  'Food Security',
+  'Housing',
+  'Land Conservation',
+  'Oceans',
+  'Pollution Prevention',
+  'Racial Equity',
+  'Real Estate',
+  'Supply Chain',
+  'Waste Management',
+  'Water Resources',
+  'Workforce Development',
+  'Youth Development',
 ];
 
+// 10 impact mechanisms
 const IMPACT_MECHANISMS = [
-  'Behavior change',
-  'Market transformation',
-  'Policy advocacy',
-  'Direct service',
-  'Technology platform',
-  'Capacity building',
+  'Direct Service',
+  'Product-based',
+  'Employment Model',
+  'Behavior Change',
+  'Market Transformation',
+  'Policy Advocacy',
+  'Technology Platform',
+  'Capacity Building',
+  'Research & Development',
+  'Systems Change',
 ];
 
+// 11 revenue sources
 const REVENUE_SOURCES = [
-  'Product sales',
-  'Service fees',
+  'Product Sales',
+  'Service Fees',
   'Subscriptions',
   'Licensing',
   'Grants',
   'Donations',
+  'Membership Fees',
   'Advertising',
+  'Transaction Fees',
+  'Government Contracts',
+  'Interest & Dividends',
 ];
 
+// 7 funding sources
 const FUNDING_SOURCES = [
   'Bootstrapped',
   'Grants',
   'Crowdfunding',
-  'Angel investors',
-  'Impact investors',
-  'Venture capital',
-  'Debt financing',
+  'Angel Investors',
+  'Impact Investors',
+  'Venture Capital',
+  'Debt Financing',
 ];
 
+// 17 industries
 const INDUSTRIES = [
   'Healthcare',
   'Education',
-  'Agriculture',
+  'Agriculture & Food',
   'Technology',
-  'Financial services',
+  'Financial Services',
   'Energy',
   'Transportation',
-  'Retail',
+  'Housing & Real Estate',
+  'Retail & Consumer',
   'Manufacturing',
+  'Media & Entertainment',
+  'Professional Services',
+  'Environment & Conservation',
+  'Arts & Culture',
+  'Community Development',
+  'Legal Services',
+  'Workforce Development',
 ];
 
 // Helper to load from localStorage

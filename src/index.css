@@ -3289,12 +3289,75 @@ code, .mono {
 
 /* Helper text in header (button hints, model indicator, status) */
 .venture-helper-text {
-  font-size: var(--font-size-sm);
+  font-size: calc(var(--font-size-sm) * 1.5);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
   transition: color 0.15s ease;
+}
+
+/* Action colors - Archive (red) */
+.venture-helper-text.action-archive {
+  color: #dc2626;
+}
+[data-theme='dark'] .venture-helper-text.action-archive,
+[data-theme='midnight'] .venture-helper-text.action-archive {
+  color: #f87171;
+}
+
+/* Action colors - Rename/Edit (amber/yellow) */
+.venture-helper-text.action-rename {
+  color: #d97706;
+}
+[data-theme='dark'] .venture-helper-text.action-rename,
+[data-theme='midnight'] .venture-helper-text.action-rename {
+  color: #fbbf24;
+}
+
+/* Action colors - Star (gold) */
+.venture-helper-text.action-star {
+  color: #ca8a04;
+}
+[data-theme='dark'] .venture-helper-text.action-star,
+[data-theme='midnight'] .venture-helper-text.action-star {
+  color: #facc15;
+}
+
+/* Action colors - Restore (green) */
+.venture-helper-text.action-restore {
+  color: #16a34a;
+}
+[data-theme='dark'] .venture-helper-text.action-restore,
+[data-theme='midnight'] .venture-helper-text.action-restore {
+  color: #4ade80;
+}
+
+/* Action colors - Undo/Redo (blue) */
+.venture-helper-text.action-undo {
+  color: #2563eb;
+}
+[data-theme='dark'] .venture-helper-text.action-undo,
+[data-theme='midnight'] .venture-helper-text.action-undo {
+  color: #60a5fa;
+}
+
+/* Action colors - Copy/Export (teal) */
+.venture-helper-text.action-export {
+  color: #0d9488;
+}
+[data-theme='dark'] .venture-helper-text.action-export,
+[data-theme='midnight'] .venture-helper-text.action-export {
+  color: #2dd4bf;
+}
+
+/* Action colors - Thinking/Processing (purple) */
+.venture-helper-text.action-thinking {
+  color: #9333ea;
+}
+[data-theme='dark'] .venture-helper-text.action-thinking,
+[data-theme='midnight'] .venture-helper-text.action-thinking {
+  color: #c084fc;
 }
 
 /* Customer model - blue to match canvas highlights */

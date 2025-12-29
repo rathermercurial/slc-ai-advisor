@@ -29,6 +29,40 @@ const MODEL_LABELS: Record<string, string> = {
   impact: 'Impact Model',
 };
 
+/**
+ * Get CSS class for action-based helper text coloring
+ */
+function getActionClass(text: string | null | undefined): string {
+  if (!text) return '';
+  const lower = text.toLowerCase();
+
+  // Archive actions (red)
+  if (lower === 'archive') return 'action-archive';
+
+  // Rename/Edit actions (yellow/amber)
+  if (lower === 'rename' || lower === 'edit') return 'action-rename';
+
+  // Star actions (gold)
+  if (lower === 'star' || lower === 'unstar') return 'action-star';
+
+  // Restore actions (green)
+  if (lower === 'restore') return 'action-restore';
+
+  // Undo/Redo actions (blue)
+  if (lower.includes('undo') || lower.includes('redo')) return 'action-undo';
+
+  // Export/Copy actions (teal)
+  if (lower.includes('copy') || lower.includes('export') || lower.includes('download') || lower.includes('save')) return 'action-export';
+
+  // Thinking/Processing (purple)
+  if (lower.includes('thinking') || lower.includes('processing') || lower.includes('generating')) return 'action-thinking';
+
+  // Model labels have their own classes
+  if (MODEL_LABELS[text]) return text;
+
+  return '';
+}
+
 export function VentureHeader({
   name,
   progress,
@@ -71,7 +105,7 @@ export function VentureHeader({
         {/* Right: Helper text area */}
         <div className="venture-header-right">
           {helperText && (
-            <span className={`venture-helper-text ${MODEL_LABELS[helperText] ? helperText : ''}`}>
+            <span className={`venture-helper-text ${getActionClass(helperText)}`}>
               {MODEL_LABELS[helperText] || helperText}
             </span>
           )}

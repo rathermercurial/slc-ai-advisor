@@ -2664,7 +2664,7 @@ code, .mono {
 .filter-menu-dropdown {
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
+  right: 0;
   min-width: 100px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);

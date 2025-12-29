@@ -277,10 +277,17 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
   // Load history from localStorage on mount
   useEffect(() => {
     const stored = loadHistory(canvasId);
+    console.log('[History] loading from localStorage', {
+      canvasId,
+      found: !!stored,
+      entriesCount: stored?.entries?.length ?? 0,
+      storedIndex: stored?.currentIndex ?? -1
+    });
     if (stored && stored.entries.length > 0) {
       setEntries(stored.entries);
       setCurrentIndex(stored.currentIndex);
       initializedRef.current = true;
+      console.log('[History] loaded from localStorage successfully');
     }
   }, [canvasId]);
 
@@ -400,11 +407,20 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
     const idx = currentIndexRef.current;
     const ents = entriesRef.current;
 
-    console.log('[History] undo called', { idx, entriesLength: ents.length, canUndo: idx > 0 });
+    console.log('[History] undo called', {
+      idx,
+      entriesLength: ents.length,
+      canUndo: idx > 0,
+      entries: ents.map(e => ({ type: e.type, hasData: !!e.data }))
+    });
 
-    if (idx <= 0) return null;
+    if (idx <= 0) {
+      console.log('[History] undo blocked - idx <= 0');
+      return null;
+    }
 
     const newIndex = idx - 1;
+    console.log('[History] attempting rebuildSnapshot at index', newIndex);
     const snapshot = rebuildSnapshot(ents, newIndex);
 
     if (snapshot) {
@@ -413,7 +429,11 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
       return snapshot;
     }
 
-    console.log('[History] undo failed to rebuild snapshot');
+    console.log('[History] undo failed - rebuildSnapshot returned null', {
+      targetIndex: newIndex,
+      entriesLength: ents.length,
+      validRange: `0 to ${ents.length - 1}`
+    });
     return null;
   }, []); // No deps - uses refs
 

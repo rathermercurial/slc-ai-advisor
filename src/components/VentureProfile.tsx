@@ -24,24 +24,24 @@ const STAGES: { value: VentureStage; label: string }[] = [
 ];
 
 const LEGAL_STRUCTURES = [
-  'Nonprofit 501(c)(3)',
-  'For-profit C-Corp',
-  'For-profit LLC',
   'B Corporation',
   'Benefit Corporation',
-  'Cooperative',
   'CIC',
-  'Social Enterprise',
-  'L3C',
+  'Cooperative',
   'Fiscal Sponsorship',
+  'For-profit C-Corp',
+  'For-profit LLC',
   'Hybrid',
+  'L3C',
+  'Nonprofit 501(c)(3)',
+  'Social Enterprise',
 ];
 
 const IMPACT_AREAS = [
   'Agriculture & Food',
   'Biodiversity',
-  'Climate',
   'Clean Energy',
+  'Climate',
   'Community Development',
   'Ecosystems',
   'Education',
@@ -63,59 +63,59 @@ const IMPACT_AREAS = [
 ];
 
 const IMPACT_MECHANISMS = [
-  'Direct Service',
-  'Product-based',
-  'Employment Model',
   'Behavior Change',
+  'Capacity Building',
+  'Direct Service',
+  'Employment Model',
   'Market Transformation',
   'Policy Advocacy',
-  'Technology Platform',
-  'Capacity Building',
+  'Product-based',
   'Research & Development',
   'Systems Change',
+  'Technology Platform',
 ];
 
 const REVENUE_SOURCES = [
+  'Advertising',
+  'Donations',
+  'Government Contracts',
+  'Grants',
+  'Interest & Dividends',
+  'Licensing',
+  'Membership Fees',
   'Product Sales',
   'Service Fees',
   'Subscriptions',
-  'Licensing',
-  'Grants',
-  'Donations',
-  'Membership Fees',
-  'Advertising',
   'Transaction Fees',
-  'Government Contracts',
-  'Interest & Dividends',
 ];
 
 const FUNDING_SOURCES = [
-  'Bootstrapped',
-  'Grants',
-  'Crowdfunding',
   'Angel Investors',
+  'Bootstrapped',
+  'Crowdfunding',
+  'Debt Financing',
+  'Grants',
   'Impact Investors',
   'Venture Capital',
-  'Debt Financing',
 ];
 
 const INDUSTRIES = [
-  'Healthcare',
-  'Education',
   'Agriculture & Food',
-  'Technology',
-  'Financial Services',
+  'Arts & Culture',
+  'Community Development',
+  'Education',
   'Energy',
-  'Transportation',
+  'Environment & Conservation',
+  'Financial Services',
+  'Healthcare',
   'Housing & Real Estate',
-  'Retail & Consumer',
+  'Legal Services',
   'Manufacturing',
   'Media & Entertainment',
   'Professional Services',
-  'Environment & Conservation',
-  'Arts & Culture',
-  'Community Development',
-  'Legal Services',
+  'Retail & Consumer',
+  'Technology',
+  'Transportation',
   'Workforce Development',
 ];
 
@@ -194,8 +194,8 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
   const [stage, setStage] = useState<VentureStage>(() =>
     loadDimension(canvasId, 'stage', 'idea' as VentureStage)
   );
-  const [legalStructure, setLegalStructure] = useState<string>(() =>
-    loadDimension(canvasId, 'legalStructure', '')
+  const [legalStructures, setLegalStructures] = useState<string[]>(() =>
+    loadDimension(canvasId, 'legalStructures', [])
   );
   const [impactAreas, setImpactAreas] = useState<string[]>(() =>
     loadDimension(canvasId, 'impactAreas', [])
@@ -213,18 +213,12 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
     loadDimension(canvasId, 'industries', [])
   );
 
-  // Single-select handlers
+  // Stage is single-select
   const handleStageToggle = useCallback((value: string) => {
     const newStage = value as VentureStage;
     setStage(newStage);
     saveDimension(canvasId, 'stage', newStage);
   }, [canvasId]);
-
-  const handleLegalToggle = useCallback((value: string) => {
-    const newValue = legalStructure === value ? '' : value;
-    setLegalStructure(newValue);
-    saveDimension(canvasId, 'legalStructure', newValue);
-  }, [canvasId, legalStructure]);
 
   // Multi-select toggle helper
   const createArrayToggle = useCallback((
@@ -253,7 +247,7 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
       </div>
 
       <div className="profile-dims">
-        {/* Row 1: Stage + Legal Structure */}
+        {/* Row 1: Stage, Legal, Impact Areas, Mechanisms */}
         <div className="profile-dims-row">
           <DimensionRow
             label="Stage"
@@ -265,17 +259,13 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
             }}
           />
           <DimensionRow
-            label="Legal Structure"
+            label="Legal"
             options={LEGAL_STRUCTURES}
-            selected={legalStructure ? [legalStructure] : []}
-            onToggle={handleLegalToggle}
+            selected={legalStructures}
+            onToggle={createArrayToggle(legalStructures, setLegalStructures, 'legalStructures')}
           />
-        </div>
-
-        {/* Row 2: Impact Areas + Mechanisms */}
-        <div className="profile-dims-row">
           <DimensionRow
-            label="Impact Areas"
+            label="Impact"
             options={IMPACT_AREAS}
             selected={impactAreas}
             onToggle={createArrayToggle(impactAreas, setImpactAreas, 'impactAreas')}
@@ -288,7 +278,7 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
           />
         </div>
 
-        {/* Row 3: Revenue + Funding */}
+        {/* Row 2: Revenue, Funding, Industries */}
         <div className="profile-dims-row">
           <DimensionRow
             label="Revenue"
@@ -302,15 +292,13 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
             selected={fundingSources}
             onToggle={createArrayToggle(fundingSources, setFundingSources, 'fundingSources')}
           />
+          <DimensionRow
+            label="Industries"
+            options={INDUSTRIES}
+            selected={industries}
+            onToggle={createArrayToggle(industries, setIndustries, 'industries')}
+          />
         </div>
-
-        {/* Row 4: Industries */}
-        <DimensionRow
-          label="Industries"
-          options={INDUSTRIES}
-          selected={industries}
-          onToggle={createArrayToggle(industries, setIndustries, 'industries')}
-        />
       </div>
     </div>
   );

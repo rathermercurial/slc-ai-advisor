@@ -3571,11 +3571,12 @@ code, .mono {
 
 .profile-dims-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .profile-dims-row > .profile-dim {
   flex: 1;
+  min-width: 0;
 }
 
 /* Single dimension block */

@@ -16,3 +16,4 @@ export { ThreadList } from './ThreadList';
 export { Toast } from './Toast';
 export { TypingIndicator } from './TypingIndicator';
 export { VentureHeader } from './VentureHeader';
+export { VentureProfile } from './VentureProfile';

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Undo2, Redo2 } from 'lucide-react';
-import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader } from './components';
+import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader, VentureProfile } from './components';
 import type { Theme } from './components/ThemeToggle';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
@@ -22,7 +22,6 @@ import {
 import type { ChatMessageForExport } from './components/Chat';
 import type { CanvasSectionId } from './types/canvas';
 import type { CanvasMeta } from './types/thread';
-import type { VentureStage } from './types/venture';
 
 /**
  * Error boundary to catch and display React errors
@@ -121,19 +120,6 @@ function AppContent({
     return () => window.removeEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
   }, [canvasId, ventureName]);
 
-  // Venture stage (stored per canvas in localStorage)
-  const [ventureStage, setVentureStage] = useState<VentureStage>(() => {
-    try {
-      const stored = localStorage.getItem(`ventureStage-${canvasId}`);
-      if (stored && ['idea', 'validation', 'growth', 'scale'].includes(stored)) {
-        return stored as VentureStage;
-      }
-    } catch (e) {
-      console.warn('Failed to read venture stage:', e);
-    }
-    return 'idea';
-  });
-
   // Chat panel collapsed state
   const [chatCollapsed, setChatCollapsed] = useState(() => {
     const saved = localStorage.getItem('chatCollapsed');
@@ -184,12 +170,6 @@ function AppContent({
     } catch (e) {
       console.warn('Failed to save canvas name:', e);
     }
-  }, [canvasId]);
-
-  // Handle venture stage change
-  const handleStageChange = useCallback((stage: VentureStage) => {
-    setVentureStage(stage);
-    localStorage.setItem(`ventureStage-${canvasId}`, stage);
   }, [canvasId]);
 
   // Toggle chat panel
@@ -404,33 +384,11 @@ function AppContent({
               modelIndicator={hoveredModel}
             />
             {showProfile && (
-              <div className="profile-inline">
-                <div className="profile-inline-header">
-                  <span className="profile-inline-title">Venture Profile</span>
-                  <button className="profile-inline-close" onClick={() => setShowProfile(false)} aria-label="Close">×</button>
-                </div>
-                <div className="profile-inline-content">
-                  <div className="profile-dimensions">
-                    <div className="profile-dimension">
-                      <span className="profile-dimension-label">Stage</span>
-                      <select
-                        className="profile-stage-select"
-                        value={ventureStage}
-                        onChange={(e) => handleStageChange(e.target.value as VentureStage)}
-                      >
-                        <option value="idea">Idea</option>
-                        <option value="validation">Validation</option>
-                        <option value="growth">Growth</option>
-                        <option value="scale">Scale</option>
-                      </select>
-                    </div>
-                    <div className="profile-dimension">
-                      <span className="profile-dimension-label">Progress</span>
-                      <span className="profile-dimension-value">{progress}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <VentureProfile
+                canvasId={canvasId}
+                progress={progress}
+                onClose={() => setShowProfile(false)}
+              />
             )}
             <Canvas
               canvasId={canvasId}

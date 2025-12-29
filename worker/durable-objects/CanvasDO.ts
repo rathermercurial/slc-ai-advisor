@@ -173,6 +173,23 @@ export class CanvasDO extends DurableObject<Env> {
       )
     `);
 
+    // Migrate existing canvas_meta tables (v2 → v3)
+    // SQLite doesn't have ADD COLUMN IF NOT EXISTS, so check and add manually
+    const metaColumns = sql
+      .exec<{ name: string }>(`PRAGMA table_info(canvas_meta)`)
+      .toArray()
+      .map((row) => row.name);
+
+    if (!metaColumns.includes('name')) {
+      sql.exec(`ALTER TABLE canvas_meta ADD COLUMN name TEXT DEFAULT 'Untitled Canvas'`);
+    }
+    if (!metaColumns.includes('starred')) {
+      sql.exec(`ALTER TABLE canvas_meta ADD COLUMN starred INTEGER NOT NULL DEFAULT 0`);
+    }
+    if (!metaColumns.includes('archived')) {
+      sql.exec(`ALTER TABLE canvas_meta ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`);
+    }
+
     // Initialize default records if they don't exist
     // Use .toArray()[0] instead of .one() because .one() throws when no row exists
     const metaExists = sql

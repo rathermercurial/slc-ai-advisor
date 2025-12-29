@@ -439,7 +439,7 @@ function AppContent({
             </button>
             {!chatCollapsed && (
               <ErrorBoundary>
-                <Chat canvasId={canvasId} threadId={threadId} onMessagesChange={setChatMessages} />
+                <Chat key={threadId || 'default'} canvasId={canvasId} threadId={threadId} onMessagesChange={setChatMessages} />
               </ErrorBoundary>
             )}
           </div>

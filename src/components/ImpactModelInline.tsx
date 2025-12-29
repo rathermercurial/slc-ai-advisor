@@ -68,6 +68,22 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlight
     setEditingField(null);
   }, [editingField, draft, impactModel, onSave]);
 
+  const handleSaveClick = useCallback((field: ImpactModelField) => {
+    if (draft[field] !== impactModel[field]) {
+      onSave(draft);
+    }
+    setEditingField(null);
+  }, [draft, impactModel, onSave]);
+
+  const handleCancelClick = useCallback((field: ImpactModelField) => {
+    // Reset draft to original value
+    setDraft((prev) => ({
+      ...prev,
+      [field]: impactModel[field],
+    }));
+    setEditingField(null);
+  }, [impactModel]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent, currentField: ImpactModelField) => {
     if (e.key === 'Escape') {
       setEditingField(null);
@@ -124,17 +140,40 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlight
             {IMPACT_MODEL_LABELS[field]}
           </label>
           {isEditing ? (
-            <textarea
-              id={`impact-field-${field}`}
-              className="impact-inline-input"
-              value={draft[field]}
-              onChange={(e) => handleFieldChange(field, e.target.value)}
-              onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, field)}
-              autoFocus
-              placeholder={getPlaceholder(field)}
-              aria-label={IMPACT_MODEL_LABELS[field]}
-            />
+            <>
+              <textarea
+                id={`impact-field-${field}`}
+                className="impact-inline-input"
+                value={draft[field]}
+                onChange={(e) => handleFieldChange(field, e.target.value)}
+                onBlur={handleFieldBlur}
+                onKeyDown={(e) => handleKeyDown(e, field)}
+                autoFocus
+                placeholder={getPlaceholder(field)}
+                aria-label={IMPACT_MODEL_LABELS[field]}
+              />
+              <div className="impact-inline-actions">
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleCancelClick(field)}
+                  title="Cancel (Esc)"
+                  aria-label="Cancel"
+                >
+                  &#10005;
+                </button>
+                <button
+                  type="button"
+                  className="save"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSaveClick(field)}
+                  title="Save (Enter)"
+                  aria-label="Save"
+                >
+                  &#10003;
+                </button>
+              </div>
+            </>
           ) : (
             <div className="impact-inline-content">
               {impactModel[field] || <span className="placeholder">{getPlaceholder(field)}</span>}

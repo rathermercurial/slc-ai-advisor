@@ -308,3 +308,95 @@ export function downloadFile(content: string, filename: string, mimeType: string
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Chat message structure for export
+ */
+export interface ExportChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp?: string;
+}
+
+/**
+ * Convert chat messages to plain text format
+ */
+export function chatToPlainText(messages: ExportChatMessage[], ventureName?: string): string {
+  const lines: string[] = [];
+  const divider = '=======================================';
+  const subDivider = '---------------------------------------';
+
+  // Header
+  lines.push(divider);
+  if (ventureName) {
+    lines.push(`         ${ventureName.toUpperCase()}`);
+    lines.push('         CHAT CONVERSATION');
+  } else {
+    lines.push('         CHAT CONVERSATION');
+  }
+  lines.push(divider);
+  lines.push('');
+
+  // Messages
+  for (const message of messages) {
+    const roleLabel = message.role === 'user' ? 'You' : message.role === 'assistant' ? 'AI Advisor' : 'System';
+    lines.push(`${roleLabel}:`);
+    lines.push(subDivider);
+    lines.push(message.content || '(empty)');
+    lines.push('');
+  }
+
+  // Footer
+  lines.push(subDivider);
+  lines.push(`Exported: ${new Date().toLocaleString()}`);
+  lines.push('Generated with SLC AI Advisor');
+
+  return lines.join('\n');
+}
+
+/**
+ * Convert chat messages to Markdown format
+ */
+export function chatToMarkdown(messages: ExportChatMessage[], ventureName?: string): string {
+  const lines: string[] = [];
+
+  // Title
+  if (ventureName) {
+    lines.push(`# ${ventureName}`);
+    lines.push('## Chat Conversation');
+  } else {
+    lines.push('# Chat Conversation');
+  }
+  lines.push('');
+  lines.push(`*Exported: ${new Date().toLocaleDateString()}*`);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Messages
+  for (const message of messages) {
+    const roleLabel = message.role === 'user' ? 'You' : message.role === 'assistant' ? 'AI Advisor' : 'System';
+    lines.push(`### ${roleLabel}`);
+    lines.push('');
+    lines.push(message.content || '*Empty message*');
+    lines.push('');
+  }
+
+  // Footer
+  lines.push('---');
+  lines.push('');
+  lines.push('*Generated with [SLC AI Advisor](https://github.com/rathermercurial/slc-ai-advisor)*');
+
+  return lines.join('\n');
+}
+
+/**
+ * Generate chat export filename
+ */
+export function getChatExportFilename(ventureName: string | undefined, extension: string): string {
+  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const baseName = ventureName
+    ? ventureName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-chat'
+    : 'slc-chat';
+  return `${baseName}-${date}.${extension}`;
+}

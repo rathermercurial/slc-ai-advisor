@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, FormEvent, ChangeEvent, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, FormEvent, ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 import { useAgent } from 'agents/react';
 import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
@@ -9,9 +9,18 @@ import { ToolInvocationCard } from './ToolInvocationCard';
 import { TypingIndicator } from './TypingIndicator';
 import { useCanvasContext, type AgentState } from '../context';
 
+/**
+ * Simplified message structure for export
+ */
+export interface ChatMessageForExport {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface ChatProps {
   canvasId: string;
   threadId?: string;
+  onMessagesChange?: (messages: ChatMessageForExport[]) => void;
 }
 
 /**
@@ -79,7 +88,7 @@ function getToolCardState(sdkState: string): 'pending' | 'executing' | 'complete
  * Agent state (status updates + canvas) syncs automatically via the agents SDK.
  * Canvas state is pushed to CanvasContext for the Canvas component to consume.
  */
-export function Chat({ canvasId, threadId }: ChatProps) {
+export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -124,6 +133,17 @@ export function Chat({ canvasId, threadId }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  // Notify parent when messages change (for export functionality)
+  useEffect(() => {
+    if (onMessagesChange) {
+      const exportMessages: ChatMessageForExport[] = messages.map((message) => ({
+        role: message.role as 'user' | 'assistant' | 'system',
+        content: getMessageText(message),
+      }));
+      onMessagesChange(exportMessages);
+    }
+  }, [messages, onMessagesChange]);
+
   // The canvasId is passed as the agent 'name', so the agent instance
   // is already scoped to this canvas. No need to call setCanvas.
 
@@ -167,8 +187,37 @@ export function Chat({ canvasId, threadId }: ChatProps) {
     await sendMessage({ text: userMessage });
   };
 
+  /**
+   * Focus input when clicking on chat area, but not when:
+   * - Clicking on interactive elements (buttons, links, inputs)
+   * - Selecting text in messages
+   */
+  const handleChatClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+
+    // Don't focus if clicking on interactive elements
+    const interactiveElements = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'SELECT'];
+    if (interactiveElements.includes(target.tagName)) {
+      return;
+    }
+
+    // Don't focus if clicking inside an interactive element (e.g., button icon)
+    if (target.closest('button, a, input, textarea, select')) {
+      return;
+    }
+
+    // Don't focus if user is selecting text
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
+
+    // Focus the textarea
+    textareaRef.current?.focus();
+  }, []);
+
   return (
-    <div className="chat">
+    <div className="chat" onClick={handleChatClick}>
       {/* Connection status */}
       <div className="chat-header">
         <ConnectionStatus readyState={agent.readyState} />

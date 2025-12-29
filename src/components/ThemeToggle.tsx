@@ -1,35 +1,49 @@
 /**
  * ThemeToggle Component
  *
- * Morphing gradient toggle with sun/moon icons.
+ * Morphing gradient toggle with icons for 4 theme modes.
+ * Cycles: light -> dark -> midnight -> daybreak -> light...
  * - Light mode: Warm sunrise gradient with sun icon
  * - Dark mode: Cool twilight gradient with moon icon
- * - Smooth gradient transition on toggle
+ * - Midnight mode: Deep purple gradient with stars icon
+ * - Daybreak mode: Soft pink gradient with sunrise icon
  */
 
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Stars, Sunrise } from 'lucide-react';
+
+export type Theme = 'light' | 'dark' | 'midnight' | 'daybreak';
 
 interface ThemeToggleProps {
-  theme: 'light' | 'dark';
+  theme: Theme;
   onToggle: () => void;
 }
 
+const themeIcons: Record<Theme, React.ReactNode> = {
+  light: <Sun size={16} className="theme-icon" />,
+  dark: <Moon size={16} className="theme-icon" />,
+  midnight: <Stars size={16} className="theme-icon" />,
+  daybreak: <Sunrise size={16} className="theme-icon" />,
+};
+
+const themeLabels: Record<Theme, string> = {
+  light: 'dark',
+  dark: 'midnight',
+  midnight: 'daybreak',
+  daybreak: 'light',
+};
+
 export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
-  const isLight = theme === 'light';
+  const nextTheme = themeLabels[theme];
 
   return (
     <button
-      className={`theme-toggle-gradient ${isLight ? 'light' : 'dark'}`}
+      className={`theme-toggle-gradient ${theme}`}
       onClick={onToggle}
-      title={`Switch to ${isLight ? 'dark' : 'light'} mode`}
-      aria-label={`Switch to ${isLight ? 'dark' : 'light'} mode`}
+      title={`Switch to ${nextTheme} mode`}
+      aria-label={`Switch to ${nextTheme} mode`}
     >
       <span className="theme-toggle-icon-wrapper">
-        {isLight ? (
-          <Sun size={16} className="theme-icon" />
-        ) : (
-          <Moon size={16} className="theme-icon" />
-        )}
+        {themeIcons[theme]}
       </span>
     </button>
   );

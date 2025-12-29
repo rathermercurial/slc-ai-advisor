@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Undo2, Redo2 } from 'lucide-react';
 import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader } from './components';
+import type { Theme } from './components/ThemeToggle';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
 import { useUndoShortcuts } from './hooks';
@@ -9,11 +10,16 @@ import {
   canvasToPlainText,
   canvasToJSON,
   canvasToMarkdown,
+  chatToPlainText,
+  chatToMarkdown,
   copyToClipboard,
   downloadFile,
   getExportFilename,
+  getChatExportFilename,
   type ExportCanvasData,
+  type ExportChatMessage,
 } from './utils/export';
+import type { ChatMessageForExport } from './components/Chat';
 import type { CanvasSectionId } from './types/canvas';
 import type { CanvasMeta } from './types/thread';
 import type { VentureStage } from './types/venture';
@@ -68,7 +74,7 @@ function AppContent({
 }: {
   canvasId: string;
   threadId?: string;
-  theme: 'light' | 'dark';
+  theme: Theme;
   toggleTheme: () => void;
 }) {
   const { canvas, undo, redo, canUndo, canRedo, isConnected } = useCanvasContext();
@@ -145,6 +151,9 @@ function AppContent({
     const saved = localStorage.getItem('sidebarWidth');
     return saved ? parseInt(saved, 10) : 220;
   });
+
+  // Chat messages for export (updated by Chat component)
+  const [chatMessages, setChatMessages] = useState<ChatMessageForExport[]>([]);
 
   // Persist split percentage
   const handleResize = useCallback((percentage: number) => {
@@ -301,21 +310,44 @@ function AppContent({
     setToast({ message: `Downloaded ${filename}`, type: 'success' });
   }, [getExportData]);
 
+  // Copy chat to clipboard
+  const handleCopyChat = useCallback(async () => {
+    if (chatMessages.length === 0) {
+      setToast({ message: 'No chat messages to copy', type: 'error' });
+      return;
+    }
+
+    const text = chatToPlainText(chatMessages as ExportChatMessage[], ventureName);
+    const success = await copyToClipboard(text);
+
+    if (success) {
+      setToast({ message: 'Chat copied to clipboard', type: 'success' });
+    } else {
+      setToast({ message: 'Failed to copy chat to clipboard', type: 'error' });
+    }
+  }, [chatMessages, ventureName]);
+
+  // Download chat as Markdown
+  const handleSaveChat = useCallback(() => {
+    if (chatMessages.length === 0) {
+      setToast({ message: 'No chat messages to save', type: 'error' });
+      return;
+    }
+
+    const markdown = chatToMarkdown(chatMessages as ExportChatMessage[], ventureName);
+    const filename = getChatExportFilename(ventureName, 'md');
+    downloadFile(markdown, filename, 'text/markdown');
+    setToast({ message: `Downloaded ${filename}`, type: 'success' });
+  }, [chatMessages, ventureName]);
+
   return (
-    <div className="app">
+    <div className="app" style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}>
       <header className="app-header">
         <div className="app-header-left">
           <h1>SLC AI Advisor</h1>
         </div>
         <div className="app-header-center">
-          <VentureHeader
-            name={ventureName}
-            progress={progress}
-            onNameChange={handleNameChange}
-            showProfile={showProfile}
-            onProfileClick={handleProfileClick}
-            modelIndicator={hoveredModel}
-          />
+          {/* VentureHeader moved to layout-canvas for proper centering with canvas */}
         </div>
         <div className="app-header-right">
           <button
@@ -340,7 +372,10 @@ function AppContent({
             onCopy={handleCopyToClipboard}
             onExportJSON={handleExportJSON}
             onExportMarkdown={handleExportMarkdown}
+            onCopyChat={handleCopyChat}
+            onSaveChat={handleSaveChat}
             disabled={!canvas}
+            chatDisabled={chatMessages.length === 0}
           />
           <ConnectionStatus readyState={isConnected ? 1 : 0} />
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -360,6 +395,14 @@ function AppContent({
         </div>
         <div className="layout-content">
           <div className="layout-canvas" style={{ flex: chatCollapsed ? 1 : `0 0 ${splitPercentage}%` }}>
+            <VentureHeader
+              name={ventureName}
+              progress={progress}
+              onNameChange={handleNameChange}
+              showProfile={showProfile}
+              onProfileClick={handleProfileClick}
+              modelIndicator={hoveredModel}
+            />
             {showProfile && (
               <div className="profile-inline">
                 <div className="profile-inline-header">
@@ -367,9 +410,6 @@ function AppContent({
                   <button className="profile-inline-close" onClick={() => setShowProfile(false)} aria-label="Close">×</button>
                 </div>
                 <div className="profile-inline-content">
-                  <p className="profile-placeholder">
-                    Venture profile dimensions will be available once backend support is complete.
-                  </p>
                   <div className="profile-dimensions">
                     <div className="profile-dimension">
                       <span className="profile-dimension-label">Stage</span>
@@ -412,7 +452,7 @@ function AppContent({
             </button>
             {!chatCollapsed && (
               <ErrorBoundary>
-                <Chat canvasId={canvasId} threadId={threadId} />
+                <Chat canvasId={canvasId} threadId={threadId} onMessagesChange={setChatMessages} />
               </ErrorBoundary>
             )}
           </div>
@@ -433,7 +473,7 @@ function AppContent({
 /**
  * Canvas route component - handles canvas and thread routing
  */
-function CanvasRoute({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () => void }) {
+function CanvasRoute({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => void }) {
   const { canvasId, threadId } = useParams<{ canvasId: string; threadId?: string }>();
   const navigate = useNavigate();
   const [defaultThreadId, setDefaultThreadId] = useState<string | null>(null);
@@ -625,11 +665,13 @@ function HomeRoute() {
  * - /canvas/:canvasId - Canvas view
  * - /canvas/:canvasId/chat/:threadId - Canvas with specific chat thread
  */
+const THEME_CYCLE: Theme[] = ['light', 'dark', 'midnight', 'daybreak'];
+
 function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage or system preference
     const saved = localStorage.getItem('theme');
-    if (saved === 'dark' || saved === 'light') return saved;
+    if (saved && THEME_CYCLE.includes(saved as Theme)) return saved as Theme;
     return window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
       : 'light';
@@ -642,7 +684,11 @@ function App() {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => {
+      const currentIndex = THEME_CYCLE.indexOf(prev);
+      const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
+      return THEME_CYCLE[nextIndex];
+    });
   }, []);
 
   return (

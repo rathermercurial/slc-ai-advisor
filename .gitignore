@@ -34,6 +34,12 @@ tmp/
 .vscode/
 .idea/
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Claude Code
 .claude/settings.local.json
 .claude/temp/

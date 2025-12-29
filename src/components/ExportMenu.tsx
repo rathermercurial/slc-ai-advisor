@@ -3,20 +3,32 @@
  *
  * Provides options to:
  * - Copy canvas to clipboard (plain text)
- * - Download as JSON
- * - Download as Markdown
+ * - Download canvas as JSON
+ * - Download canvas as Markdown
+ * - Copy chat to clipboard
+ * - Download chat as Markdown
  *
  * Closes on click outside or Escape key.
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import {
+  Download,
+  ClipboardCopy,
+  FileJson,
+  FileText,
+  MessageSquare,
+  MessageSquareText,
+} from 'lucide-react';
 
 export interface ExportMenuProps {
   onCopy: () => void;
   onExportJSON: () => void;
   onExportMarkdown: () => void;
+  onCopyChat?: () => void;
+  onSaveChat?: () => void;
   disabled?: boolean;
+  chatDisabled?: boolean;
 }
 
 /**
@@ -26,7 +38,10 @@ export function ExportMenu({
   onCopy,
   onExportJSON,
   onExportMarkdown,
+  onCopyChat,
+  onSaveChat,
   disabled = false,
+  chatDisabled = false,
 }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -73,40 +88,73 @@ export function ExportMenu({
         disabled={disabled}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        aria-label="Export canvas"
+        aria-label="Copy & Export"
+        title="Copy & Export"
       >
         <Download size={18} />
       </button>
 
       {isOpen && (
         <div className="export-menu-dropdown" role="menu">
-          <button
-            type="button"
-            className="export-menu-item"
-            onClick={() => handleItemClick(onCopy)}
-            role="menuitem"
-          >
-            <span className="export-menu-item-icon">{'\u2398'}</span>
-            Copy to Clipboard
-          </button>
-          <button
-            type="button"
-            className="export-menu-item"
-            onClick={() => handleItemClick(onExportJSON)}
-            role="menuitem"
-          >
-            <span className="export-menu-item-icon">{'\u007B\u007D'}</span>
-            Download JSON
-          </button>
-          <button
-            type="button"
-            className="export-menu-item"
-            onClick={() => handleItemClick(onExportMarkdown)}
-            role="menuitem"
-          >
-            <span className="export-menu-item-icon">M</span>
-            Download Markdown
-          </button>
+          <div className="export-menu-group">
+            <div className="export-menu-group-label">Canvas</div>
+            <button
+              type="button"
+              className="export-menu-item"
+              onClick={() => handleItemClick(onCopy)}
+              role="menuitem"
+            >
+              <ClipboardCopy size={16} className="export-menu-item-icon" />
+              Copy to Clipboard
+            </button>
+            <button
+              type="button"
+              className="export-menu-item"
+              onClick={() => handleItemClick(onExportJSON)}
+              role="menuitem"
+            >
+              <FileJson size={16} className="export-menu-item-icon" />
+              Download JSON
+            </button>
+            <button
+              type="button"
+              className="export-menu-item"
+              onClick={() => handleItemClick(onExportMarkdown)}
+              role="menuitem"
+            >
+              <FileText size={16} className="export-menu-item-icon" />
+              Download Markdown
+            </button>
+          </div>
+          {(onCopyChat || onSaveChat) && (
+            <div className="export-menu-group">
+              <div className="export-menu-group-label">Chat</div>
+              {onCopyChat && (
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={() => handleItemClick(onCopyChat)}
+                  role="menuitem"
+                  disabled={chatDisabled}
+                >
+                  <MessageSquare size={16} className="export-menu-item-icon" />
+                  Copy Chat
+                </button>
+              )}
+              {onSaveChat && (
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={() => handleItemClick(onSaveChat)}
+                  role="menuitem"
+                  disabled={chatDisabled}
+                >
+                  <MessageSquareText size={16} className="export-menu-item-icon" />
+                  Save Chat
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

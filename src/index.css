@@ -2803,6 +2803,43 @@ code, .mono {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  cursor: pointer;
+}
+
+.sidebar-item-name-input {
+  flex: 1;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.125rem 0.25rem;
+  min-width: 0;
+  outline: none;
+}
+
+.sidebar-item-name-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.sidebar-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: 0.125rem 0.25rem;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.1s ease, color 0.1s ease;
+}
+
+.sidebar-list-item:hover .sidebar-edit-btn {
+  opacity: 1;
+}
+
+.sidebar-edit-btn:hover {
+  color: var(--accent-primary);
 }
 
 .sidebar-archive-btn {

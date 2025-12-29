@@ -1,26 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, KeyboardEvent, ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Star, Archive, ArchiveRestore } from 'lucide-react';
-import { InlineEdit } from './InlineEdit';
+import { ChevronDown, ChevronRight, Star, Pencil, Archive, ArchiveRestore } from 'lucide-react';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import type { Thread } from '../types/thread';
 
 interface ThreadListProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onHoverChange?: (text: string | null) => void;
 }
 
 /**
  * Thread list component for sidebar.
  * Shows threads for current canvas with filter, star/archive controls.
  */
-export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
+export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: ThreadListProps) {
   const { canvasId, threadId } = useParams<{ canvasId: string; threadId?: string }>();
   const navigate = useNavigate();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [filter, setFilter] = useState<FilterOption>('active');
   const [isLoading, setIsLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   // Load threads for current canvas
   const loadThreads = useCallback(async () => {
@@ -50,31 +53,70 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
     loadThreads();
   }, [loadThreads]);
 
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
+
   const handleThreadClick = (id: string) => {
     navigate(`/canvas/${canvasId}/chat/${id}`);
   };
 
-  const handleRename = async (id: string, name: string) => {
-    if (!canvasId) return;
+  const startEditing = (id: string, currentName: string) => {
+    setEditingId(id);
+    setEditValue(currentName);
+  };
+
+  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>, id: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEdit(id);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditingId(null);
+    }
+  };
+
+  const handleEditChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEditValue(e.target.value);
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!canvasId) {
+      setEditingId(null);
+      return;
+    }
+
+    const trimmed = editValue.trim();
+    const thread = threads.find(t => t.id === id);
+    if (!trimmed || trimmed === thread?.name) {
+      setEditingId(null);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/canvas/${canvasId}/threads/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: trimmed }),
       });
 
       if (!response.ok) {
         console.error('Failed to rename thread:', response.status);
+        setEditingId(null);
         return;
       }
 
       setThreads((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, name } : t))
+        prev.map((t) => (t.id === id ? { ...t, name: trimmed } : t))
       );
     } catch (err) {
       console.error('Failed to rename thread:', err);
     }
+    setEditingId(null);
   };
 
   const handleToggleStar = async (id: string, starred: boolean) => {
@@ -201,7 +243,7 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                 <div
                   key={thread.id}
                   className={`sidebar-list-item ${thread.id === threadId ? 'active' : ''}`}
-                  onClick={() => handleThreadClick(thread.id)}
+                  onClick={() => editingId !== thread.id && handleThreadClick(thread.id)}
                 >
                   <button
                     type="button"
@@ -210,16 +252,40 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                       e.stopPropagation();
                       handleToggleStar(thread.id, thread.starred);
                     }}
-                    title={thread.starred ? 'Unstar' : 'Star'}
+                    onMouseEnter={() => onHoverChange?.(thread.starred ? 'Unstar' : 'Star')}
+                    onMouseLeave={() => onHoverChange?.(null)}
                     aria-label={thread.starred ? 'Unstar thread' : 'Star thread'}
                   >
                     <Star size={14} fill={thread.starred ? 'currentColor' : 'none'} />
                   </button>
-                  <InlineEdit
-                    value={thread.name}
-                    onSave={(name) => handleRename(thread.id, name)}
-                    className="sidebar-item-name"
-                  />
+                  {editingId === thread.id ? (
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editValue}
+                      onChange={handleEditChange}
+                      onBlur={() => saveEdit(thread.id)}
+                      onKeyDown={(e) => handleEditKeyDown(e, thread.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="sidebar-item-name-input"
+                      aria-label="Edit thread name"
+                    />
+                  ) : (
+                    <span className="sidebar-item-name">{thread.name || 'Untitled'}</span>
+                  )}
+                  <button
+                    type="button"
+                    className="sidebar-edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditing(thread.id, thread.name);
+                    }}
+                    onMouseEnter={() => onHoverChange?.('Rename')}
+                    onMouseLeave={() => onHoverChange?.(null)}
+                    aria-label="Rename thread"
+                  >
+                    <Pencil size={14} />
+                  </button>
                   {!thread.archived ? (
                     <button
                       type="button"
@@ -228,7 +294,8 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                         e.stopPropagation();
                         handleArchive(thread.id);
                       }}
-                      title="Archive"
+                      onMouseEnter={() => onHoverChange?.('Archive')}
+                      onMouseLeave={() => onHoverChange?.(null)}
                       aria-label="Archive thread"
                     >
                       <Archive size={14} />
@@ -241,7 +308,8 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                         e.stopPropagation();
                         // TODO: Implement unarchive
                       }}
-                      title="Restore from archive"
+                      onMouseEnter={() => onHoverChange?.('Restore')}
+                      onMouseLeave={() => onHoverChange?.(null)}
                       aria-label="Restore thread from archive"
                     >
                       <ArchiveRestore size={14} />

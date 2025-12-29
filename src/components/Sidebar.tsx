@@ -3,11 +3,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasList } from './CanvasList';
 import { ThreadList } from './ThreadList';
 
+interface SidebarProps {
+  onHoverChange?: (text: string | null) => void;
+}
+
 /**
  * Sidebar component with collapsible canvas and thread sections.
  * Left edge of screen, can be collapsed entirely.
  */
-export function Sidebar() {
+export function Sidebar({ onHoverChange }: SidebarProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved === 'true';
@@ -73,11 +77,13 @@ export function Sidebar() {
       <CanvasList
         collapsed={canvasesCollapsed}
         onToggleCollapse={() => setCanvasesCollapsed((prev) => !prev)}
+        onHoverChange={onHoverChange}
       />
 
       <ThreadList
         collapsed={threadsCollapsed}
         onToggleCollapse={() => setThreadsCollapsed((prev) => !prev)}
+        onHoverChange={onHoverChange}
       />
     </div>
   );

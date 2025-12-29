@@ -1,26 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent, ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Star, Archive, ArchiveRestore } from 'lucide-react';
-import { InlineEdit } from './InlineEdit';
+import { ChevronDown, ChevronRight, Star, Pencil, Archive, ArchiveRestore } from 'lucide-react';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import type { CanvasMeta } from '../types/thread';
 
 interface CanvasListProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onHoverChange?: (text: string | null) => void;
 }
 
 /**
  * Canvas list component for sidebar.
  * Shows list of canvases with filter, star/archive controls.
  */
-export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
+export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: CanvasListProps) {
   const { canvasId } = useParams<{ canvasId: string }>();
   const navigate = useNavigate();
 
   const [canvases, setCanvases] = useState<CanvasMeta[]>([]);
   const [filter, setFilter] = useState<FilterOption>('active');
   const [isLoading, setIsLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   // Load canvases from localStorage index
   useEffect(() => {
@@ -78,32 +81,68 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
     navigate(`/canvas/${id}`);
   };
 
-  const handleRename = async (id: string, name: string) => {
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
+
+  const startEditing = (id: string, currentName: string) => {
+    setEditingId(id);
+    setEditValue(currentName);
+  };
+
+  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>, id: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEdit(id);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditingId(null);
+    }
+  };
+
+  const handleEditChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEditValue(e.target.value);
+  };
+
+  const saveEdit = async (id: string) => {
+    const trimmed = editValue.trim();
+    const canvas = canvases.find(c => c.id === id);
+    if (!trimmed || trimmed === canvas?.name) {
+      setEditingId(null);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/canvas/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: trimmed }),
       });
 
       if (!response.ok) {
         console.error('Failed to rename canvas:', response.status);
+        setEditingId(null);
         return;
       }
 
       // Update local state
       setCanvases((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, name } : c))
+        prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c))
       );
       // Update localStorage
       updateCanvasIndex((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, name } : c))
+        prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c))
       );
       // Dispatch event for header sync
       window.dispatchEvent(new Event('canvasIndexUpdated'));
     } catch (err) {
       console.error('Failed to rename canvas:', err);
     }
+    setEditingId(null);
   };
 
   const handleToggleStar = async (id: string, starred: boolean) => {
@@ -242,7 +281,7 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
               <div
                 key={canvas.id}
                 className={`sidebar-list-item ${canvas.id === canvasId ? 'active' : ''}`}
-                onClick={() => handleCanvasClick(canvas.id)}
+                onClick={() => editingId !== canvas.id && handleCanvasClick(canvas.id)}
               >
                 <button
                   type="button"
@@ -251,16 +290,40 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
                     e.stopPropagation();
                     handleToggleStar(canvas.id, canvas.starred);
                   }}
-                  title={canvas.starred ? 'Unstar' : 'Star'}
+                  onMouseEnter={() => onHoverChange?.(canvas.starred ? 'Unstar' : 'Star')}
+                  onMouseLeave={() => onHoverChange?.(null)}
                   aria-label={canvas.starred ? 'Unstar canvas' : 'Star canvas'}
                 >
                   <Star size={14} fill={canvas.starred ? 'currentColor' : 'none'} />
                 </button>
-                <InlineEdit
-                  value={canvas.name}
-                  onSave={(name) => handleRename(canvas.id, name)}
-                  className="sidebar-item-name"
-                />
+                {editingId === canvas.id ? (
+                  <input
+                    ref={editInputRef}
+                    type="text"
+                    value={editValue}
+                    onChange={handleEditChange}
+                    onBlur={() => saveEdit(canvas.id)}
+                    onKeyDown={(e) => handleEditKeyDown(e, canvas.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="sidebar-item-name-input"
+                    aria-label="Edit canvas name"
+                  />
+                ) : (
+                  <span className="sidebar-item-name">{canvas.name || 'Untitled'}</span>
+                )}
+                <button
+                  type="button"
+                  className="sidebar-edit-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEditing(canvas.id, canvas.name);
+                  }}
+                  onMouseEnter={() => onHoverChange?.('Rename')}
+                  onMouseLeave={() => onHoverChange?.(null)}
+                  aria-label="Rename canvas"
+                >
+                  <Pencil size={14} />
+                </button>
                 {!canvas.archived ? (
                   <button
                     type="button"
@@ -269,7 +332,8 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
                       e.stopPropagation();
                       handleArchive(canvas.id);
                     }}
-                    title="Archive"
+                    onMouseEnter={() => onHoverChange?.('Archive')}
+                    onMouseLeave={() => onHoverChange?.(null)}
                     aria-label="Archive canvas"
                   >
                     <Archive size={14} />
@@ -282,7 +346,8 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
                       e.stopPropagation();
                       // TODO: Implement unarchive
                     }}
-                    title="Restore from archive"
+                    onMouseEnter={() => onHoverChange?.('Restore')}
+                    onMouseLeave={() => onHoverChange?.(null)}
                     aria-label="Restore canvas from archive"
                   >
                     <ArchiveRestore size={14} />

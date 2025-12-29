@@ -394,7 +394,7 @@ function AppContent({
 
       <main className="app-main">
         <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
-          <Sidebar />
+          <Sidebar onHoverChange={setHelperText} />
           <Resizer
             direction="horizontal"
             onResize={handleSidebarResize}

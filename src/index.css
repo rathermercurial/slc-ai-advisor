@@ -215,64 +215,96 @@ code, .mono {
   cursor: not-allowed;
 }
 
-/* Theme Toggle - Sun/Moon Switch */
-.theme-toggle {
-  background: transparent;
-  border: none;
-  padding: 0.375rem;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
+/* ============================================
+   Theme Toggle - Morphing Gradient
+   ============================================ */
 
-.theme-toggle:hover {
-  background: var(--bg-tertiary);
-}
-
-.theme-toggle-track {
+.theme-toggle-gradient {
   position: relative;
-  width: 48px;
-  height: 24px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  overflow: hidden;
 }
 
-.theme-toggle-icon {
-  width: 14px;
-  height: 14px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  transition: color var(--transition-fast);
+/* Light mode - warm sunrise gradient */
+.theme-toggle-gradient.light {
+  background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 50%, #f59e0b 100%);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
 }
 
-.theme-toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform var(--transition-normal);
+/* Dark mode - cool twilight gradient */
+.theme-toggle-gradient.dark {
+  background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 50%, #7c3aed 100%);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
-/* Dark mode - move thumb to right */
-[data-theme='dark'] .theme-toggle-thumb {
-  transform: translateX(24px);
+/* Hover state - scale up and intensify glow */
+.theme-toggle-gradient:hover {
+  transform: scale(1.1);
 }
 
-/* Light mode - first icon (sun) active */
-[data-theme='light'] .theme-toggle .theme-toggle-icon:first-of-type {
-  color: var(--accent-color);
+.theme-toggle-gradient.light:hover {
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.5);
 }
 
-/* Dark mode - second icon (moon) active */
-[data-theme='dark'] .theme-toggle .theme-toggle-icon:last-of-type {
-  color: var(--accent-color);
+.theme-toggle-gradient.dark:hover {
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.5);
+}
+
+/* Focus state for accessibility */
+.theme-toggle-gradient:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+/* Icon wrapper for animation */
+.theme-toggle-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: iconPop 0.25s ease;
+}
+
+/* Icon styling */
+.theme-toggle-gradient .theme-icon {
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.theme-toggle-gradient.light .theme-icon {
+  color: #78350f; /* Dark amber for contrast on light gradient */
+}
+
+/* Icon pop animation on toggle */
+@keyframes iconPop {
+  0% {
+    transform: scale(0.5) rotate(-30deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-icon-wrapper {
+    animation: none;
+  }
+  .theme-toggle-gradient {
+    transition: none;
+  }
 }
 
 .app-main {
@@ -319,21 +351,16 @@ code, .mono {
 
 .chat-collapse-toggle {
   position: absolute;
-  top: 1rem;
-  left: 0;
-  transform: none;
-  width: 24px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-tertiary);
+  top: 0.5rem;
+  left: 0.5rem;
+  background: none;
   border: none;
-  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
   cursor: pointer;
-  color: var(--text-muted);
-  font-size: 10px;
-  transition: all var(--transition-fast);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.1s ease, color 0.1s ease;
   z-index: 10;
 }
 
@@ -342,6 +369,7 @@ code, .mono {
   color: var(--text-primary);
 }
 
+/* Chat collapsed state - position in center of collapsed bar */
 .layout-chat.collapsed .chat-collapse-toggle {
   left: 4px;
 }
@@ -1364,44 +1392,156 @@ code, .mono {
 }
 
 /* ============================================
-   Connection Status
+   Connection Status - Pulsing Orb
    ============================================ */
 
-.connection-status {
-  display: flex;
+.connection-orb {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  outline: none;
 }
 
-.connection-dot {
-  width: 8px;
-  height: 8px;
+.connection-orb:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
   border-radius: 50%;
 }
 
-.connection-connecting .connection-dot {
-  background: #eab308;
-  animation: pulse 1.5s ease-in-out infinite;
+/* Core orb */
+.connection-orb-core {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
 }
 
-.connection-connected .connection-dot {
+/* Outer ring (pulse effect) */
+.connection-orb-ring {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  opacity: 0.4;
+}
+
+/* Connected state - green with subtle glow */
+.connection-orb.connected .connection-orb-core {
   background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
 }
 
-.connection-closing .connection-dot {
-  background: #f97316;
+.connection-orb.connected .connection-orb-ring {
+  border: 2px solid #22c55e;
+  animation: orbPulse 2.5s ease-in-out infinite;
 }
 
-.connection-disconnected .connection-dot {
-  background: #ef4444;
+/* Connecting state - yellow with active pulse */
+.connection-orb.connecting .connection-orb-core {
+  background: #eab308;
+  box-shadow: 0 0 6px rgba(234, 179, 8, 0.5);
+  animation: orbCorePulse 1.2s ease-in-out infinite;
 }
 
-.connection-unknown .connection-dot {
+.connection-orb.connecting .connection-orb-ring {
+  border: 2px solid #eab308;
+  animation: orbPulse 1.5s ease-in-out infinite;
+}
+
+/* Disconnected state - gray, no animation */
+.connection-orb.disconnected .connection-orb-core {
   background: #6b7280;
+  opacity: 0.5;
+}
+
+/* Hover state - brighten and scale */
+.connection-orb:hover .connection-orb-core {
+  transform: scale(1.15);
+}
+
+.connection-orb.connected:hover .connection-orb-core {
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+}
+
+.connection-orb.connecting:hover .connection-orb-core {
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.7);
+}
+
+.connection-orb.disconnected:hover .connection-orb-core {
+  opacity: 0.7;
+}
+
+/* Tooltip */
+.connection-orb-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  animation: tooltipFadeIn 0.15s ease;
+}
+
+.connection-orb-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--border-color);
+}
+
+@keyframes orbPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes orbCorePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .connection-orb-ring,
+  .connection-orb.connecting .connection-orb-core {
+    animation: none;
+  }
 }
 
 /* ============================================
@@ -1449,6 +1589,16 @@ code, .mono {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+
+/* Subtle pulse for toggle button hover - very gentle */
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
 }
 
 /* ============================================
@@ -1981,6 +2131,12 @@ code, .mono {
   display: flex;
   flex-shrink: 0;
   position: relative;
+  transition: width var(--transition-normal);
+}
+
+/* When sidebar is collapsed, override the inline width so main content expands */
+.sidebar-wrapper:has(.sidebar-collapsed) {
+  width: 32px !important;
 }
 
 .sidebar {
@@ -2003,8 +2159,9 @@ code, .mono {
 .sidebar-collapsed {
   width: 32px;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   padding-top: 0.5rem;
 }
 
@@ -2025,13 +2182,19 @@ code, .mono {
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  transition: background 0.1s ease, color 0.1s ease;
+  transition: background 0.15s ease, color 0.15s ease, font-weight 0.15s ease;
+}
+
+/* Expand button (collapsed state) - slightly bolder to indicate action */
+.sidebar-expand-btn {
+  font-weight: 600;
 }
 
 .sidebar-collapse-btn:hover,
 .sidebar-expand-btn:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+  animation: subtlePulse 2s ease-in-out infinite;
 }
 
 .sidebar-section {
@@ -2441,19 +2604,50 @@ code, .mono {
 
 .venture-header {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0.5rem 1rem 0.25rem;
+  background: transparent;
+  gap: 0.25rem;
+}
+
+/* Top row: progress | name | helper text */
+.venture-header-row {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: transparent;
   gap: 1rem;
 }
 
-.venture-header-main {
+/* Left side: Progress indicator */
+.venture-header .venture-header-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  min-width: 110px;
+}
+
+/* Center: Venture name */
+.venture-header .venture-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
   min-width: 0;
+}
+
+/* Right side: Helper text / model indicator */
+.venture-header .venture-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 110px;
+}
+
+/* Bottom row: Centered profile toggle */
+.venture-header-toggle-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .venture-name-edit {
@@ -2461,6 +2655,7 @@ code, .mono {
   font-weight: 600;
   color: var(--text-primary);
   max-width: 300px;
+  text-align: center;
 }
 
 .venture-stage-dropdown {
@@ -2587,7 +2782,6 @@ code, .mono {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-muted);
-  margin-left: 0.75rem;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
   background: var(--bg-tertiary);
@@ -2623,11 +2817,19 @@ code, .mono {
 
 .venture-profile-btn:hover {
   background: var(--bg-tertiary);
+  animation: subtlePulse 2s ease-in-out infinite;
 }
 
 .venture-profile-toggle {
   font-size: 0.75rem;
   color: var(--text-muted);
+  transition: font-weight 0.15s ease;
+}
+
+/* Profile panel closed - toggle is slightly bolder to indicate action */
+.venture-profile-btn:not(.active) .venture-profile-toggle {
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 /* ============================================

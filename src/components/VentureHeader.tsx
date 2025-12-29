@@ -2,6 +2,7 @@
  * VentureHeader Component
  *
  * Displays venture name (editable), progress bar, and venture profile toggle.
+ * Layout: [progress] [name] [helper text area] with centered profile toggle below.
  */
 
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -38,37 +39,48 @@ export function VentureHeader({
 }: VentureHeaderProps) {
   return (
     <div className="venture-header">
-      <div className="venture-header-main">
-        <InlineEdit
-          value={name}
-          onSave={onNameChange}
-          placeholder="Untitled Venture"
-          className="venture-name-edit"
-        />
-      </div>
-
-      <div className="venture-header-meta">
-        <div className="venture-progress">
-          <div className="venture-progress-bar">
-            <div
-              className="venture-progress-fill"
-              style={{ width: `${progress}%` }}
-              role="progressbar"
-              aria-valuenow={progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
+      {/* Top row: progress | name | helper text */}
+      <div className="venture-header-row">
+        {/* Left: Progress indicator */}
+        <div className="venture-header-left">
+          <div className="venture-progress">
+            <div className="venture-progress-bar">
+              <div
+                className="venture-progress-fill"
+                style={{ width: `${progress}%` }}
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
+            </div>
+            <span className="venture-progress-text">{progress}%</span>
           </div>
-          <span className="venture-progress-text">{progress}%</span>
         </div>
 
-        {modelIndicator && (
-          <span className={`venture-model-indicator ${modelIndicator}`}>
-            {MODEL_LABELS[modelIndicator] || ''}
-          </span>
-        )}
+        {/* Center: Venture name */}
+        <div className="venture-header-center">
+          <InlineEdit
+            value={name}
+            onSave={onNameChange}
+            placeholder="Untitled Venture"
+            className="venture-name-edit"
+          />
+        </div>
 
-        {onProfileClick && (
+        {/* Right: Helper text / model indicator area */}
+        <div className="venture-header-right">
+          {modelIndicator && (
+            <span className={`venture-model-indicator ${modelIndicator}`}>
+              {MODEL_LABELS[modelIndicator] || ''}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom row: Centered profile toggle */}
+      {onProfileClick && (
+        <div className="venture-header-toggle-row">
           <button
             type="button"
             className="venture-profile-btn"
@@ -81,8 +93,8 @@ export function VentureHeader({
               {showProfile ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

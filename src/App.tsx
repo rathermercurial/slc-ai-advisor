@@ -407,9 +407,9 @@ function AppContent({
             />
           )}
           <div className={`layout-chat ${chatCollapsed ? 'collapsed' : ''}`} style={{ flex: chatCollapsed ? 'none' : `0 0 ${100 - splitPercentage}%` }}>
-            <div className="chat-collapse-toggle" onClick={handleChatToggle} title={chatCollapsed ? 'Expand chat' : 'Collapse chat'}>
+            <button className="chat-collapse-toggle" onClick={handleChatToggle} title={chatCollapsed ? 'Expand chat' : 'Collapse chat'} aria-label={chatCollapsed ? 'Expand chat' : 'Collapse chat'}>
               {chatCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-            </div>
+            </button>
             {!chatCollapsed && (
               <ErrorBoundary>
                 <Chat canvasId={canvasId} threadId={threadId} />

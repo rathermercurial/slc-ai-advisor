@@ -268,6 +268,12 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
   const lastAiUpdateRef = useRef<number>(0);
   const initializedRef = useRef(false);
 
+  // Refs to avoid stale closures in callbacks
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
+
   // Load history from localStorage on mount
   useEffect(() => {
     const stored = loadHistory(canvasId);
@@ -287,8 +293,12 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
 
   // Initialize with current state
   const initialize = useCallback((snapshot: CanvasSnapshot) => {
-    if (initializedRef.current) return;
+    if (initializedRef.current) {
+      console.log('[History] initialize skipped - already initialized');
+      return;
+    }
 
+    console.log('[History] initialize called, setting up first entry');
     setEntries([{ type: 'snapshot', data: snapshot }]);
     setCurrentIndex(0);
     initializedRef.current = true;
@@ -300,10 +310,15 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
   // Push new snapshot
   const pushSnapshot = useCallback((snapshot: CanvasSnapshot) => {
     shouldIncrementRef.current = true;
+    console.log('[History] pushSnapshot called', { source: snapshot.source });
 
     setEntries((prev) => {
+      // Use ref to get latest currentIndex (avoid stale closure)
+      const idx = currentIndexRef.current;
+      console.log('[History] pushSnapshot processing', { prevLength: prev.length, idx });
+
       // Get current snapshot for comparison
-      const currentSnapshot = currentIndex >= 0 ? rebuildSnapshot(prev, currentIndex) : null;
+      const currentSnapshot = idx >= 0 ? rebuildSnapshot(prev, idx) : null;
 
       // Skip if no change
       if (currentSnapshot && snapshotsEqual(currentSnapshot, snapshot)) {
@@ -315,13 +330,13 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
       const now = Date.now();
       if (
         snapshot.source === 'ai' &&
-        currentIndex >= 0 &&
-        prev[currentIndex]?.type === 'snapshot' &&
-        (prev[currentIndex].data as CanvasSnapshot).source === 'ai' &&
+        idx >= 0 &&
+        prev[idx]?.type === 'snapshot' &&
+        (prev[idx].data as CanvasSnapshot).source === 'ai' &&
         now - lastAiUpdateRef.current < AI_BATCH_TIMEOUT_MS
       ) {
         // Replace last AI entry instead of adding new one
-        const newEntries = [...prev.slice(0, currentIndex)];
+        const newEntries = [...prev.slice(0, idx)];
         newEntries.push({ type: 'snapshot', data: snapshot });
         lastAiUpdateRef.current = now;
         shouldIncrementRef.current = false; // Replacing, don't increment index
@@ -333,7 +348,7 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
       }
 
       // Truncate any redo history when pushing new state
-      let newEntries = prev.slice(0, currentIndex + 1);
+      let newEntries = prev.slice(0, idx + 1);
 
       // Convert older full snapshots to diffs (keep last FULL_SNAPSHOT_COUNT as full)
       if (newEntries.length > FULL_SNAPSHOT_COUNT) {
@@ -378,43 +393,59 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
         return prev + 1;
       });
     }
-  }, [currentIndex]);
+  }, []); // No deps - uses refs for all external values
 
   // Undo
   const undo = useCallback((): CanvasSnapshot | null => {
-    if (currentIndex <= 0) return null;
+    const idx = currentIndexRef.current;
+    const ents = entriesRef.current;
 
-    const newIndex = currentIndex - 1;
-    const snapshot = rebuildSnapshot(entries, newIndex);
+    console.log('[History] undo called', { idx, entriesLength: ents.length, canUndo: idx > 0 });
+
+    if (idx <= 0) return null;
+
+    const newIndex = idx - 1;
+    const snapshot = rebuildSnapshot(ents, newIndex);
 
     if (snapshot) {
       setCurrentIndex(newIndex);
+      console.log('[History] undo success, new index:', newIndex);
       return snapshot;
     }
 
+    console.log('[History] undo failed to rebuild snapshot');
     return null;
-  }, [entries, currentIndex]);
+  }, []); // No deps - uses refs
 
   // Redo
   const redo = useCallback((): CanvasSnapshot | null => {
-    if (currentIndex >= entries.length - 1) return null;
+    const idx = currentIndexRef.current;
+    const ents = entriesRef.current;
 
-    const newIndex = currentIndex + 1;
-    const snapshot = rebuildSnapshot(entries, newIndex);
+    console.log('[History] redo called', { idx, entriesLength: ents.length, canRedo: idx < ents.length - 1 });
+
+    if (idx >= ents.length - 1) return null;
+
+    const newIndex = idx + 1;
+    const snapshot = rebuildSnapshot(ents, newIndex);
 
     if (snapshot) {
       setCurrentIndex(newIndex);
+      console.log('[History] redo success, new index:', newIndex);
       return snapshot;
     }
 
+    console.log('[History] redo failed to rebuild snapshot');
     return null;
-  }, [entries, currentIndex]);
+  }, []); // No deps - uses refs
 
   // Get current snapshot
   const getCurrentSnapshot = useCallback((): CanvasSnapshot | null => {
-    if (currentIndex < 0 || entries.length === 0) return null;
-    return rebuildSnapshot(entries, currentIndex);
-  }, [entries, currentIndex]);
+    const idx = currentIndexRef.current;
+    const ents = entriesRef.current;
+    if (idx < 0 || ents.length === 0) return null;
+    return rebuildSnapshot(ents, idx);
+  }, []); // No deps - uses refs
 
   // Clear history
   const clear = useCallback(() => {

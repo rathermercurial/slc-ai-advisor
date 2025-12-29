@@ -10,8 +10,9 @@
  * - PATCH /api/canvas/:id - Update canvas meta (name, starred, archived)
  * - PUT /api/canvas/:id/section/:key - Update section
  * - GET /api/canvas/:id/model/:model - Get model view
- * - GET /api/canvas/:id/venture-profile - Get dimensions
- * - PUT /api/canvas/:id/venture-profile - Update dimension
+ * - GET /api/canvas/:id/venture-profile - Get venture properties
+ * - PUT /api/canvas/:id/venture-profile - Update venture property
+ * - GET /api/canvas/:id/properties-for-filtering - Get filtered properties
  * - GET /api/canvas/:id/export/:format - Export canvas
  * - GET /api/canvas/:id/threads - List threads (with filter query param)
  * - POST /api/canvas/:id/threads - Create new thread
@@ -20,7 +21,8 @@
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
-import type { VentureDimensions } from '../../src/types/venture';
+import type { VentureProperties } from '../../src/types/venture';
+import { createLogger, createMetrics } from '../observability';
 
 /**
  * Thread filter type
@@ -35,9 +37,9 @@ const VALID_THREAD_FILTERS: ThreadFilter[] = ['all', 'active', 'starred', 'archi
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Valid venture dimension keys
+ * Valid venture property keys
  */
-const VALID_DIMENSIONS: (keyof VentureDimensions)[] = [
+const VALID_PROPERTIES: (keyof VentureProperties)[] = [
   'ventureStage',
   'impactAreas',
   'impactMechanisms',
@@ -60,6 +62,8 @@ export async function handleCanvasRoute(
   env: Env,
   requestId?: string
 ): Promise<Response> {
+  const logger = createLogger('canvas-routes', requestId);
+  const metrics = createMetrics(env.SLC_ANALYTICS);
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean);
   // parts: ['api', 'canvas', ...rest]
@@ -71,6 +75,8 @@ export async function handleCanvasRoute(
       const stub = getCanvasStub(env, canvasId);
 
       const canvas = await stub.getFullCanvas();
+
+      metrics.trackEvent('canvas_created', { sessionId: canvasId });
 
       return jsonResponse({
         canvasId,
@@ -130,6 +136,11 @@ export async function handleCanvasRoute(
       }
 
       const result = await stub.updateSection(sectionKey as CanvasSectionId, body.content);
+
+      if (result.success) {
+        metrics.trackEvent('canvas_updated', { sessionId: canvasId, section: sectionKey });
+      }
+
       // Return 422 Unprocessable Entity for validation failures
       const status = result.success ? 200 : 422;
       return jsonResponse(result, status, requestId);
@@ -188,26 +199,26 @@ export async function handleCanvasRoute(
       return jsonResponse(profile, 200, requestId);
     }
 
-    // PUT /api/canvas/:id/venture-profile - Update dimension
+    // PUT /api/canvas/:id/venture-profile - Update property
     if (parts.length === 4 && parts[3] === 'venture-profile' && request.method === 'PUT') {
       const body = await request.json().catch(() => ({})) as {
-        dimension?: keyof VentureDimensions;
+        property?: keyof VentureProperties;
         value?: string | string[] | null;
         confidence?: number;
         confirmed?: boolean;
       };
 
-      if (!body.dimension) {
-        return jsonResponse({ error: 'dimension is required' }, 400, requestId);
+      if (!body.property) {
+        return jsonResponse({ error: 'property is required' }, 400, requestId);
       }
 
-      // Validate dimension key
-      if (!VALID_DIMENSIONS.includes(body.dimension)) {
-        return jsonResponse({ error: `Invalid dimension: ${body.dimension}` }, 400, requestId);
+      // Validate property key
+      if (!VALID_PROPERTIES.includes(body.property)) {
+        return jsonResponse({ error: `Invalid property: ${body.property}` }, 400, requestId);
       }
 
-      await stub.updateVentureDimension(
-        body.dimension,
+      await stub.updateVentureProperty(
+        body.property,
         body.value ?? null,
         body.confidence,
         body.confirmed
@@ -217,10 +228,10 @@ export async function handleCanvasRoute(
       return jsonResponse(profile, 200, requestId);
     }
 
-    // GET /api/canvas/:id/dimensions-for-filtering - Get filtered dimensions
-    if (parts.length === 4 && parts[3] === 'dimensions-for-filtering' && request.method === 'GET') {
-      const dimensions = await stub.getDimensionsForFiltering();
-      return jsonResponse(dimensions, 200, requestId);
+    // GET /api/canvas/:id/properties-for-filtering - Get filtered properties
+    if (parts.length === 4 && parts[3] === 'properties-for-filtering' && request.method === 'GET') {
+      const properties = await stub.getPropertiesForFiltering();
+      return jsonResponse(properties, 200, requestId);
     }
 
     // GET /api/canvas/:id/export/:format - Export canvas
@@ -346,7 +357,7 @@ export async function handleCanvasRoute(
 
     return jsonResponse({ error: 'Not found' }, 404, requestId);
   } catch (error) {
-    console.error('Canvas route error:', error);
+    logger.error('Canvas route error', error);
     return jsonResponse(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       500,

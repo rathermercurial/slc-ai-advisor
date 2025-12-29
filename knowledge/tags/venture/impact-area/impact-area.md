@@ -3,7 +3,7 @@ title: Impact Area Tags
 aliases:
   - '#impact-area'
 tags:
-  - venture/dimension
+  - venture/property
   - venture/impact-area
 ---
 
@@ -67,7 +67,7 @@ Tags based on IRIS+ impact measurement themes:
 
 ## Required Combinations
 
-- Must include `venture-type` when using impact area tags
+- Must include `venture-properties` when using impact area tags
 - Must include `impact-area` parent tag
 - Can combine with impact mechanism tags for how impact is created
 
@@ -75,13 +75,13 @@ Tags based on IRIS+ impact measurement themes:
 
 ```yaml
 # Single SDG focus
-tags: [venture-type, impact-area, sdg-04-quality-education]
+tags: [venture-properties, impact-area, sdg-04-quality-education]
 
 # Multiple IRIS+ themes
-tags: [venture-type, impact-area, water, health]
+tags: [venture-properties, impact-area, water, health]
 
 # Mixed framework
-tags: [venture-type, impact-area, sdg-13-climate-action, energy]
+tags: [venture-properties, impact-area, sdg-13-climate-action, energy]
 ```
 
 ## Individual Tag Definitions

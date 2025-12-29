@@ -1,7 +1,7 @@
 /**
  * Venture-related type definitions
  *
- * These types define the structure for venture profiles and dimensions
+ * These types define the structure for venture profiles and properties
  * used throughout the application.
  */
 
@@ -11,9 +11,16 @@
 export type VentureStage = 'idea' | 'validation' | 'growth' | 'scale';
 
 /**
- * The 7 venture dimensions used for Selection Matrix filtering
+ * Venture Properties for Selection Matrix filtering.
+ *
+ * TERMINOLOGY:
+ * - "Properties" = all 7 characteristics (open-ended classification)
+ * - "Dimension" = property with pre-defined, mutually exclusive values
+ *
+ * Currently only `ventureStage` is a dimension (4 valid values).
+ * All others are properties accepting open-ended tag values.
  */
-export interface VentureDimensions {
+export interface VentureProperties {
   /** Current stage: ideation | validation | efficiency | scale */
   ventureStage: string | null;
 
@@ -63,12 +70,12 @@ export interface DimensionConfirmed {
 }
 
 /**
- * Full venture profile with dimensions, confidence, and confirmation status
+ * Full venture profile with properties, confidence, and confirmation status
  */
 export interface VentureProfile {
   id: string;
   sessionId: string;
-  dimensions: VentureDimensions;
+  properties: VentureProperties;
   confidence: DimensionConfidence;
   confirmed: DimensionConfirmed;
   createdAt: string;
@@ -76,9 +83,9 @@ export interface VentureProfile {
 }
 
 /**
- * Default empty venture dimensions
+ * Default empty venture properties
  */
-export function createEmptyDimensions(): VentureDimensions {
+export function createEmptyProperties(): VentureProperties {
   return {
     ventureStage: null,
     impactAreas: [],

@@ -77,15 +77,15 @@ worker/
 - `getCustomerModel()`, `getEconomicModel()`, `getImpactModel()`
 - `updateImpactModelField(field, content)` - syncs with impact section
 
-*Venture Dimensions (filtering):*
-- `getVentureProfile()`, `updateVentureDimension(dimension, value, confidence)`
-- `getDimensionsForFiltering()` - for KB queries
+*Venture Properties (filtering):*
+- `getVentureProfile()`, `updateVentureProperty(property, value, confidence)`
+- `getPropertiesForFiltering()` - for KB queries
 
 **RAG Pipeline:**
 1. Parse user intent (methodology vs examples)
-2. Get venture dimensions from profile (for filtering)
+2. Get venture properties from profile (for filtering)
 3. Determine target model/section from context
-4. Query Vectorize with dimension + model/section filters
+4. Query Vectorize with property + model/section filters
 5. Build system prompt with retrieved context
 6. Call Claude via AI Gateway
 

@@ -1,187 +1,181 @@
 ---
-title: Venture Type Tags
-last_updated: 2025-06-30
-source:
+title: Venture Properties
+last_updated: 2025-12-26
 tags: [design, admin]
+aliases:
+  - '#venture-properties'
 ---
 
-# Venture Type Tags
+# Venture Properties
 
-This section defines all tags related to venture typology and classification. These tags enable detailed categorization of social enterprises across multiple dimensions including impact areas, revenue models, funding sources, industries, and legal structures.
+> ⚡ **Properties vs. Dimensions**
+>
+> | Concept | Values | Assessment | Current Examples |
+> |---------|--------|------------|------------------|
+> | **Venture Properties** | Open-ended (any valid tag) | Descriptive classification | `industry/apparel`, `legal-structure/dao` |
+> | **Venture Dimensions** | Strictly pre-defined, mutually exclusive | Framework-based assessment criteria | `stage` (only: idea/early/growth/scale) |
+>
+> **Dimensions are a special subset of properties.** A dimension has:
+> - Pre-enumerated valid values (no arbitrary values allowed)
+> - Assessment criteria for determining which value applies
+> - Mutual exclusivity (exactly one value at a time)
+>
+> Currently, **[stage](stage/readme.md)** is the only venture dimension.
 
-## Tag Categories
-
-### [Impact Area Tags](impact-area/impact-area.md)
-Tags for categorizing ventures by their primary social or environmental impact focus:
-- **UN SDG Tags** - Aligned with the 17 UN Sustainable Development Goals
-- **IRIS+ Theme Tags** - Based on IRIS+ impact measurement themes
-
-### [Revenue Source Tags](revenue-source/revenue-source.md)
-Tags for categorizing ventures by their primary revenue generation models:
-- Product Sales, Service Fees, Membership Dues, Subscriptions
-- Licensing/Royalty, Platform Commission, Advertising/Sponsorship
-- Government Contracts, Outcome Payments, Philanthropy
-
-### [Industry Tags](industry/industry.md)
-Tags for categorizing ventures by their primary industry or sector:
-- Agriculture, Apparel, Clean Energy, Education, Healthcare
-- Financial Services, Food & Beverage, ICT, Manufacturing, and more
-
-### [Impact Mechanism Tags](impact-mechanism/impact-mechanism.md)
-Tags for categorizing ventures by how they create social/environmental impact:
-- Product/Service Impact, Employment Model, Reinvest Surplus
-- Cross-Subsidy, Direct Service, Policy Advocacy, Systems Change
-
-### [Funding Source Tags](funding-source/funding-source.md)
-Tags for categorizing ventures by their primary funding approaches:
-- Bootstrapped, Grants, Donations, Impact Equity
-- Concessional Debt, Crowdfunding, Blended Finance
-
-### [Legal Structure Tags](legal-structure/legal-structure.md)
-Tags for categorizing ventures by their legal organizational form:
-- Charity, Nonprofit, Cooperative, Benefit Corporation
-- CIC (UK), L3C (US), Standard Company, Trust, Foundation
+This directory defines tags for classifying ventures across multiple property categories. These tags enable:
+- Precise categorization of venture examples
+- Selection Matrix filtering in retrieval
+- Multi-dimensional venture profile building
 
 ---
 
+## Property Categories
 
-## Tag Definition
-The `venture-type` tag is the parent tag for all venture classification and typology tags. It identifies content that categorizes or classifies social enterprises across multiple dimensions including impact areas, revenue models, industries, legal structures, funding sources, and impact mechanisms.
+| Category | Path | Count | Type | Description |
+|----------|------|-------|------|-------------|
+| [Stage](stage/readme.md) | `venture/stage/` | 4 | ⚡ **Dimension** | Development phase with assessment criteria |
+| [Impact Area](impact-area/impact-area.md) | `venture/impact-area/` | 34 | Property | SDG + IRIS+ impact themes |
+| [Industry](industry/industry.md) | `venture/industry/` | 16 | Property | Sector classification |
+| [Impact Mechanism](impact-mechanism/) | `venture/impact-mechanism/` | 9 | Property | How impact is created |
+| [Legal Structure](legal-structure/) | `venture/legal-structure/` | 9 | Property | Organizational form |
+| [Revenue Source](revenue-source/) | `venture/revenue-source/` | 10 | Property | Revenue models |
+| [Funding Source](funding-source/) | `venture/funding-source/` | 9 | Property | Capital sources |
 
-## Usage Criteria
-Apply this tag to content that:
-- Classifies ventures by type, category, or characteristics
-- Provides venture typology frameworks and taxonomies
-- Analyzes venture types and business model patterns
-- Compares different types of social enterprises
-- Discusses venture classification methodologies
+**Total tags: 91+**
 
-## Always Include When
-- Any venture-type sub-category tag is used
-- Content about venture classification systems
-- Venture type analysis and comparison
-- Business model type discussions
-- Venture taxonomy development
+---
 
-## Never Include When
-- General business content not focused on venture types
-- Individual venture examples without type classification
-- Non-venture content (use appropriate primary tags instead)
+## Understanding Properties vs. Dimensions
 
-## Required Combinations
-- Must be included when any venture-type sub-tag is used
-- Often combined with canvas section tags for type-specific guidance
-- May combine with venture stage tags for type-stage intersections
+### Venture Properties (Open-Ended)
 
-## Sub-Category Tags
-
-### Impact Area (34 tags)
-- UN SDG tags: `sdg-01-no-poverty` through `sdg-17-partnerships-for-the-goals`
-- IRIS+ theme tags: `agriculture`, `health`, `education`, `climate`, etc.
-
-### Revenue Source (10 tags)
-- `product-sales`, `service-fees`, `membership-dues`, `subscription`
-- `licensing-royalty`, `platform-commission`, `advertising-sponsorship`
-- `gov-contract`, `outcome-payment`, `philanthropy`
-
-### Industry (16 tags)
-- `agriculture`, `apparel`, `clean-energy`, `education`, `healthcare`
-- `financial-services`, `ict`, `manufacturing`, and others
-
-### Impact Mechanism (9 tags)
-- `product-service-impact`, `employment-model`, `reinvest-surplus`
-- `cross-subsidy`, `direct-service`, `capacity-building`
-- `policy-advocacy`, `systems-change`, `research-innovation`
-
-### Funding Source (9 tags)
-- `bootstrapped`, `grant`, `donation`, `impact-equity`
-- `concessional-debt`, `crowdfunding`, `blended-finance`, etc.
-
-### Legal Structure (9 tags)
-- `charity`, `nonprofit-inc`, `cooperative`, `benefit-corporation`
-- `cic`, `l3c`, `standard-limited-company`, `trust`, `foundation`
-
-## Content Examples
-- Venture classification frameworks and typologies
-- Business model pattern analysis
-- Sector-specific venture characteristics
-- Type-based impact measurement approaches
-- Venture type comparison studies
-
-## Related Tags
-- Often appears with all major tag categories
-- Essential for canvas examples and case studies
-- Frequently combined with venture stage model tags
-- May appear with any canvas section tags
-
-## Multi-Dimensional Classification
-
-Ventures typically require multiple venture-type tags:
+Properties describe venture characteristics without strict validation:
 
 ```yaml
-# Complete venture classification example
+# Any valid tag is acceptable
 tags:
-  - venture-type
-  - impact-area, sdg-04-quality-education
-  - industry, education
-  - revenue-source, service-fees
-  - funding-source, impact-equity
-  - impact-mechanism, direct-service
-  - legal-structure, benefit-corporation
+  - industry/apparel           # Canonical tag
+  - industry/space-tech        # Non-canonical but valid
+  - legal-structure/dao        # Emerging structure, valid
 ```
 
-## Key Concepts
-- Multi-dimensional venture classification
-- Business model type patterns
-- Impact-business model alignment
-- Venture typology development
-- Type-based analysis and comparison
-- Classification system validation
+Properties are:
+- **Descriptive** - they describe what something IS
+- **Additive** - multiple values per category allowed
+- **Open** - non-canonical values accepted when appropriate
 
-## Usage Notes
-- Always use hierarchical tagging with parent tags
-- Include multiple dimensions for complete classification
-- Ensure accuracy and specificity in tag selection
-- Use for precise venture example categorization
-- Enable sophisticated search and filtering capabilities
+### Venture Dimensions (Strictly Defined)
 
+Dimensions have assessment frameworks that determine the correct value:
+
+```yaml
+# Only these 4 values are valid for stage:
+tags:
+  - idea-stage      # Concept development, problem validation
+  - early-stage     # Solution validation, initial operations
+  - growth-stage    # Scaling operations, expanding impact
+  - scale-stage     # Systemic impact, sustainable operations
+```
+
+Dimensions are:
+- **Assessed** - criteria determine the value (see [stage assessment criteria](stage/readme.md#stage-transition-criteria))
+- **Exclusive** - exactly one value at a time
+- **Closed** - only pre-defined values are valid
+
+### Why This Distinction Matters
+
+For **retrieval filtering**:
+- Dimension values (stage) can be exact-matched with high confidence
+- Property values should use flexible matching (partial, semantic)
+
+For **venture profile building**:
+- Dimensions can be inferred with clear criteria
+- Properties require more nuanced understanding
+
+For **Vectorize indexing**:
+- Dimensions could have dedicated metadata fields
+- Properties are better stored as flat tags for flexible querying
+
+---
+
+## Tagging Conventions
+
+### Flat Tag Format (Preferred)
+```yaml
+tags:
+  - growth-stage                   # Dimension - exactly one
+  - industry/apparel               # Property - can have multiple
+  - legal-structure/trust
+  - impact-area/sdg-12-responsible-consumption-and-production
+  - revenue-source/product-sales
+  - impact-mechanism/product-service-impact
+```
+
+### Hierarchical Tag Format (Also Valid)
+```yaml
+tags:
+  - stage/growth
+  - industry/apparel
+```
+
+Both formats are normalized during indexing. Prefer flat format for clarity.
+
+### Complete Example
+
+A typical venture example might be tagged as:
+```yaml
+tags:
+  # Dimension (exactly one)
+  - scale-stage
+  
+  # Properties (multiple allowed)
+  - industry/apparel
+  - legal-structure/trust
+  - impact-area/sdg-12-responsible-consumption-and-production
+  - impact-area/sdg-13-climate-action
+  - revenue-source/product-sales
+  - impact-mechanism/product-service-impact
+  - impact-mechanism/reinvest-surplus
+  - funding-source/bootstrapped
+```
+
+---
+
+## For Vectorize Indexing
+
+Venture properties are stored as flat tags in markdown frontmatter. The indexing script:
+
+1. Extracts all tags from frontmatter
+2. Normalizes stage tags to canonical form (`growth-stage` not `stage/growth`)
+3. Stores in Vectorize metadata for Selection Matrix filtering
+
+### Metadata Strategy
+
+Stage is elevated to its own metadata field for exact matching:
+```
+venture_stage: "growth-stage"
+```
+
+Other properties are stored as a flat `tags` field for flexible matching:
+```
+tags: "industry/apparel legal-structure/trust impact-area/sdg-12..."
+```
+
+---
 
 ## Usage Guidelines
 
-1. **Multiple Tags**: Ventures typically need multiple venture-type tags
-2. **Hierarchical Structure**: Include parent category tags when using specific tags
-3. **Version Tracking**: This taxonomy is version-controlled for migration purposes
-4. **Validation**: Tag definitions include usage criteria and validation rules
+1. **Always include relevant properties**: Tag all applicable categories
+2. **Stage is required**: Every venture example needs exactly one stage tag
+3. **Be specific**: Use most specific applicable tags
+4. **Multiple values allowed**: Ventures often span multiple impact areas, industries, etc.
+5. **Non-canonical values**: Accept when legitimate (e.g., emerging legal structures)
 
-## Tag Hierarchy Rules
+---
 
-When using venture-type tags, always include the parent category:
-```
-tags: [revenue-source, product-sales]
-tags: [industry, apparel]
-tags: [impact-area, sdg-02-zero-hunger]
-```
+## Related
 
-## Complete Example
-
-A typical venture might be tagged as:
-```yaml
-tags:
-  - venture-type
-  - revenue-source, product-sales
-  - funding-source, impact-equity
-  - industry, apparel
-  - impact-area, sdg-02-zero-hunger
-  - impact-mechanism, product-service-impact
-  - legal-structure, benefit-corporation
-```
-
-## Tag Validation
-
-- All venture-type tags must be from approved taxonomy
-- Unknown tags will be rejected with nearest match suggestions
-- Regular validation ensures consistency across knowledge base
-
-## Total Venture Type Tags: 75+
-
-This comprehensive taxonomy enables precise classification and retrieval of venture examples and case studies based on multiple business model dimensions.
+- [Tag System Overview](../readme.md) - Tagging rules and conventions
+- [Canvas Section Tags](../canvas/) - Canvas structure tags
+- [Content Type Tags](../content/) - Content classification tags
+- [Stage Dimension](stage/readme.md) - The only current venture dimension

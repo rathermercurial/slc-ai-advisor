@@ -12,6 +12,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { AgentState } from './SLCAgent';
+import { searchForTools } from '../retrieval/vector-search';
 
 /**
  * Context interface for tool execution
@@ -347,37 +348,45 @@ export async function executeTool(
       return canvas;
     }
 
-    // Knowledge tools
+    // Knowledge tools - use unified search from vector-search.ts
     case 'search_methodology': {
       setStatus('searching', 'Searching methodology...');
-      const result = await searchKnowledge(ctx.env, {
+      const result = await searchForTools(ctx.env, {
         query: toolInput.query as string,
         contentType: 'methodology',
         limit: Math.min((toolInput.limit as number) || 5, 10),
-      });
+      }, canvasId);
       return result;
     }
 
     case 'search_examples': {
       setStatus('searching', 'Searching examples...');
-      const filters = (toolInput.filters as SelectionMatrixFilters) || {};
-      const result = await searchKnowledge(ctx.env, {
+      const filters = toolInput.filters as {
+        stage?: string;
+        impactArea?: string;
+        mechanism?: string;
+        legalStructure?: string;
+        revenueSource?: string;
+        fundingSource?: string;
+        industry?: string;
+      } | undefined;
+      const result = await searchForTools(ctx.env, {
         query: toolInput.query as string,
         contentType: 'example',
         filters,
         limit: Math.min((toolInput.limit as number) || 3, 10),
-      });
+      }, canvasId);
       return result;
     }
 
     case 'search_knowledge_base': {
       setStatus('searching', 'Searching knowledge base...');
       const contentType = (toolInput.contentType as string) || 'all';
-      const result = await searchKnowledge(ctx.env, {
+      const result = await searchForTools(ctx.env, {
         query: toolInput.query as string,
-        contentType: contentType === 'all' ? undefined : contentType,
+        contentType: contentType === 'all' ? undefined : (contentType as 'methodology' | 'example'),
         limit: Math.min((toolInput.limit as number) || 5, 20),
-      });
+      }, canvasId);
       return result;
     }
 
@@ -412,76 +421,3 @@ export async function executeToolWithBroadcast(
   return result;
 }
 
-/**
- * Selection Matrix dimension filters for knowledge search
- */
-interface SelectionMatrixFilters {
-  stage?: 'idea' | 'validation' | 'growth' | 'scale';
-  impactArea?: string;
-  mechanism?: 'product' | 'service' | 'platform' | 'hybrid';
-  legalStructure?: 'nonprofit' | 'forprofit' | 'hybrid' | 'cooperative';
-  revenueSource?: 'earned' | 'grants' | 'donations' | 'mixed';
-  fundingSource?: 'bootstrapped' | 'angel' | 'vc' | 'grants' | 'crowdfunding';
-  industry?: string;
-}
-
-/**
- * Search options for knowledge base queries
- */
-interface SearchOptions {
-  query: string;
-  contentType?: string;
-  filters?: SelectionMatrixFilters;
-  limit?: number;
-}
-
-/**
- * Search the knowledge base using Vectorize
- */
-async function searchKnowledge(
-  env: Env,
-  options: SearchOptions
-): Promise<{ results: Array<{ content: string; metadata: Record<string, unknown>; score: number }> }> {
-  const { query, contentType, filters, limit = 5 } = options;
-
-  // Generate embedding for query using bge-m3
-  const embeddingResponse = await env.AI.run('@cf/baai/bge-m3', {
-    text: [query],
-  });
-  const embedding = embeddingResponse.data[0];
-
-  // Build metadata filter
-  const metadataFilter: Record<string, unknown> = {};
-  if (contentType) {
-    metadataFilter.contentType = contentType;
-  }
-  if (filters) {
-    if (filters.stage) metadataFilter.stage = filters.stage;
-    if (filters.impactArea) metadataFilter.impactArea = filters.impactArea;
-    if (filters.mechanism) metadataFilter.mechanism = filters.mechanism;
-    if (filters.legalStructure) metadataFilter.legalStructure = filters.legalStructure;
-    if (filters.revenueSource) metadataFilter.revenueSource = filters.revenueSource;
-    if (filters.fundingSource) metadataFilter.fundingSource = filters.fundingSource;
-    if (filters.industry) metadataFilter.industry = filters.industry;
-  }
-
-  // Query Vectorize with metadata filtering
-  const queryOptions: VectorizeQueryOptions = {
-    topK: limit,
-    returnMetadata: 'all',
-  };
-  if (Object.keys(metadataFilter).length > 0) {
-    queryOptions.filter = metadataFilter;
-  }
-
-  const vectorResults = await env.VECTORIZE.query(embedding, queryOptions);
-
-  // Format results
-  const results = vectorResults.matches.map((match) => ({
-    content: (match.metadata?.content as string) || '',
-    metadata: match.metadata || {},
-    score: match.score,
-  }));
-
-  return { results };
-}

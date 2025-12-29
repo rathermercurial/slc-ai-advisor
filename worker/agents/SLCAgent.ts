@@ -97,11 +97,12 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   }
 
   /**
-   * Extract canvasId from agent name (format: canvasId or canvasId/threadId)
+   * Extract canvasId from agent name (format: canvasId or canvasId--threadId)
+   * Using -- separator to avoid PartySocket routing issues with /
    */
   private getCanvasId(): string | null {
     if (!this.name) return null;
-    return this.name.split('/')[0];
+    return this.name.split('--')[0];
   }
 
   /**

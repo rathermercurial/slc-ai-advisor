@@ -96,8 +96,8 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   const { updateFromAgent, setConnected, setGenerating } = useCanvasContext();
 
   // Agent name includes threadId for multi-thread support
-  // Format: canvasId or canvasId/threadId
-  const agentName = threadId ? `${canvasId}/${threadId}` : canvasId;
+  // Format: canvasId or canvasId--threadId (using -- to avoid PartySocket routing issues with /)
+  const agentName = threadId ? `${canvasId}--${threadId}` : canvasId;
   console.log('[Chat] Connecting to agent:', agentName);
 
   // Connect to agent via WebSocket

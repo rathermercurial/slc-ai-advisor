@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, FormEvent, ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, FormEvent, ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 import { useAgent } from 'agents/react';
 import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
@@ -98,13 +98,20 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   // Format: canvasId or canvasId--threadId (using -- to avoid PartySocket routing issues with /)
   const agentName = threadId ? `${canvasId}--${threadId}` : canvasId;
 
+  // Keep a ref to the latest updateFromAgent to avoid stale closures in useAgent callback
+  const updateFromAgentRef = useRef(updateFromAgent);
+  useLayoutEffect(() => {
+    updateFromAgentRef.current = updateFromAgent;
+  }, [updateFromAgent]);
+
   // Connect to agent via WebSocket
   const agent = useAgent<AgentState>({
     agent: 'slc-agent',
     name: agentName,
     onStateUpdate: (state) => {
       // Push state to context (includes canvas sync)
-      updateFromAgent(state);
+      // Use ref to always call latest version of updateFromAgent
+      updateFromAgentRef.current(state);
     },
   });
 

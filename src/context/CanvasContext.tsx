@@ -154,6 +154,14 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const historyInitializedRef = useRef(false);
   const isRestoringRef = useRef(false);
 
+  // Ref for canvasUpdatedAt to avoid stale closure in updateFromAgent
+  const canvasUpdatedAtRef = useRef(canvasUpdatedAt);
+  canvasUpdatedAtRef.current = canvasUpdatedAt;
+
+  // Ref for history to avoid stale closure
+  const historyRef = useRef(history);
+  historyRef.current = history;
+
   // Mark section as editing/not editing
   const setEditing = useCallback((section: CanvasSectionId, editing: boolean) => {
     setEditingSections(prev => {
@@ -173,21 +181,22 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     setAgentStatusMessage(state.statusMessage);
 
     // Only update canvas if timestamp changed (actual update)
-    if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAt) {
+    // Use refs to avoid stale closure issues with rapid updates
+    if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
       setCanvas(state.canvas);
       setCanvasUpdatedAt(state.canvasUpdatedAt);
 
       // Initialize or push to history (skip if we're restoring from undo/redo)
       if (!isRestoringRef.current) {
         if (!historyInitializedRef.current) {
-          history.initialize(canvasToSnapshot(state.canvas, 'ai'));
+          historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
           historyInitializedRef.current = true;
         } else {
-          history.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
+          historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
         }
       }
     }
-  }, [canvasUpdatedAt, history]);
+  }, []); // No dependencies - uses refs for all external values
 
   // Set connection status
   const setConnected = useCallback((connected: boolean) => {

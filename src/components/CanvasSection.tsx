@@ -61,6 +61,15 @@ export function CanvasSection({
   const [saveError, setSaveError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Track mounted state to prevent state updates after unmount
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const label = CANVAS_SECTION_LABELS[sectionKey];
   const sectionNumber = CANVAS_SECTION_NUMBER[sectionKey];
   const model = SECTION_TO_MODEL[sectionKey];
@@ -140,6 +149,9 @@ export function CanvasSection({
 
     const result = await onSave(draft);
 
+    // Check if still mounted before updating state
+    if (!mountedRef.current) return;
+
     if (result.success) {
       setSaveState('saved');
       setIsEditing(false);
@@ -175,6 +187,8 @@ export function CanvasSection({
       if (draft !== content) {
         setSaveState('saving');
         const result = await onSave(draft);
+        // Check if still mounted before updating state
+        if (!mountedRef.current) return;
         if (result.success) {
           setSaveState('saved');
         } else {

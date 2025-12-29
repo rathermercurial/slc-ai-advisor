@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ArrowRight, ArrowLeft, ArrowDown } from 'lucide-react';
 import {
   type ImpactModel,
@@ -42,9 +42,13 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlight
   const row1: ImpactModelField[] = ['issue', 'participants', 'activities', 'outputs'];
   const row2: ImpactModelField[] = ['impact', 'longTermOutcomes', 'mediumTermOutcomes', 'shortTermOutcomes'];
 
-  // Auto-focus first field when opened
+  // Track if auto-focus has already been applied
+  const autoFocusAppliedRef = useRef(false);
+
+  // Auto-focus first field when opened (only once)
   useEffect(() => {
-    if (autoFocusFirst) {
+    if (autoFocusFirst && !autoFocusAppliedRef.current) {
+      autoFocusAppliedRef.current = true;
       setEditingField('issue');
       setDraft(impactModel);
     }

@@ -47,11 +47,16 @@ export async function handleSessionRoute(
       // Initialize the canvas by calling getFullCanvas (this triggers ensureInitialized)
       await stub.getFullCanvas();
 
+      // Create default thread for backward compatibility
+      // Returns existing thread if one exists
+      const defaultThread = await stub.ensureDefaultThread();
+
       metrics.trackEvent('session_created', { sessionId });
 
       return jsonResponse({
         sessionId,
         canvasId: sessionId, // Same ID for both
+        threadId: defaultThread.id,
         program,
       });
     }
@@ -77,10 +82,13 @@ export async function handleSessionRoute(
         // acceptable since UUIDs are unpredictable. The canvas will be orphaned
         // if the user doesn't use it.
         if (canvas.createdAt) {
+          // Get default thread for this canvas
+          const defaultThread = await stub.ensureDefaultThread();
           return jsonResponse({
             exists: true,
             sessionId,
             canvasId: sessionId,
+            threadId: defaultThread.id,
             completionPercentage: canvas.completionPercentage,
           });
         }

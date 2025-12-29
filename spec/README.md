@@ -41,6 +41,8 @@ A conversational AI advisor for social entrepreneurs using the Social Lean Canva
 - [`requirements.md`](slc-ai-advisor-mvp/requirements.md) - Problem statement, canvas structure, functional requirements, success criteria
 - [`design.md`](slc-ai-advisor-mvp/design.md) - Architecture, data models, SQLite schema, interfaces
 - [`tasks.md`](slc-ai-advisor-mvp/tasks.md) - Implementation tasks organized by milestone (Demo-critical vs MVP)
+- [`multi-canvas-architecture.md`](slc-ai-advisor-mvp/multi-canvas-architecture.md) - Multi-canvas/thread support, migration path to auth
+- [`../api-contracts.md`](api-contracts.md) - REST API endpoint documentation
 
 ---
 

@@ -26,8 +26,23 @@ Worker (entry) → SLCAgent (orchestrator, extends AIChatAgent)
               → Anthropic (Claude via AI Gateway)
 ```
 
-- **SLCAgent**: Conversation + tool execution. Has own `this.sql` for messages.
-- **CanvasDO**: Canvas state + Model Managers. Stores sections, venture profile.
+- **SLCAgent**: Conversation + tool execution. Has own `this.sql` for messages. One instance per thread.
+- **CanvasDO**: Canvas state + thread registry. Stores sections, venture profile, threads.
+
+### Multi-Canvas/Thread Architecture
+
+```
+User → Canvas 1 → Thread A → SLCAgent A (WebSocket)
+                → Thread B → SLCAgent B (WebSocket)
+     → Canvas 2 → Thread C → SLCAgent C (WebSocket)
+```
+
+- **One SLCAgent per thread**: Agents SDK pattern, each thread is separate DO instance
+- **CanvasDO as thread registry**: Stores thread metadata (title, summary, starred, archived)
+- **Canvas registry**: localStorage + backend verification (see `src/utils/canvasRegistry.ts`)
+- **WebSocket URL**: `/agents/slc-agent/{threadId}?canvasId={canvasId}`
+
+See [multi-canvas-architecture.md](spec/slc-ai-advisor-mvp/multi-canvas-architecture.md) for migration path to authenticated backend registry.
 
 **Stack:**
 - Frontend: React 19 + Vite + Agents SDK (`useAgentChat`)
@@ -47,17 +62,23 @@ Worker (entry) → SLCAgent (orchestrator, extends AIChatAgent)
 | `spec/slc-ai-advisor-mvp/requirements.md` | What we're building |
 | `spec/slc-ai-advisor-mvp/design.md` | Architecture, data models, interfaces |
 | `spec/slc-ai-advisor-mvp/tasks.md` | Milestones and definitions of done |
+| `spec/slc-ai-advisor-mvp/multi-canvas-architecture.md` | Multi-canvas/thread support, auth migration |
+| `spec/api-contracts.md` | REST API endpoint documentation |
 
 ## File Structure
 
 ```
 src/
+  components/       # React components (Canvas, Chat, ThreadList, CanvasList)
+  context/          # React Context providers
   types/            # TypeScript interfaces (canvas.ts, venture.ts)
   models/           # Model Manager classes
+  utils/            # Utilities (canvasRegistry.ts for localStorage)
 worker/
   index.ts          # Entry point, request routing
-  agents/           # SLCAgent (AIChatAgent)
-  durable-objects/  # CanvasDO
+  agents/           # SLCAgent (AIChatAgent, one per thread)
+  durable-objects/  # CanvasDO (canvas state + thread registry)
+  routes/           # API route handlers (canvas.ts, session.ts)
 knowledge/          # Knowledge base
   programs/         # Learning journeys (generic/, p2p/) → Vectorize namespaces
   tags/             # Concepts & dimensions → Vectorize metadata

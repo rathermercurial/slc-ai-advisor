@@ -9,6 +9,7 @@ import { useCanvasContext, type AgentState } from '../context';
 
 interface ChatProps {
   canvasId: string;
+  threadId: string;
 }
 
 /**
@@ -75,8 +76,12 @@ function getToolCardState(sdkState: string): 'pending' | 'executing' | 'complete
  * Connects to SLCAgent via WebSocket for real-time streaming responses.
  * Agent state (status updates + canvas) syncs automatically via the agents SDK.
  * Canvas state is pushed to CanvasContext for the Canvas component to consume.
+ *
+ * Multi-thread architecture:
+ * - threadId is the agent instance name (unique per conversation)
+ * - canvasId is passed via query param so the agent knows which canvas to use
  */
-export function Chat({ canvasId }: ChatProps) {
+export function Chat({ canvasId, threadId }: ChatProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -85,9 +90,13 @@ export function Chat({ canvasId }: ChatProps) {
   const { updateFromAgent, setConnected, agentStatus, agentStatusMessage } = useCanvasContext();
 
   // Connect to agent via WebSocket
+  // threadId is the agent instance name, canvasId is passed via query param
   const agent = useAgent<AgentState>({
     agent: 'slc-agent',
-    name: canvasId,
+    name: threadId,
+    // Pass canvasId as query param for the agent to look up canvas context
+    // The Agents SDK appends this to the WebSocket URL
+    path: `/agents/slc-agent/${threadId}?canvasId=${canvasId}`,
     onStateUpdate: (state) => {
       // Push state to context (includes canvas sync)
       updateFromAgent(state);

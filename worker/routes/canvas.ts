@@ -5,17 +5,30 @@
  * Routes to CanvasDO via RPC methods.
  *
  * Routes:
+ * Canvas:
  * - POST /api/canvas - Create new canvas
  * - GET /api/canvas/:id - Get full canvas state
+ * - GET /api/canvas/:id/meta - Get canvas metadata
+ * - PUT /api/canvas/:id/name - Update canvas name
  * - PUT /api/canvas/:id/section/:key - Update section
  * - GET /api/canvas/:id/model/:model - Get model view
  * - GET /api/canvas/:id/venture-profile - Get venture properties
  * - PUT /api/canvas/:id/venture-profile - Update venture property
  * - GET /api/canvas/:id/properties-for-filtering - Get filtered properties
  * - GET /api/canvas/:id/export/:format - Export canvas
+ * - DELETE /api/canvas/:id - Archive canvas
+ *
+ * Threads:
+ * - POST /api/canvas/:id/threads - Create thread
+ * - GET /api/canvas/:id/threads - List threads
+ * - GET /api/canvas/:id/threads/:threadId - Get thread
+ * - GET /api/canvas/:id/threads/:threadId/messages - Get thread messages
+ * - PUT /api/canvas/:id/threads/:threadId - Update thread
+ * - DELETE /api/canvas/:id/threads/:threadId - Archive thread
  */
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
+import type { SLCAgent } from '../agents/SLCAgent';
 import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
 import type { VentureProperties } from '../../src/types/venture';
 import { createLogger, createMetrics } from '../observability';
@@ -250,6 +263,131 @@ export async function handleCanvasRoute(
 
       await stub.setCurrentSection(body.section ?? null);
 
+      return jsonResponse({ success: true }, 200, requestId);
+    }
+
+    // GET /api/canvas/:id/meta - Get canvas metadata
+    if (parts.length === 4 && parts[3] === 'meta' && request.method === 'GET') {
+      const meta = await stub.getCanvasMeta();
+      return jsonResponse(meta, 200, requestId);
+    }
+
+    // PUT /api/canvas/:id/name - Update canvas name
+    if (parts.length === 4 && parts[3] === 'name' && request.method === 'PUT') {
+      const body = await request.json().catch(() => ({})) as { name?: string };
+      if (!body.name || typeof body.name !== 'string') {
+        return jsonResponse({ error: 'name is required' }, 400, requestId);
+      }
+      await stub.updateCanvasName(body.name);
+      return jsonResponse({ success: true }, 200, requestId);
+    }
+
+    // DELETE /api/canvas/:id - Archive canvas
+    if (parts.length === 3 && request.method === 'DELETE') {
+      await stub.archiveCanvas();
+      return jsonResponse({ success: true }, 200, requestId);
+    }
+
+    // ============================================
+    // Thread Routes
+    // ============================================
+
+    // POST /api/canvas/:id/threads - Create thread
+    if (parts.length === 4 && parts[3] === 'threads' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({})) as { title?: string };
+      const thread = await stub.createThread({ title: body.title });
+
+      metrics.trackEvent('thread_created', { sessionId: canvasId, threadId: thread.id });
+
+      return jsonResponse(thread, 201, requestId);
+    }
+
+    // GET /api/canvas/:id/threads - List threads
+    if (parts.length === 4 && parts[3] === 'threads' && request.method === 'GET') {
+      const includeArchived = url.searchParams.get('includeArchived') === 'true';
+      const threads = await stub.listThreads(includeArchived);
+      return jsonResponse({ threads }, 200, requestId);
+    }
+
+    // GET /api/canvas/:id/threads/:threadId - Get thread
+    if (parts.length === 5 && parts[3] === 'threads' && request.method === 'GET') {
+      const threadId = parts[4];
+
+      // Validate thread ID format
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      const thread = await stub.getThread(threadId);
+      if (!thread) {
+        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
+      }
+      return jsonResponse(thread, 200, requestId);
+    }
+
+    // GET /api/canvas/:id/threads/:threadId/messages - Get thread messages
+    if (parts.length === 6 && parts[3] === 'threads' && parts[5] === 'messages' && request.method === 'GET') {
+      const threadId = parts[4];
+
+      // Validate thread ID format
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      // Verify thread belongs to this canvas
+      const thread = await stub.getThread(threadId);
+      if (!thread) {
+        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
+      }
+
+      // Parse limit from query string
+      const limitParam = url.searchParams.get('limit');
+      const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10)), 50) : 10;
+
+      try {
+        // Get messages from the thread's agent via RPC
+        const agentId = env.SLC_AGENT.idFromName(threadId);
+        const agentStub = env.SLC_AGENT.get(agentId) as DurableObjectStub<SLCAgent>;
+        const messages = await agentStub.getRecentMessages(limit);
+
+        return jsonResponse({ threadId, messages }, 200, requestId);
+      } catch (error) {
+        logger.error('Failed to get thread messages', error);
+        return jsonResponse({ error: 'Failed to retrieve messages' }, 500, requestId);
+      }
+    }
+
+    // PUT /api/canvas/:id/threads/:threadId - Update thread
+    if (parts.length === 5 && parts[3] === 'threads' && request.method === 'PUT') {
+      const threadId = parts[4];
+
+      // Validate thread ID format
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      const body = await request.json().catch(() => ({})) as { title?: string; summary?: string };
+      const thread = await stub.updateThread(threadId, body);
+
+      if (!thread) {
+        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
+      }
+      return jsonResponse(thread, 200, requestId);
+    }
+
+    // DELETE /api/canvas/:id/threads/:threadId - Archive thread
+    if (parts.length === 5 && parts[3] === 'threads' && request.method === 'DELETE') {
+      const threadId = parts[4];
+
+      // Validate thread ID format
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      const archived = await stub.archiveThread(threadId);
+      if (!archived) {
+        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
+      }
       return jsonResponse({ success: true }, 200, requestId);
     }
 

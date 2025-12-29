@@ -78,8 +78,33 @@ MVP simplification: Chat-primary interface. Visual canvas editor deferred to pos
   - Store canvas sections via Model Managers
   - Store venture profile (7 dimensions)
   - Validate updates via Model Manager rules
+  - Manage thread registry (CRUD operations)
   - Export canvas in multiple formats
 - **Files:** `worker/durable-objects/CanvasDO.ts`, `src/models/*.ts`
+
+### Thread Architecture
+
+Each canvas can have multiple conversation threads. Each thread maps to a separate SLCAgent instance.
+
+```
+Canvas (CanvasDO)
+├── Canvas Metadata (name, starred, archived)
+├── Sections (purpose, customers, etc.)
+├── Impact Model
+├── Venture Profile
+└── Thread Registry
+    ├── Thread A → SLCAgent A (separate DO)
+    ├── Thread B → SLCAgent B (separate DO)
+    └── Thread C → SLCAgent C (separate DO)
+```
+
+**Design Decisions:**
+- **One SLCAgent per thread:** Cloudflare Agents SDK pattern - each agent instance has its own `this.sql` for message history
+- **CanvasDO as registry:** Stores thread metadata (title, summary, starred, archived, timestamps)
+- **No thread_id in agent:** Agents SDK's `cf_ai_chat_agent_messages` table is per-DO instance
+- **WebSocket routing:** `/agents/slc-agent/{threadId}?canvasId={canvasId}`
+
+See [multi-canvas-architecture.md](multi-canvas-architecture.md) for migration path to authenticated backend registry.
 
 ### Model Managers
 
@@ -275,12 +300,26 @@ interface ImpactModel {
 // Full canvas state returned by API
 interface CanvasState {
   sessionId: string;
+  name: string;               // Canvas name
   sections: CanvasSection[];  // All sections except impact (simple content)
   impactModel: ImpactModel;   // Impact section (nested causality chain)
   currentSection: CanvasSectionId | null;  // User's curriculum progress
   completionPercentage: number;
+  starred: boolean;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Thread metadata (stored in CanvasDO)
+interface Thread {
+  id: string;
+  title: string | null;
+  summary: string | null;      // Auto-generated from conversation
+  starred: boolean;
+  archived: boolean;
+  createdAt: string;
+  lastMessageAt: string;
 }
 ```
 
@@ -329,12 +368,28 @@ CREATE INDEX idx_message_conv ON message(conversation_id, timestamp);
 
 ```sql
 -- Canvas metadata
-CREATE TABLE canvas (
-  id TEXT PRIMARY KEY,
+CREATE TABLE canvas_meta (
+  id TEXT PRIMARY KEY DEFAULT 'canvas',
+  name TEXT DEFAULT 'Untitled Canvas',
   current_section TEXT,         -- Curriculum progress (section key)
+  starred INTEGER NOT NULL DEFAULT 0,
+  archived INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+-- Thread registry (each thread → separate SLCAgent instance)
+CREATE TABLE thread (
+  id TEXT PRIMARY KEY,
+  title TEXT,
+  summary TEXT,
+  starred INTEGER NOT NULL DEFAULT 0,
+  archived INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  last_message_at TEXT NOT NULL
+);
+
+CREATE INDEX idx_thread_last_message ON thread(last_message_at DESC);
 
 -- Venture profile (7 dimensions)
 CREATE TABLE venture_profile (

@@ -57,6 +57,11 @@ tag = "v2"
 new_sqlite_classes = ["CanvasDO", "SLCAgent"]
 deleted_classes = ["UserSession"]
 
+# Migration v3: Multi-thread support (Issue #65)
+# Adds thread table to CanvasDO, canvas name/archived columns
+[[migrations]]
+tag = "v3"
+
 # AI Binding for embeddings
 [ai]
 binding = "AI"

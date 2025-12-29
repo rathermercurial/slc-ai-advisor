@@ -40,6 +40,27 @@ import {
 } from '../../src/types/venture';
 
 /**
+ * Thread metadata stored in CanvasDO
+ */
+export interface Thread {
+  id: string;
+  title: string | null;
+  summary: string | null;
+  starred: boolean;
+  archived: boolean;
+  createdAt: string;
+  lastMessageAt: string;
+}
+
+/**
+ * Thread creation options
+ */
+export interface CreateThreadOptions {
+  id?: string;
+  title?: string;
+}
+
+/**
  * Confidence threshold for dimension filtering
  */
 const CONFIDENCE_THRESHOLD = 0.7;
@@ -72,16 +93,39 @@ export class CanvasDO extends DurableObject<Env> {
     const sql = this.ctx.storage.sql;
     const now = new Date().toISOString();
 
-    // Canvas metadata
+    // Canvas metadata (with name, starred, archived for multi-canvas support)
     sql.exec(`
       CREATE TABLE IF NOT EXISTS canvas_meta (
         id TEXT PRIMARY KEY DEFAULT 'canvas',
+        name TEXT DEFAULT 'Untitled Canvas',
         purpose TEXT NOT NULL DEFAULT '',
         key_metrics TEXT NOT NULL DEFAULT '',
         current_section TEXT,
+        starred INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
+    `);
+
+    // Thread registry (for multi-thread support)
+    sql.exec(`
+      CREATE TABLE IF NOT EXISTS thread (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        summary TEXT,
+        starred INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        last_message_at TEXT NOT NULL
+      )
+    `);
+
+    // Index for thread listing (most recent first, excluding archived)
+    sql.exec(`
+      CREATE INDEX IF NOT EXISTS idx_thread_last_message
+      ON thread(last_message_at DESC)
+      WHERE archived = 0
     `);
 
     // Canvas sections (10 standard sections, not impact)
@@ -721,6 +765,329 @@ export class CanvasDO extends DurableObject<Env> {
     }
 
     return result;
+  }
+
+  // ============================================
+  // Thread Methods
+  // ============================================
+
+  /**
+   * Create a new thread for this canvas
+   */
+  async createThread(options: CreateThreadOptions = {}): Promise<Thread> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    const id = options.id || crypto.randomUUID();
+    const title = options.title || null;
+
+    sql.exec(
+      `INSERT INTO thread (id, title, summary, starred, archived, created_at, last_message_at)
+       VALUES (?, ?, NULL, 0, 0, ?, ?)`,
+      id,
+      title,
+      now,
+      now
+    );
+
+    return {
+      id,
+      title,
+      summary: null,
+      starred: false,
+      archived: false,
+      createdAt: now,
+      lastMessageAt: now,
+    };
+  }
+
+  /**
+   * List all threads for this canvas
+   * @param includeArchived - Include archived threads (default: false)
+   */
+  async listThreads(includeArchived = false): Promise<Thread[]> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const query = includeArchived
+      ? `SELECT * FROM thread ORDER BY last_message_at DESC`
+      : `SELECT * FROM thread WHERE archived = 0 ORDER BY last_message_at DESC`;
+
+    const rows = sql
+      .exec<{
+        id: string;
+        title: string | null;
+        summary: string | null;
+        starred: number;
+        archived: number;
+        created_at: string;
+        last_message_at: string;
+      }>(query)
+      .toArray();
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      summary: row.summary,
+      starred: row.starred === 1,
+      archived: row.archived === 1,
+      createdAt: row.created_at,
+      lastMessageAt: row.last_message_at,
+    }));
+  }
+
+  /**
+   * Get a specific thread by ID
+   */
+  async getThread(threadId: string): Promise<Thread | null> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const row = sql
+      .exec<{
+        id: string;
+        title: string | null;
+        summary: string | null;
+        starred: number;
+        archived: number;
+        created_at: string;
+        last_message_at: string;
+      }>(`SELECT * FROM thread WHERE id = ?`, threadId)
+      .toArray()[0];
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      title: row.title,
+      summary: row.summary,
+      starred: row.starred === 1,
+      archived: row.archived === 1,
+      createdAt: row.created_at,
+      lastMessageAt: row.last_message_at,
+    };
+  }
+
+  /**
+   * Update thread metadata (title, summary, starred)
+   */
+  async updateThread(
+    threadId: string,
+    updates: { title?: string; summary?: string; starred?: boolean }
+  ): Promise<Thread | null> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const thread = await this.getThread(threadId);
+    if (!thread) return null;
+
+    if (updates.title !== undefined) {
+      sql.exec(`UPDATE thread SET title = ? WHERE id = ?`, updates.title, threadId);
+    }
+
+    if (updates.summary !== undefined) {
+      sql.exec(`UPDATE thread SET summary = ? WHERE id = ?`, updates.summary, threadId);
+    }
+
+    if (updates.starred !== undefined) {
+      sql.exec(`UPDATE thread SET starred = ? WHERE id = ?`, updates.starred ? 1 : 0, threadId);
+    }
+
+    return this.getThread(threadId);
+  }
+
+  /**
+   * Update thread's last message timestamp
+   * Called by SLCAgent when a new message is sent
+   */
+  async touchThread(threadId: string): Promise<void> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    sql.exec(`UPDATE thread SET last_message_at = ? WHERE id = ?`, now, threadId);
+  }
+
+  /**
+   * Archive a thread (soft delete)
+   */
+  async archiveThread(threadId: string): Promise<boolean> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const thread = await this.getThread(threadId);
+    if (!thread) return false;
+
+    sql.exec(`UPDATE thread SET archived = 1 WHERE id = ?`, threadId);
+    return true;
+  }
+
+  /**
+   * Restore an archived thread
+   */
+  async restoreThread(threadId: string): Promise<boolean> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const thread = await this.getThread(threadId);
+    if (!thread) return false;
+
+    sql.exec(`UPDATE thread SET archived = 0 WHERE id = ?`, threadId);
+    return true;
+  }
+
+  /**
+   * Update thread summary (for cross-thread context sharing)
+   * Called after conversation to generate a summary of the discussion
+   */
+  async updateThreadSummary(threadId: string, summary: string): Promise<boolean> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const thread = await this.getThread(threadId);
+    if (!thread) return false;
+
+    sql.exec(`UPDATE thread SET summary = ? WHERE id = ?`, summary, threadId);
+    return true;
+  }
+
+  /**
+   * Ensure a default thread exists for backward compatibility
+   * Returns the default thread, creating it if necessary
+   */
+  async ensureDefaultThread(): Promise<Thread> {
+    await this.ensureInitialized();
+
+    const threads = await this.listThreads();
+    if (threads.length > 0) {
+      return threads[0];
+    }
+
+    // Create default thread with the canvas ID for backward compatibility
+    const canvasId = this.ctx.id.toString();
+    return this.createThread({ id: canvasId, title: 'Main' });
+  }
+
+  /**
+   * Get all thread summaries for system prompt context
+   */
+  async getThreadSummaries(): Promise<Array<{ id: string; title: string | null; summary: string | null }>> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const rows = sql
+      .exec<{
+        id: string;
+        title: string | null;
+        summary: string | null;
+      }>(`SELECT id, title, summary FROM thread WHERE archived = 0 AND summary IS NOT NULL`)
+      .toArray();
+
+    return rows;
+  }
+
+  // ============================================
+  // Canvas Meta Methods
+  // ============================================
+
+  /**
+   * Get canvas metadata (for listing)
+   */
+  async getCanvasMeta(): Promise<{
+    id: string;
+    name: string;
+    starred: boolean;
+    archived: boolean;
+    completionPercentage: number;
+    threadCount: number;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+
+    const meta = sql
+      .exec<{
+        name: string;
+        starred: number;
+        archived: number;
+        created_at: string;
+        updated_at: string;
+      }>(`SELECT name, starred, archived, created_at, updated_at FROM canvas_meta WHERE id = 'canvas'`)
+      .one()!;
+
+    const canvas = await this.getFullCanvas();
+    const threads = await this.listThreads();
+
+    return {
+      id: this.ctx.id.toString(),
+      name: meta.name || 'Untitled Canvas',
+      starred: meta.starred === 1,
+      archived: meta.archived === 1,
+      completionPercentage: canvas.completionPercentage,
+      threadCount: threads.length,
+      createdAt: meta.created_at,
+      updatedAt: meta.updated_at,
+    };
+  }
+
+  /**
+   * Update canvas name
+   */
+  async updateCanvasName(name: string): Promise<void> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    sql.exec(`UPDATE canvas_meta SET name = ?, updated_at = ? WHERE id = 'canvas'`, name, now);
+  }
+
+  /**
+   * Update canvas starred status
+   */
+  async updateCanvasStarred(starred: boolean): Promise<void> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    sql.exec(
+      `UPDATE canvas_meta SET starred = ?, updated_at = ? WHERE id = 'canvas'`,
+      starred ? 1 : 0,
+      now
+    );
+  }
+
+  /**
+   * Update canvas metadata (name, starred)
+   */
+  async updateCanvasMeta(updates: { name?: string; starred?: boolean }): Promise<void> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    if (updates.name !== undefined) {
+      sql.exec(`UPDATE canvas_meta SET name = ?, updated_at = ? WHERE id = 'canvas'`, updates.name, now);
+    }
+
+    if (updates.starred !== undefined) {
+      sql.exec(
+        `UPDATE canvas_meta SET starred = ?, updated_at = ? WHERE id = 'canvas'`,
+        updates.starred ? 1 : 0,
+        now
+      );
+    }
+  }
+
+  /**
+   * Archive this canvas (soft delete)
+   */
+  async archiveCanvas(): Promise<void> {
+    await this.ensureInitialized();
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+
+    sql.exec(`UPDATE canvas_meta SET archived = 1, updated_at = ? WHERE id = 'canvas'`, now);
   }
 
   // ============================================

@@ -37,10 +37,19 @@ export interface AgentState {
   canvas: import('../../src/types/canvas').CanvasState | null;
   /** Timestamp of last canvas update for change detection */
   canvasUpdatedAt: string | null;
+  /** Canvas ID this thread belongs to (extracted from connection URL) */
+  canvasId: string | null;
+  /** Thread ID (this.name) */
+  threadId: string | null;
 }
 
 /**
  * SLC Agent implementation
+ *
+ * In the multi-thread architecture:
+ * - this.name = threadId (unique per conversation)
+ * - canvasId is extracted from ?canvasId query param on WebSocket connect
+ * - For backward compatibility, if no canvasId param, use this.name as canvasId
  */
 export class SLCAgent extends AIChatAgent<Env, AgentState> {
   initialState: AgentState = {
@@ -48,14 +57,63 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     statusMessage: '',
     canvas: null,
     canvasUpdatedAt: null,
+    canvasId: null,
+    threadId: null,
   };
 
   /**
+   * Handle WebSocket connection
+   * Extracts canvasId from URL query parameter
+   */
+  async onConnect(connection: Connection, ctx: { request: Request }): Promise<void> {
+    const logger = this.getLogger();
+    const url = new URL(ctx.request.url);
+
+    // Extract canvasId from query param, fallback to this.name for backward compatibility
+    const canvasId = url.searchParams.get('canvasId') || this.name;
+    const threadId = this.name;
+
+    logger.info('Agent connected', { threadId, canvasId, url: url.pathname });
+
+    // Store in state for access during chat
+    this.setState({
+      ...this.state,
+      canvasId,
+      threadId,
+    });
+
+    // Touch thread to update last_message_at (only if we have a different canvasId)
+    if (canvasId && canvasId !== threadId) {
+      try {
+        const stub = this.getCanvasStub(canvasId);
+        await stub.touchThread(threadId);
+      } catch (error) {
+        logger.warn('Failed to touch thread', { error });
+      }
+    }
+  }
+
+  /**
+   * Get the canvas ID for this thread
+   * Falls back to this.name for backward compatibility
+   */
+  private getCanvasId(): string {
+    return this.state.canvasId || this.name || '';
+  }
+
+  /**
+   * Get the thread ID (this.name)
+   */
+  private getThreadId(): string {
+    return this.name || '';
+  }
+
+  /**
    * Get logger for this agent instance
-   * Uses canvasId (this.name) as request ID for correlation
+   * Uses threadId as request ID for correlation
    */
   private getLogger(): Logger {
-    return createLogger('SLCAgent', this.name || 'unknown');
+    return createLogger('SLCAgent', this.getThreadId() || 'unknown');
   }
 
   /**
@@ -106,7 +164,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
    * Called after tool execution modifies the canvas
    */
   async broadcastCanvasUpdate(): Promise<void> {
-    const canvasId = this.name;
+    const canvasId = this.getCanvasId();
     if (!canvasId) return;
 
     const logger = this.getLogger();
@@ -125,11 +183,28 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   }
 
   /**
+   * Get recent messages from this thread (for cross-thread context sharing)
+   * This is an RPC method that can be called by sibling agents
+   *
+   * @param limit - Maximum number of messages to return
+   * @returns Array of simplified messages (role + text content)
+   */
+  async getRecentMessages(limit = 10): Promise<Array<{ role: string; content: string }>> {
+    // this.messages is provided by AIChatAgent from the SDK
+    const messages = this.messages.slice(-limit);
+
+    return messages.map((msg) => ({
+      role: msg.role,
+      content: this.getMessageText(msg),
+    }));
+  }
+
+  /**
    * Get canvas context for system prompt
    * Also broadcasts canvas state to clients for initial sync
    */
   private async getCanvasContext(): Promise<string> {
-    const canvasId = this.name;
+    const canvasId = this.getCanvasId();
     const logger = this.getLogger();
 
     if (!canvasId) {
@@ -189,10 +264,13 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   ): Promise<Response | undefined> {
     const logger = this.getLogger();
     const metrics = this.getMetrics();
-    const sessionId = this.name || 'unknown';
+    const canvasId = this.getCanvasId();
+    const threadId = this.getThreadId();
+    const sessionId = threadId || 'unknown';
 
     logger.info('Chat message received', {
-      canvasId: this.name,
+      threadId,
+      canvasId,
       messageCount: this.messages.length,
       hasAccountId: !!this.env.CF_ACCOUNT_ID,
       hasGatewayId: !!this.env.CF_GATEWAY_ID,
@@ -204,10 +282,25 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     this.setStatus('thinking', 'Processing your message...');
 
     try {
-      // Get canvas context
+      // Get canvas context and thread summaries for cross-thread context
       this.setStatus('searching', 'Gathering context...');
       const canvasContext = await this.getCanvasContext();
-      const systemPrompt = buildSystemPrompt(canvasContext);
+
+      // Fetch thread summaries for cross-thread context sharing
+      const canvasId = this.getCanvasId();
+      const threadId = this.getThreadId();
+      let threadSummaries: Array<{ id: string; title: string | null; summary: string | null }> = [];
+
+      if (canvasId) {
+        try {
+          const stub = this.getCanvasStub(canvasId);
+          threadSummaries = await stub.getThreadSummaries();
+        } catch (error) {
+          logger.warn('Failed to fetch thread summaries', { error });
+        }
+      }
+
+      const systemPrompt = buildSystemPrompt(canvasContext, threadSummaries, threadId);
 
       // Create Anthropic client via AI Gateway (per design.md specification)
       // If CF_AIG_TOKEN is set, the gateway has Authenticated Gateway enabled
@@ -240,8 +333,8 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
       // Create executor context for tool execution
       const executorContext: ExecutorContext = {
-        canvasId: this.name || '',
-        canvasStub: this.getCanvasStub(this.name || ''),
+        canvasId,
+        canvasStub: this.getCanvasStub(canvasId),
         env: this.env,
         logger,
         setStatus: (status, message) => this.setStatus(status, message),

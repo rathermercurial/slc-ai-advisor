@@ -43,7 +43,18 @@ Issue → Participants → Activities → Outputs → Short-term Outcomes → Me
 - Reference the impact model when discussing social outcomes
 - Be encouraging but honest about gaps in the canvas
 - Keep responses concise and actionable
-`;
+
+{previousDiscussions}`;
+
+/**
+ * Thread summaries placeholder - replaced with actual summaries when available
+ */
+const PREVIOUS_DISCUSSIONS_SECTION = `## Previous Discussions
+The user has had other conversations about this canvas. Here are summaries:
+
+{threadSummaries}
+
+Use the get_thread_context tool if you need more details from a specific thread.`;
 
 /**
  * Format canvas state for inclusion in system prompt
@@ -167,8 +178,51 @@ Start with a natural, friendly conversation. Do NOT list all the sections or ove
 }
 
 /**
- * Build system prompt with canvas context
+ * Thread summary for system prompt
  */
-export function buildSystemPrompt(canvasContext: string): string {
-  return SYSTEM_PROMPT.replace('{canvasContext}', canvasContext);
+interface ThreadSummary {
+  id: string;
+  title: string | null;
+  summary: string | null;
+}
+
+/**
+ * Format thread summaries for inclusion in system prompt
+ */
+function formatThreadSummaries(summaries: ThreadSummary[], currentThreadId: string): string {
+  // Filter out current thread and threads without summaries
+  const relevantSummaries = summaries.filter(
+    (s) => s.id !== currentThreadId && s.summary
+  );
+
+  if (relevantSummaries.length === 0) {
+    return '';
+  }
+
+  const formatted = relevantSummaries
+    .map((s) => `- **${s.title || 'Untitled'}**: ${s.summary}`)
+    .join('\n');
+
+  return PREVIOUS_DISCUSSIONS_SECTION.replace('{threadSummaries}', formatted);
+}
+
+/**
+ * Build system prompt with canvas context and optional thread summaries
+ */
+export function buildSystemPrompt(
+  canvasContext: string,
+  threadSummaries?: ThreadSummary[],
+  currentThreadId?: string
+): string {
+  let prompt = SYSTEM_PROMPT.replace('{canvasContext}', canvasContext);
+
+  // Add thread summaries if available
+  if (threadSummaries && threadSummaries.length > 0 && currentThreadId) {
+    const discussionsSection = formatThreadSummaries(threadSummaries, currentThreadId);
+    prompt = prompt.replace('{previousDiscussions}', discussionsSection);
+  } else {
+    prompt = prompt.replace('{previousDiscussions}', '');
+  }
+
+  return prompt;
 }

@@ -69,7 +69,17 @@ MVP simplification: Chat-primary interface. Visual canvas editor deferred to pos
   - Execute tools that modify CanvasDO
   - Update status via `setState()` (syncs to frontend)
   - Store conversation history in own `this.sql`
+  - Manage session lifecycle (new → in_progress → paused → complete)
 - **State:** conversation, message tables (agent's own DB)
+- **AgentState (synced to clients):**
+  - `status`: 'idle' | 'thinking' | 'searching' | 'updating' | 'error'
+  - `statusMessage`: string
+  - `canvas`: CanvasState | null
+  - `canvasId`, `threadId`: string | null
+  - `toneProfile`: 'beginner' | 'experienced' (P1)
+  - `sessionStatus`: 'new' | 'in_progress' | 'paused' | 'complete' (P1)
+  - `sessionStartedAt`: string | null (P1)
+  - `completionPercentage`: number (P1)
 - **Files:** `worker/agents/SLCAgent.ts`
 
 ### CanvasDO (extends DurableObject)
@@ -526,10 +536,11 @@ async updateImpactModel(sessionId: string, field: string, content: string): Prom
 
 ### External
 - **Libraries:**
-  - `agents` ^0.2.32 (Cloudflare Agents SDK)
-  - `@anthropic-ai/sdk` ^0.39.0 (Anthropic SDK - routed through AI Gateway)
+  - `agents` ^0.3.0 (Cloudflare Agents SDK)
+  - `@anthropic-ai/sdk` ^0.71.2 (Anthropic SDK - routed through AI Gateway)
+  - `ai` ^6.0.3 (Vercel AI SDK - streaming utilities)
   - `gray-matter` ^4.0.3 (frontmatter parsing)
-  - `zod` ^4.0.0 (response validation - v4 for performance + JSON Schema export)
+  - `zod` ^4.2.1 (response validation - v4 for performance + JSON Schema export)
 - **APIs:**
   - Anthropic Claude API (via AI Gateway `/anthropic` endpoint)
   - Workers AI (embeddings: @cf/baai/bge-m3, 1024 dimensions)
@@ -552,7 +563,7 @@ const client = new Anthropic({
 });
 
 const response = await client.messages.create({
-  model: "claude-sonnet-4-5-20250514",
+  model: "claude-sonnet-4-20250514",
   max_tokens: 1024,
   messages: [{ role: "user", content: "Hello" }]
 });
@@ -562,6 +573,21 @@ const response = await client.messages.create({
 - `ANTHROPIC_API_KEY` - Anthropic API key (secret)
 - `CF_ACCOUNT_ID` - Cloudflare account ID
 - `CF_GATEWAY_ID` - AI Gateway ID (e.g., "slc-advisor")
+- `CF_AIG_TOKEN` - AI Gateway auth token (optional, for authenticated gateway)
+
+### Observability
+
+Structured logging and metrics via Analytics Engine.
+
+**Logger** (`worker/observability/logger.ts`):
+- JSON structured logging with request ID tracing
+- Log levels: `debug`, `info`, `warn`, `error`
+- Timing: `logger.startTimer(op)` → `.end(meta)` returns duration in ms
+
+**Metrics** (`worker/observability/metrics.ts`):
+- Analytics Engine integration for event tracking
+- Events: `message_received`, `message_sent`, `tool_executed`, `canvas_updated`, `error`
+- Timing: `metrics.startTimer(event, data)` → returns end function
 
 ### Vectorize Setup
 

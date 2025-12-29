@@ -55,6 +55,29 @@ See [multi-canvas-architecture.md](spec/slc-ai-advisor-mvp/multi-canvas-architec
 - **Model**: `claude-sonnet-4-20250514`
 - **Secrets**: `CF_ACCOUNT_ID`, `CF_GATEWAY_ID`, `ANTHROPIC_API_KEY` (required), `CF_AIG_TOKEN` (optional)
 
+## Package Versions
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| agents | ^0.3.0 | Cloudflare Agents SDK |
+| @anthropic-ai/sdk | ^0.71.2 | Claude API client |
+| ai | ^6.0.3 | Vercel AI SDK (streaming) |
+| zod | ^4.2.1 | Schema validation |
+
+## Observability
+
+Structured logging and metrics via Analytics Engine. See `worker/observability/`.
+
+### Logger
+- `createLogger(component, requestId)` - JSON structured logging
+- Log levels: `debug`, `info`, `warn`, `error`
+- Timer: `logger.startTimer(op)` → `.end(meta)` returns duration in ms
+
+### Metrics
+- `createMetrics(analytics)` - Analytics Engine integration
+- Events: `message_received`, `message_sent`, `tool_executed`, `canvas_updated`, `error`
+- Timer: `metrics.startTimer(event, data)` → returns end function
+
 ## Spec Documents
 
 | Document | Purpose |
@@ -79,7 +102,11 @@ worker/
   agents/           # SLCAgent (AIChatAgent, one per thread)
   config/           # Configuration (tone-profiles.ts)
   durable-objects/  # CanvasDO (canvas state + thread registry)
+  observability/    # Logging (logger.ts) and metrics (metrics.ts)
   routes/           # API route handlers (canvas.ts, session.ts)
+docs/               # Developer documentation
+  BACKEND.md        # Backend architecture guide with Mermaid diagrams
+  API.md            # REST API reference with curl examples
 knowledge/          # Knowledge base
   programs/         # Learning journeys (generic/, p2p/) → Vectorize namespaces
   tags/             # Concepts & dimensions → Vectorize metadata

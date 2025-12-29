@@ -19,8 +19,8 @@ interface VentureHeaderProps {
   showProfile?: boolean;
   /** Called when profile panel toggle is clicked */
   onProfileClick?: () => void;
-  /** Current model being hovered (from Canvas) */
-  modelIndicator?: string | null;
+  /** Helper text displayed in header (model indicator, button hints, status) */
+  helperText?: string | null;
 }
 
 const MODEL_LABELS: Record<string, string> = {
@@ -35,7 +35,7 @@ export function VentureHeader({
   onNameChange,
   showProfile = false,
   onProfileClick,
-  modelIndicator,
+  helperText,
 }: VentureHeaderProps) {
   return (
     <div className="venture-header">
@@ -68,11 +68,11 @@ export function VentureHeader({
           />
         </div>
 
-        {/* Right: Helper text / model indicator area */}
+        {/* Right: Helper text area */}
         <div className="venture-header-right">
-          {modelIndicator && (
-            <span className={`venture-model-indicator ${modelIndicator}`}>
-              {MODEL_LABELS[modelIndicator] || ''}
+          {helperText && (
+            <span className={`venture-helper-text ${MODEL_LABELS[helperText] ? helperText : ''}`}>
+              {MODEL_LABELS[helperText] || helperText}
             </span>
           )}
         </div>

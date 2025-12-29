@@ -29,6 +29,7 @@ export interface ExportMenuProps {
   onSaveChat?: () => void;
   disabled?: boolean;
   chatDisabled?: boolean;
+  onHoverChange?: (text: string | null) => void;
 }
 
 /**
@@ -42,6 +43,7 @@ export function ExportMenu({
   onSaveChat,
   disabled = false,
   chatDisabled = false,
+  onHoverChange,
 }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -85,11 +87,12 @@ export function ExportMenu({
         type="button"
         className="export-menu-trigger"
         onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => onHoverChange?.('Copy & Export')}
+        onMouseLeave={() => onHoverChange?.(null)}
         disabled={disabled}
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-label="Copy & Export"
-        title="Copy & Export"
       >
         <Download size={18} />
       </button>

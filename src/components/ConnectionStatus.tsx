@@ -7,20 +7,28 @@
  * - Disconnected: Gray dim orb, no animation
  */
 
-import { useState } from 'react';
-
 interface ConnectionStatusProps {
   readyState: number;
+  isGenerating?: boolean;
+  onHoverChange?: (text: string | null) => void;
 }
 
-export function ConnectionStatus({ readyState }: ConnectionStatusProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
-
+export function ConnectionStatus({ readyState, isGenerating = false, onHoverChange }: ConnectionStatusProps) {
   const connected = readyState === 1;
   const connecting = readyState === 0;
 
-  const statusClass = connected ? 'connected' : connecting ? 'connecting' : 'disconnected';
-  const statusText = connected
+  // Generating takes priority over connected for visual state
+  const statusClass = isGenerating
+    ? 'generating'
+    : connected
+    ? 'connected'
+    : connecting
+    ? 'connecting'
+    : 'disconnected';
+
+  const statusText = isGenerating
+    ? 'AI is thinking...'
+    : connected
     ? 'AI Agent Connected'
     : connecting
     ? 'Connecting to AI...'
@@ -30,19 +38,15 @@ export function ConnectionStatus({ readyState }: ConnectionStatusProps) {
     <span
       className={`connection-orb ${statusClass}`}
       aria-label={statusText}
-      title={statusText}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-      onFocus={() => setShowTooltip(true)}
-      onBlur={() => setShowTooltip(false)}
+      onMouseEnter={() => onHoverChange?.(statusText)}
+      onMouseLeave={() => onHoverChange?.(null)}
+      onFocus={() => onHoverChange?.(statusText)}
+      onBlur={() => onHoverChange?.(null)}
       tabIndex={0}
       role="status"
     >
       <span className="connection-orb-core" />
-      {(connected || connecting) && <span className="connection-orb-ring" />}
-      {showTooltip && (
-        <span className="connection-orb-tooltip">{statusText}</span>
-      )}
+      {(connected || connecting || isGenerating) && <span className="connection-orb-ring" />}
     </span>
   );
 }

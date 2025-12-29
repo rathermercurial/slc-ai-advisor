@@ -180,6 +180,9 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
       setCanvases((prev) => [newCanvas, ...prev]);
       updateCanvasIndex((prev) => [newCanvas, ...prev]);
 
+      // Dispatch event for header sync
+      window.dispatchEvent(new Event('canvasIndexUpdated'));
+
       // Navigate to new canvas
       navigate(`/canvas/${data.canvasId}`);
     } catch (err) {
@@ -202,94 +205,93 @@ export function CanvasList({ collapsed, onToggleCollapse }: CanvasListProps) {
 
   return (
     <div className="sidebar-section">
-      <button
-        type="button"
-        className="sidebar-section-header"
-        onClick={onToggleCollapse}
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? 'Expand canvases section' : 'Collapse canvases section'}
-      >
-        <span className="sidebar-section-toggle">
-          {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-        </span>
-        <span className="sidebar-section-title">CANVASES</span>
-      </button>
+      <div className="sidebar-section-header">
+        <button
+          type="button"
+          className="sidebar-section-title-btn"
+          onClick={onToggleCollapse}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand canvases section' : 'Collapse canvases section'}
+        >
+          <span className="sidebar-section-toggle">
+            {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+          </span>
+          <span className="sidebar-section-title">CANVASES</span>
+        </button>
+        <div className="sidebar-section-controls">
+          <button
+            type="button"
+            className="sidebar-add-btn"
+            onClick={handleCreateCanvas}
+            title="New Canvas"
+          >
+            +
+          </button>
+          <FilterDropdown value={filter} onChange={setFilter} />
+        </div>
+      </div>
 
       {!collapsed && (
-        <>
-          <div className="sidebar-section-controls">
-            <button
-              type="button"
-              className="sidebar-add-btn"
-              onClick={handleCreateCanvas}
-              title="New Canvas"
-            >
-              +
-            </button>
-            <FilterDropdown value={filter} onChange={setFilter} />
-          </div>
-
-          <div className="sidebar-list">
-        {isLoading ? (
-          <div className="sidebar-list-loading">Loading...</div>
-        ) : filteredCanvases.length === 0 ? (
-          <div className="sidebar-list-empty">No canvases</div>
-        ) : (
-          filteredCanvases.map((canvas) => (
-            <div
-              key={canvas.id}
-              className={`sidebar-list-item ${canvas.id === canvasId ? 'active' : ''}`}
-              onClick={() => handleCanvasClick(canvas.id)}
-            >
-              <button
-                type="button"
-                className={`sidebar-star-btn ${canvas.starred ? 'starred' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleStar(canvas.id, canvas.starred);
-                }}
-                title={canvas.starred ? 'Unstar' : 'Star'}
-                aria-label={canvas.starred ? 'Unstar canvas' : 'Star canvas'}
+        <div className="sidebar-list">
+          {isLoading ? (
+            <div className="sidebar-list-loading">Loading...</div>
+          ) : filteredCanvases.length === 0 ? (
+            <div className="sidebar-list-empty">No canvases</div>
+          ) : (
+            filteredCanvases.map((canvas) => (
+              <div
+                key={canvas.id}
+                className={`sidebar-list-item ${canvas.id === canvasId ? 'active' : ''}`}
+                onClick={() => handleCanvasClick(canvas.id)}
               >
-                <Star size={14} fill={canvas.starred ? 'currentColor' : 'none'} />
-              </button>
-              <InlineEdit
-                value={canvas.name}
-                onSave={(name) => handleRename(canvas.id, name)}
-                className="sidebar-item-name"
-              />
-              {!canvas.archived ? (
                 <button
                   type="button"
-                  className="sidebar-archive-btn"
+                  className={`sidebar-star-btn ${canvas.starred ? 'starred' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleArchive(canvas.id);
+                    handleToggleStar(canvas.id, canvas.starred);
                   }}
-                  title="Archive"
-                  aria-label="Archive canvas"
+                  title={canvas.starred ? 'Unstar' : 'Star'}
+                  aria-label={canvas.starred ? 'Unstar canvas' : 'Star canvas'}
                 >
-                  <Archive size={14} />
+                  <Star size={14} fill={canvas.starred ? 'currentColor' : 'none'} />
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  className="sidebar-unarchive-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // TODO: Implement unarchive
-                  }}
-                  title="Restore from archive"
-                  aria-label="Restore canvas from archive"
-                >
-                  <ArchiveRestore size={14} />
-                </button>
-              )}
-            </div>
-          ))
-        )}
-          </div>
-        </>
+                <InlineEdit
+                  value={canvas.name}
+                  onSave={(name) => handleRename(canvas.id, name)}
+                  className="sidebar-item-name"
+                />
+                {!canvas.archived ? (
+                  <button
+                    type="button"
+                    className="sidebar-archive-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArchive(canvas.id);
+                    }}
+                    title="Archive"
+                    aria-label="Archive canvas"
+                  >
+                    <Archive size={14} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="sidebar-unarchive-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Implement unarchive
+                    }}
+                    title="Restore from archive"
+                    aria-label="Restore canvas from archive"
+                  >
+                    <ArchiveRestore size={14} />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       )}
     </div>
   );

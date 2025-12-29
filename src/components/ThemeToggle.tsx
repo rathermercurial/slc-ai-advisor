@@ -16,6 +16,7 @@ export type Theme = 'light' | 'dark' | 'midnight' | 'daybreak';
 interface ThemeToggleProps {
   theme: Theme;
   onToggle: () => void;
+  onHoverChange?: (text: string | null) => void;
 }
 
 const themeIcons: Record<Theme, React.ReactNode> = {
@@ -32,15 +33,17 @@ const themeLabels: Record<Theme, string> = {
   daybreak: 'light',
 };
 
-export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
+export function ThemeToggle({ theme, onToggle, onHoverChange }: ThemeToggleProps) {
   const nextTheme = themeLabels[theme];
+  const helperText = `Switch to ${nextTheme} mode`;
 
   return (
     <button
       className={`theme-toggle-gradient ${theme}`}
       onClick={onToggle}
-      title={`Switch to ${nextTheme} mode`}
-      aria-label={`Switch to ${nextTheme} mode`}
+      onMouseEnter={() => onHoverChange?.(helperText)}
+      onMouseLeave={() => onHoverChange?.(null)}
+      aria-label={helperText}
     >
       <span className="theme-toggle-icon-wrapper">
         {themeIcons[theme]}

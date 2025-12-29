@@ -48,6 +48,10 @@ interface CanvasContextValue {
   agentStatusMessage: string;
   /** Whether agent is connected */
   isConnected: boolean;
+  /** Whether AI is currently generating a response */
+  isGenerating: boolean;
+  /** Set generating state (from Chat component) */
+  setGenerating: (generating: boolean) => void;
   /** Set of sections currently being edited locally */
   editingSections: Set<CanvasSectionId>;
   /** Mark a section as being edited (prevents overwrite from sync) */
@@ -142,6 +146,7 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const [agentStatus, setAgentStatus] = useState<AgentState['status']>('idle');
   const [agentStatusMessage, setAgentStatusMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [editingSections, setEditingSections] = useState<Set<CanvasSectionId>>(new Set());
 
   // History management
@@ -187,6 +192,11 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   // Set connection status
   const setConnected = useCallback((connected: boolean) => {
     setIsConnected(connected);
+  }, []);
+
+  // Set generating status (called by Chat component)
+  const setGenerating = useCallback((generating: boolean) => {
+    setIsGenerating(generating);
   }, []);
 
   // Save section locally and to server
@@ -344,6 +354,8 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     agentStatus,
     agentStatusMessage,
     isConnected,
+    isGenerating,
+    setGenerating,
     editingSections,
     setEditing,
     updateFromAgent,

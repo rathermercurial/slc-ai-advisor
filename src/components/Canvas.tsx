@@ -509,6 +509,7 @@ export function Canvas({ canvasId, hoveredModel: externalHoveredModel, onHovered
           isUpdating={recentlyUpdated.has('impact')}
           isHighlighted={hoveredModel === 'impact'}
           autoFocusFirst={impactJustOpened}
+          onHoverChange={(isHovered) => setHoveredModel(isHovered ? 'impact' : null)}
         />
       )}
     </>

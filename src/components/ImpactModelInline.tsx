@@ -13,6 +13,8 @@ interface ImpactModelInlineProps {
   isHighlighted?: boolean;
   /** Auto-focus first field when mounted */
   autoFocusFirst?: boolean;
+  /** Called when hover state changes */
+  onHoverChange?: (isHovered: boolean) => void;
 }
 
 // Tab order for Impact Model fields (boustrophedon: left-to-right then right-to-left)
@@ -32,7 +34,7 @@ const FIELD_TAB_ORDER: ImpactModelField[] = [
  * Shows the causality chain: Issue → Participants → Activities → Outputs
  *                            Short-term → Medium-term → Long-term → Impact
  */
-export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlighted, autoFocusFirst }: ImpactModelInlineProps) {
+export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlighted, autoFocusFirst, onHoverChange }: ImpactModelInlineProps) {
   const [editingField, setEditingField] = useState<ImpactModelField | null>(null);
   const [draft, setDraft] = useState<ImpactModel>(impactModel);
 
@@ -185,7 +187,11 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlight
   };
 
   return (
-    <div className={`impact-inline ${isHighlighted ? 'highlighted' : ''}`}>
+    <div
+      className={`impact-inline ${isHighlighted ? 'highlighted' : ''}`}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
+    >
       <div className="impact-inline-header">
         <span className="impact-inline-title">Impact Model</span>
       </div>

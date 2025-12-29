@@ -59,7 +59,7 @@
   --transition-slow: 0.3s ease;
 
   /* Spacing */
-  --section-gap: 0.5rem; /* 8px - consistent gap between major sections */
+  --section-gap: 0.8rem; /* 13px - breathing room between major sections */
 
   /* Focus ring */
   --focus-ring: 0 0 0 2px var(--bg-secondary), 0 0 0 4px var(--accent-color);
@@ -217,7 +217,7 @@ code, .mono {
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.5rem 0.75rem 1.5rem; /* Extra 5px at top */
   background: var(--bg-secondary);
   color: var(--text-primary);
   display: flex;
@@ -263,6 +263,14 @@ code, .mono {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
+  cursor: default;
+  transition: transform 0.2s ease, text-shadow 0.2s ease, color 0.2s ease;
+}
+
+.app-header h1:hover {
+  transform: scale(1.03);
+  color: var(--text-primary);
+  text-shadow: 0 0 8px var(--accent-color-muted, rgba(91, 155, 213, 0.3));
 }
 
 .app-header-actions {
@@ -453,8 +461,8 @@ code, .mono {
 
 .chat-collapse-toggle {
   position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 0.25rem;
+  left: 0.25rem;
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -1169,11 +1177,16 @@ code, .mono {
   font-family: inherit;
   background: var(--bg-tertiary);
   color: var(--text-primary);
+  transition: box-shadow var(--transition-fast);
+}
+
+.chat-input:hover {
+  box-shadow: 0 0 0 1px var(--accent-color), 0 0 8px rgba(91, 155, 213, 0.15);
 }
 
 .chat-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color), 0 0 12px rgba(91, 155, 213, 0.25);
 }
 
 .chat-input::placeholder {
@@ -1776,6 +1789,22 @@ code, .mono {
 .connection-orb.disconnected .connection-orb-core {
   background: #6b7280;
   opacity: 0.5;
+}
+
+/* Generating state - blue with active glow */
+.connection-orb.generating .connection-orb-core {
+  background: #3b82f6;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.7);
+  animation: orbCorePulse 0.8s ease-in-out infinite;
+}
+
+.connection-orb.generating .connection-orb-ring {
+  border: 2px solid #3b82f6;
+  animation: orbPulse 1s ease-in-out infinite;
+}
+
+.connection-orb.generating:hover .connection-orb-core {
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.9);
 }
 
 /* Hover state - brighten and scale */
@@ -2499,11 +2528,11 @@ code, .mono {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 0.5rem;
+  padding-top: 0.25rem;
 }
 
 .sidebar-header {
-  padding: 0.5rem;
+  padding: 0.25rem;
   display: flex;
   justify-content: flex-end;
   /* No border - use spacing */
@@ -2542,10 +2571,17 @@ code, .mono {
 }
 
 .sidebar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.sidebar-section-title-btn {
   /* Button reset */
   background: none;
   border: none;
-  width: 100%;
   font: inherit;
   color: inherit;
   text-align: left;
@@ -2553,14 +2589,14 @@ code, .mono {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0;
   cursor: pointer;
   user-select: none;
-  transition: background 0.1s ease;
+  transition: opacity 0.1s ease;
 }
 
-.sidebar-section-header:hover {
-  background: var(--bg-tertiary);
+.sidebar-section-title-btn:hover {
+  opacity: 0.7;
 }
 
 .sidebar-section-toggle {
@@ -2580,9 +2616,7 @@ code, .mono {
 .sidebar-section-controls {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  /* Reduced vertical whitespace */
+  gap: 0.25rem;
 }
 
 /* ============================================
@@ -3086,6 +3120,21 @@ code, .mono {
   text-align: center;
 }
 
+/* Subtle hint that venture name is editable */
+.inline-edit-text.venture-name-edit,
+.inline-edit-input.venture-name-edit {
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  border-bottom: 2px dashed transparent;
+  padding-bottom: 2px;
+}
+
+.inline-edit-text.venture-name-edit:hover {
+  background: transparent !important;
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  transform: scale(1.02);
+}
+
 .venture-stage-dropdown {
   position: relative;
 }
@@ -3206,64 +3255,64 @@ code, .mono {
   min-width: 36px;
 }
 
-/* Model indicator in header (from Canvas hover) */
-.venture-model-indicator {
+/* Helper text in header (button hints, model indicator, status) */
+.venture-helper-text {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   transition: color 0.15s ease;
 }
 
 /* Customer model - blue to match canvas highlights */
-.venture-model-indicator.customer {
+.venture-helper-text.customer {
   color: #2563eb;
 }
 
-[data-theme='dark'] .venture-model-indicator.customer {
+[data-theme='dark'] .venture-helper-text.customer {
   color: #60a5fa;
 }
 
-[data-theme='midnight'] .venture-model-indicator.customer {
+[data-theme='midnight'] .venture-helper-text.customer {
   color: #93c5fd;
 }
 
-[data-theme='daybreak'] .venture-model-indicator.customer {
+[data-theme='daybreak'] .venture-helper-text.customer {
   color: #1d4ed8;
 }
 
 /* Economic model - amber to match canvas highlights */
-.venture-model-indicator.economic {
+.venture-helper-text.economic {
   color: #d97706;
 }
 
-[data-theme='dark'] .venture-model-indicator.economic {
+[data-theme='dark'] .venture-helper-text.economic {
   color: #fbbf24;
 }
 
-[data-theme='midnight'] .venture-model-indicator.economic {
+[data-theme='midnight'] .venture-helper-text.economic {
   color: #fcd34d;
 }
 
-[data-theme='daybreak'] .venture-model-indicator.economic {
+[data-theme='daybreak'] .venture-helper-text.economic {
   color: #b45309;
 }
 
 /* Impact model - purple to match canvas highlights */
-.venture-model-indicator.impact {
+.venture-helper-text.impact {
   color: #9333ea;
 }
 
-[data-theme='dark'] .venture-model-indicator.impact {
+[data-theme='dark'] .venture-helper-text.impact {
   color: #c084fc;
 }
 
-[data-theme='midnight'] .venture-model-indicator.impact {
+[data-theme='midnight'] .venture-helper-text.impact {
   color: #d8b4fe;
 }
 
-[data-theme='daybreak'] .venture-model-indicator.impact {
+[data-theme='daybreak'] .venture-helper-text.impact {
   color: #7e22ce;
 }
 
@@ -3589,6 +3638,16 @@ code, .mono {
   align-items: center;
   gap: 0.375rem;
   margin-bottom: 0.125rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.profile-dim-header:hover .profile-dim-label {
+  color: var(--text-primary);
 }
 
 .profile-dim-label {
@@ -3605,24 +3664,23 @@ code, .mono {
   justify-content: center;
   width: 18px;
   height: 18px;
-  padding: 0;
-  background: transparent;
-  border: none;
   color: var(--text-muted);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast);
 }
 
-.profile-dim-toggle:hover {
+.profile-dim-header:hover .profile-dim-toggle {
   color: var(--text-primary);
-  background: var(--bg-tertiary);
 }
 
 .profile-dim-value {
   font-size: var(--font-size-sm);
   color: var(--text-primary);
   line-height: 1.4;
+  cursor: pointer;
+}
+
+.profile-dim-value:hover {
+  color: var(--slc-accent);
 }
 
 .profile-dim-empty {

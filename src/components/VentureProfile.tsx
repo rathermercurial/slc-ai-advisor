@@ -158,19 +158,18 @@ function DimensionRow({ label, options, selected, onToggle }: DimensionRowProps)
 
   return (
     <div className="profile-dim">
-      <div className="profile-dim-header">
+      <button
+        type="button"
+        className="profile-dim-header"
+        onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+      >
         <span className="profile-dim-label">{label}</span>
-        <button
-          type="button"
-          className="profile-dim-toggle"
-          onClick={() => setExpanded(!expanded)}
-          aria-label={expanded ? 'Collapse options' : 'Expand options'}
-          aria-expanded={expanded}
-        >
+        <span className="profile-dim-toggle">
           {expanded ? <Minus size={14} /> : <Plus size={14} />}
-        </button>
-      </div>
-      <div className="profile-dim-value">{displayText}</div>
+        </span>
+      </button>
+      <div className="profile-dim-value" onClick={() => setExpanded(!expanded)}>{displayText}</div>
       {expanded && (
         <div className="profile-dim-options">
           {options.map(opt => (

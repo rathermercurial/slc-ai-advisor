@@ -4,9 +4,7 @@ import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
 import { ArrowUp, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
-import { StatusBar } from './StatusBar';
 import { ToolInvocationCard } from './ToolInvocationCard';
-import { TypingIndicator } from './TypingIndicator';
 import { useCanvasContext, type AgentState } from '../context';
 
 /**
@@ -94,7 +92,7 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Get canvas context to push agent state updates
-  const { updateFromAgent, setConnected, agentStatus, agentStatusMessage } = useCanvasContext();
+  const { updateFromAgent, setConnected, setGenerating } = useCanvasContext();
 
   // Agent name includes threadId for multi-thread support
   // Format: canvasId or canvasId/threadId
@@ -127,6 +125,11 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
 
   // Determine loading state from status
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  // Sync generating state with context (for orb glow)
+  useEffect(() => {
+    setGenerating(isLoading);
+  }, [isLoading, setGenerating]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -223,11 +226,6 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
         <ConnectionStatus readyState={agent.readyState} />
       </div>
 
-      {/* Agent status bar (when not idle) */}
-      {agentStatus !== 'idle' && (
-        <StatusBar status={agentStatus} message={agentStatusMessage} />
-      )}
-
       {/* Messages */}
       <div className="chat-messages">
         {/* Welcome message when no chat history */}
@@ -273,8 +271,7 @@ Tell me about your social venture idea - what problem are you trying to solve, a
           </div>
         ))}
 
-        {/* Loading indicator */}
-        {isLoading && <TypingIndicator />}
+        {/* Loading state shown via orb glow + header text */}
 
         {/* Error message */}
         {error && (

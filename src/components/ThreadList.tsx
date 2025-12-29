@@ -164,35 +164,35 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
 
   return (
     <div className="sidebar-section">
-      <button
-        type="button"
-        className="sidebar-section-header"
-        onClick={onToggleCollapse}
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? 'Expand threads section' : 'Collapse threads section'}
-      >
-        <span className="sidebar-section-toggle">
-          {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-        </span>
-        <span className="sidebar-section-title">THREADS</span>
-      </button>
+      <div className="sidebar-section-header">
+        <button
+          type="button"
+          className="sidebar-section-title-btn"
+          onClick={onToggleCollapse}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand threads section' : 'Collapse threads section'}
+        >
+          <span className="sidebar-section-toggle">
+            {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+          </span>
+          <span className="sidebar-section-title">THREADS</span>
+        </button>
+        <div className="sidebar-section-controls">
+          <button
+            type="button"
+            className="sidebar-add-btn"
+            onClick={handleCreateThread}
+            title="New Thread"
+          >
+            +
+          </button>
+          <FilterDropdown value={filter} onChange={setFilter} />
+        </div>
+      </div>
 
       {!collapsed && (
-        <>
-          <div className="sidebar-section-controls">
-            <button
-              type="button"
-              className="sidebar-add-btn"
-              onClick={handleCreateThread}
-              title="New Thread"
-            >
-              +
-            </button>
-            <FilterDropdown value={filter} onChange={setFilter} />
-          </div>
-
-          <div className="sidebar-list">
-            {isLoading ? (
+        <div className="sidebar-list">
+          {isLoading ? (
               <div className="sidebar-list-loading">Loading...</div>
             ) : threads.length === 0 ? (
               <div className="sidebar-list-empty">No threads</div>
@@ -250,8 +250,7 @@ export function ThreadList({ collapsed, onToggleCollapse }: ThreadListProps) {
                 </div>
               ))
             )}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

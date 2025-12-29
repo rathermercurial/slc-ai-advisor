@@ -76,7 +76,7 @@ function AppContent({
   theme: Theme;
   toggleTheme: () => void;
 }) {
-  const { canvas, undo, redo, canUndo, canRedo, isConnected } = useCanvasContext();
+  const { canvas, undo, redo, canUndo, canRedo, isConnected, isGenerating } = useCanvasContext();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // Canvas/chat split percentage (stored in localStorage)
@@ -99,6 +99,22 @@ function AppContent({
     }
     return 'Untitled Venture';
   });
+
+  // Sync venture name when canvasId changes (component remounts via key)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('canvasIndex');
+      if (stored) {
+        const canvases = JSON.parse(stored) as CanvasMeta[];
+        const current = canvases.find((c) => c.id === canvasId);
+        if (current) {
+          setVentureName(current.name);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to sync canvas name on mount:', e);
+    }
+  }, [canvasId]);
 
   // Listen for name changes from sidebar
   useEffect(() => {
@@ -131,6 +147,9 @@ function AppContent({
 
   // Model indicator (lifted from Canvas for header display)
   const [hoveredModel, setHoveredModel] = useState<string | null>(null);
+
+  // Helper text for header (replaces native tooltips)
+  const [helperText, setHelperText] = useState<string | null>(null);
 
   // Sidebar width in pixels (stored in localStorage)
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -334,7 +353,8 @@ function AppContent({
             className="header-icon-btn"
             onClick={undo}
             disabled={!canUndo}
-            title="Undo (Cmd+Z)"
+            onMouseEnter={() => setHelperText('Undo (Cmd+Z)')}
+            onMouseLeave={() => setHelperText(null)}
             aria-label="Undo"
           >
             <Undo2 size={18} />
@@ -343,7 +363,8 @@ function AppContent({
             className="header-icon-btn"
             onClick={redo}
             disabled={!canRedo}
-            title="Redo (Cmd+Shift+Z)"
+            onMouseEnter={() => setHelperText('Redo (Cmd+Shift+Z)')}
+            onMouseLeave={() => setHelperText(null)}
             aria-label="Redo"
           >
             <Redo2 size={18} />
@@ -356,9 +377,18 @@ function AppContent({
             onSaveChat={handleSaveChat}
             disabled={!canvas}
             chatDisabled={chatMessages.length === 0}
+            onHoverChange={setHelperText}
           />
-          <ConnectionStatus readyState={isConnected ? 1 : 0} />
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <ConnectionStatus
+            readyState={isConnected ? 1 : 0}
+            isGenerating={isGenerating}
+            onHoverChange={setHelperText}
+          />
+          <ThemeToggle
+            theme={theme}
+            onToggle={toggleTheme}
+            onHoverChange={setHelperText}
+          />
         </div>
       </header>
 
@@ -381,7 +411,7 @@ function AppContent({
               onNameChange={handleNameChange}
               showProfile={showProfile}
               onProfileClick={handleProfileClick}
-              modelIndicator={hoveredModel}
+              helperText={helperText || (isGenerating ? 'Thinking...' : hoveredModel)}
             />
             {showProfile && (
               <VentureProfile
@@ -488,7 +518,7 @@ function CanvasRoute({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => 
 
   return (
     <ErrorBoundary>
-      <CanvasProvider canvasId={canvasId}>
+      <CanvasProvider key={canvasId} canvasId={canvasId}>
         <AppContent
           canvasId={canvasId}
           threadId={activeThreadId || undefined}

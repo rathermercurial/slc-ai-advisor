@@ -41,8 +41,32 @@
 - PR #45: Phase 1 (Streaming, tools, frontend integration)
 - PR #50: Unified knowledge tools
 - Phases 2-5 on `feature/backend`
+- PR #75: Multi-canvas/thread support
+- PR #76: P1 Configuration & State (tone profiles, session lifecycle)
 
 **Ready for:** Demo milestone - pending KB indexing (A2)
+
+---
+
+## Post-Demo Enhancements
+
+| Priority | Feature | Issue | Status |
+|----------|---------|-------|--------|
+| **P0** | Tool Modularization | #70 | ✅ COMPLETE |
+| **P1** | Configuration & State - Tone profiles, session lifecycle | #66 | ✅ COMPLETE |
+| **P3** | Documentation - Backend docs, API reference, spec updates | #68 | 🔄 IN PROGRESS |
+| **A1-A5** | Deferred Items - Various A-series improvements | #65 | ⏸️ BACKLOG |
+
+**P1 Features (PR #76):**
+- Tone profiles (`beginner` | `experienced`) with safe defaults
+- AgentState extended with session lifecycle
+- Session status: `new` → `in_progress` → `paused` → `complete`
+- SLC methodology skills (`.claude/skills/slc-methodology/`)
+
+**P3 Documentation (Issue #68):**
+- `docs/BACKEND.md` - Architecture with Mermaid diagrams
+- `docs/API.md` - REST API with curl examples
+- Updated CLAUDE.md, requirements.md, design.md, tasks.md
 
 ---
 
@@ -76,4 +100,7 @@
 
 - Requirements: `spec/slc-ai-advisor-mvp/requirements.md`
 - Design: `spec/slc-ai-advisor-mvp/design.md`
-- Architecture notes: `tmp/backend-suggestions.md`
+- Multi-canvas: `spec/slc-ai-advisor-mvp/multi-canvas-architecture.md`
+- API Contracts: `spec/api-contracts.md`
+- Backend Docs: `docs/BACKEND.md`
+- API Reference: `docs/API.md`

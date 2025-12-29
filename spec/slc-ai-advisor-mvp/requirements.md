@@ -256,6 +256,25 @@ Without this: User repeats context every query, no canvas persistence, poor expe
 
 With this: Natural conversation, contextual responses, canvas continuity.
 
+### 8. Multi-Canvas & Thread Support
+
+Users must be able to:
+- Create multiple canvases to work on different ventures
+- Have multiple conversation threads per canvas
+- Switch between canvases without losing state
+- See thread history and summaries
+
+See [multi-canvas-architecture.md](multi-canvas-architecture.md) for implementation details.
+
+### 9. Configuration & Session State (P1)
+
+The system must support:
+- **Tone profiles:** Adjust communication style (`beginner` vs `experienced`)
+- **Session lifecycle:** Track session status (`new` → `in_progress` → `paused` → `complete`)
+- **Completion tracking:** Real-time canvas completion percentage
+
+See `worker/config/tone-profiles.ts` for tone profile implementation.
+
 ## Success Criteria
 
 ### Milestones

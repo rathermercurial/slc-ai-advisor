@@ -57,9 +57,11 @@ tag = "v2"
 new_sqlite_classes = ["CanvasDO", "SLCAgent"]
 deleted_classes = ["UserSession"]
 
-# Note: Thread table and canvas_meta updates (Issue #65) are handled internally
-# by CanvasDO's ensureInitialized() using CREATE TABLE IF NOT EXISTS.
-# No wrangler migration needed - schema is self-migrating.
+# Note: Thread table and canvas_meta column additions (Issue #65) are handled
+# internally by CanvasDO's ensureInitialized() method:
+# - New tables: CREATE TABLE IF NOT EXISTS
+# - New columns: PRAGMA table_info + ALTER TABLE ADD COLUMN
+# No wrangler migration tag needed - avoids gradual deployment conflicts.
 
 # AI Binding for embeddings
 [ai]

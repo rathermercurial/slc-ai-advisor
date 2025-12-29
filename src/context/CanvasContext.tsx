@@ -177,12 +177,20 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
 
   // Update from agent state sync
   const updateFromAgent = useCallback((state: AgentState) => {
+    console.log('[CanvasContext] updateFromAgent called', {
+      hasCanvas: !!state.canvas,
+      newTimestamp: state.canvasUpdatedAt,
+      currentTimestamp: canvasUpdatedAtRef.current,
+      willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
+    });
+
     setAgentStatus(state.status);
     setAgentStatusMessage(state.statusMessage);
 
     // Only update canvas if timestamp changed (actual update)
     // Use refs to avoid stale closure issues with rapid updates
     if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
+      console.log('[CanvasContext] updating canvas state');
       setCanvas(state.canvas);
       setCanvasUpdatedAt(state.canvasUpdatedAt);
 

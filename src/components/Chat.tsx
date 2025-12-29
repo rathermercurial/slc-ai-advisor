@@ -109,6 +109,11 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
     agent: 'slc-agent',
     name: agentName,
     onStateUpdate: (state) => {
+      console.log('[Chat] onStateUpdate received', {
+        status: state.status,
+        hasCanvas: !!state.canvas,
+        canvasUpdatedAt: state.canvasUpdatedAt
+      });
       // Push state to context (includes canvas sync)
       // Use ref to always call latest version of updateFromAgent
       updateFromAgentRef.current(state);

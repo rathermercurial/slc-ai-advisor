@@ -2,15 +2,16 @@
  * VentureProfile Component
  *
  * Compact display of all 7 venture dimensions.
- * Clean, simple layout with dropdowns and multi-selects.
+ * Typography-based design - no pills, consistent interaction.
+ * Each dimension shows selected items; click + to expand options.
  */
 
 import { useState, useCallback } from 'react';
+import { Plus, Minus } from 'lucide-react';
 import type { VentureStage } from '../types/venture';
 
 interface VentureProfileProps {
   canvasId: string;
-  progress: number;
   onClose: () => void;
 }
 
@@ -22,7 +23,6 @@ const STAGES: { value: VentureStage; label: string }[] = [
   { value: 'scale', label: 'Scale' },
 ];
 
-// 11 legal structures
 const LEGAL_STRUCTURES = [
   'Nonprofit 501(c)(3)',
   'For-profit C-Corp',
@@ -37,7 +37,6 @@ const LEGAL_STRUCTURES = [
   'Hybrid',
 ];
 
-// 22 impact areas (deduplicated SDG + IRIS+, favoring IRIS+ names)
 const IMPACT_AREAS = [
   'Agriculture & Food',
   'Biodiversity',
@@ -63,7 +62,6 @@ const IMPACT_AREAS = [
   'Youth Development',
 ];
 
-// 10 impact mechanisms
 const IMPACT_MECHANISMS = [
   'Direct Service',
   'Product-based',
@@ -77,7 +75,6 @@ const IMPACT_MECHANISMS = [
   'Systems Change',
 ];
 
-// 11 revenue sources
 const REVENUE_SOURCES = [
   'Product Sales',
   'Service Fees',
@@ -92,7 +89,6 @@ const REVENUE_SOURCES = [
   'Interest & Dividends',
 ];
 
-// 7 funding sources
 const FUNDING_SOURCES = [
   'Bootstrapped',
   'Grants',
@@ -103,7 +99,6 @@ const FUNDING_SOURCES = [
   'Debt Financing',
 ];
 
-// 17 industries
 const INDUSTRIES = [
   'Healthcare',
   'Education',
@@ -146,7 +141,55 @@ function saveDimension<T>(canvasId: string, key: string, value: T): void {
   }
 }
 
-export function VentureProfile({ canvasId, progress, onClose }: VentureProfileProps) {
+// Expandable dimension component
+interface DimensionRowProps {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (item: string) => void;
+}
+
+function DimensionRow({ label, options, selected, onToggle }: DimensionRowProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const displayText = selected.length > 0
+    ? selected.join(', ')
+    : <span className="profile-dim-empty">None selected</span>;
+
+  return (
+    <div className="profile-dim">
+      <div className="profile-dim-header">
+        <span className="profile-dim-label">{label}</span>
+        <button
+          type="button"
+          className="profile-dim-toggle"
+          onClick={() => setExpanded(!expanded)}
+          aria-label={expanded ? 'Collapse options' : 'Expand options'}
+          aria-expanded={expanded}
+        >
+          {expanded ? <Minus size={14} /> : <Plus size={14} />}
+        </button>
+      </div>
+      <div className="profile-dim-value">{displayText}</div>
+      {expanded && (
+        <div className="profile-dim-options">
+          {options.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              className={`profile-dim-option ${selected.includes(opt) ? 'selected' : ''}`}
+              onClick={() => onToggle(opt)}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
   // Load all dimensions from localStorage
   const [stage, setStage] = useState<VentureStage>(() =>
     loadDimension(canvasId, 'stage', 'idea' as VentureStage)
@@ -170,23 +213,25 @@ export function VentureProfile({ canvasId, progress, onClose }: VentureProfilePr
     loadDimension(canvasId, 'industries', [])
   );
 
-  // Handlers
-  const handleStageChange = useCallback((value: VentureStage) => {
-    setStage(value);
-    saveDimension(canvasId, 'stage', value);
+  // Single-select handlers
+  const handleStageToggle = useCallback((value: string) => {
+    const newStage = value as VentureStage;
+    setStage(newStage);
+    saveDimension(canvasId, 'stage', newStage);
   }, [canvasId]);
 
-  const handleLegalChange = useCallback((value: string) => {
-    setLegalStructure(value);
-    saveDimension(canvasId, 'legalStructure', value);
-  }, [canvasId]);
+  const handleLegalToggle = useCallback((value: string) => {
+    const newValue = legalStructure === value ? '' : value;
+    setLegalStructure(newValue);
+    saveDimension(canvasId, 'legalStructure', newValue);
+  }, [canvasId, legalStructure]);
 
-  const toggleArrayItem = useCallback((
+  // Multi-select toggle helper
+  const createArrayToggle = useCallback((
     arr: string[],
-    item: string,
     setter: (v: string[]) => void,
     key: string
-  ) => {
+  ) => (item: string) => {
     const newArr = arr.includes(item)
       ? arr.filter(i => i !== item)
       : [...arr, item];
@@ -207,133 +252,65 @@ export function VentureProfile({ canvasId, progress, onClose }: VentureProfilePr
         </button>
       </div>
 
-      <div className="profile-grid">
-        {/* Row 1: Stage + Legal + Progress */}
-        <div className="profile-row">
-          <div className="profile-field">
-            <label className="profile-label">Stage</label>
-            <select
-              className="profile-select"
-              value={stage}
-              onChange={(e) => handleStageChange(e.target.value as VentureStage)}
-            >
-              {STAGES.map(s => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="profile-field">
-            <label className="profile-label">Legal Structure</label>
-            <select
-              className="profile-select"
-              value={legalStructure}
-              onChange={(e) => handleLegalChange(e.target.value)}
-            >
-              <option value="">Select...</option>
-              {LEGAL_STRUCTURES.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="profile-field profile-field-progress">
-            <label className="profile-label">Progress</label>
-            <span className="profile-progress-value">{progress}%</span>
-          </div>
+      <div className="profile-dims">
+        {/* Row 1: Stage + Legal Structure */}
+        <div className="profile-dims-row">
+          <DimensionRow
+            label="Stage"
+            options={STAGES.map(s => s.label)}
+            selected={[STAGES.find(s => s.value === stage)?.label || 'Idea']}
+            onToggle={(label) => {
+              const found = STAGES.find(s => s.label === label);
+              if (found) handleStageToggle(found.value);
+            }}
+          />
+          <DimensionRow
+            label="Legal Structure"
+            options={LEGAL_STRUCTURES}
+            selected={legalStructure ? [legalStructure] : []}
+            onToggle={handleLegalToggle}
+          />
         </div>
 
-        {/* Row 2: Impact Areas */}
-        <div className="profile-row">
-          <div className="profile-field profile-field-wide">
-            <label className="profile-label">Impact Areas</label>
-            <div className="profile-chips">
-              {IMPACT_AREAS.map(area => (
-                <button
-                  key={area}
-                  type="button"
-                  className={`profile-chip ${impactAreas.includes(area) ? 'selected' : ''}`}
-                  onClick={() => toggleArrayItem(impactAreas, area, setImpactAreas, 'impactAreas')}
-                >
-                  {area}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Row 2: Impact Areas + Mechanisms */}
+        <div className="profile-dims-row">
+          <DimensionRow
+            label="Impact Areas"
+            options={IMPACT_AREAS}
+            selected={impactAreas}
+            onToggle={createArrayToggle(impactAreas, setImpactAreas, 'impactAreas')}
+          />
+          <DimensionRow
+            label="Mechanisms"
+            options={IMPACT_MECHANISMS}
+            selected={impactMechanisms}
+            onToggle={createArrayToggle(impactMechanisms, setImpactMechanisms, 'impactMechanisms')}
+          />
         </div>
 
-        {/* Row 3: Impact Mechanisms */}
-        <div className="profile-row">
-          <div className="profile-field profile-field-wide">
-            <label className="profile-label">Impact Mechanisms</label>
-            <div className="profile-chips">
-              {IMPACT_MECHANISMS.map(mech => (
-                <button
-                  key={mech}
-                  type="button"
-                  className={`profile-chip ${impactMechanisms.includes(mech) ? 'selected' : ''}`}
-                  onClick={() => toggleArrayItem(impactMechanisms, mech, setImpactMechanisms, 'impactMechanisms')}
-                >
-                  {mech}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Row 3: Revenue + Funding */}
+        <div className="profile-dims-row">
+          <DimensionRow
+            label="Revenue"
+            options={REVENUE_SOURCES}
+            selected={revenueSources}
+            onToggle={createArrayToggle(revenueSources, setRevenueSources, 'revenueSources')}
+          />
+          <DimensionRow
+            label="Funding"
+            options={FUNDING_SOURCES}
+            selected={fundingSources}
+            onToggle={createArrayToggle(fundingSources, setFundingSources, 'fundingSources')}
+          />
         </div>
 
-        {/* Row 4: Revenue + Funding */}
-        <div className="profile-row">
-          <div className="profile-field">
-            <label className="profile-label">Revenue Sources</label>
-            <div className="profile-chips">
-              {REVENUE_SOURCES.map(src => (
-                <button
-                  key={src}
-                  type="button"
-                  className={`profile-chip ${revenueSources.includes(src) ? 'selected' : ''}`}
-                  onClick={() => toggleArrayItem(revenueSources, src, setRevenueSources, 'revenueSources')}
-                >
-                  {src}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="profile-field">
-            <label className="profile-label">Funding Sources</label>
-            <div className="profile-chips">
-              {FUNDING_SOURCES.map(src => (
-                <button
-                  key={src}
-                  type="button"
-                  className={`profile-chip ${fundingSources.includes(src) ? 'selected' : ''}`}
-                  onClick={() => toggleArrayItem(fundingSources, src, setFundingSources, 'fundingSources')}
-                >
-                  {src}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 5: Industries */}
-        <div className="profile-row">
-          <div className="profile-field profile-field-wide">
-            <label className="profile-label">Industries</label>
-            <div className="profile-chips">
-              {INDUSTRIES.map(ind => (
-                <button
-                  key={ind}
-                  type="button"
-                  className={`profile-chip ${industries.includes(ind) ? 'selected' : ''}`}
-                  onClick={() => toggleArrayItem(industries, ind, setIndustries, 'industries')}
-                >
-                  {ind}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Row 4: Industries */}
+        <DimensionRow
+          label="Industries"
+          options={INDUSTRIES}
+          selected={industries}
+          onToggle={createArrayToggle(industries, setIndustries, 'industries')}
+        />
       </div>
     </div>
   );

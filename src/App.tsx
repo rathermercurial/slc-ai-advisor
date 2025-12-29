@@ -386,7 +386,6 @@ function AppContent({
             {showProfile && (
               <VentureProfile
                 canvasId={canvasId}
-                progress={progress}
                 onClose={() => setShowProfile(false)}
               />
             )}

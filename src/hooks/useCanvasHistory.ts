@@ -294,14 +294,20 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
     initializedRef.current = true;
   }, []);
 
+  // Track whether we should increment index (false for skip/replace cases)
+  const shouldIncrementRef = useRef(true);
+
   // Push new snapshot
   const pushSnapshot = useCallback((snapshot: CanvasSnapshot) => {
+    shouldIncrementRef.current = true;
+
     setEntries((prev) => {
       // Get current snapshot for comparison
       const currentSnapshot = currentIndex >= 0 ? rebuildSnapshot(prev, currentIndex) : null;
 
       // Skip if no change
       if (currentSnapshot && snapshotsEqual(currentSnapshot, snapshot)) {
+        shouldIncrementRef.current = false; // No change, don't increment
         return prev;
       }
 
@@ -318,6 +324,7 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
         const newEntries = [...prev.slice(0, currentIndex)];
         newEntries.push({ type: 'snapshot', data: snapshot });
         lastAiUpdateRef.current = now;
+        shouldIncrementRef.current = false; // Replacing, don't increment index
         return newEntries;
       }
 
@@ -365,11 +372,12 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
       return newEntries;
     });
 
-    setCurrentIndex((prev) => {
-      // After push, currentIndex should be at the end
-      // We need to recalculate based on new entries length
-      return prev + 1;
-    });
+    // Only increment index if we actually added a new entry
+    if (shouldIncrementRef.current) {
+      setCurrentIndex((prev) => {
+        return prev + 1;
+      });
+    }
   }, [currentIndex]);
 
   // Undo

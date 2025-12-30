@@ -69,7 +69,26 @@ The P2P program uses a distinctive pedagogical pattern to contextualize Generic/
 
 3. **P2P Commentary** provides P2P-specific mindset shifts, opportunities, examples from the P2P library, and tactical guidance for solo founders
 
-See [Content README](content/readme.md) for detailed sandwich pattern examples and P2P script structure.
+### Real Example: Customer Model (3.2.2)
+
+From `3.2.2 customer-model.md`:
+
+**P2P Framing:**
+
+- "Next you are going to work through the Core content on the Customer Model"
+- "After you've gone through the framework core, we'll come back and talk about what matters most for P2P ventures specifically"
+
+**Core Content Directive:**
+
+- `slc-ai-advisor/knowledge/programs/generic/content/3.0 business-model-design/3.2 fill-in-your-canvas/3.2.2 customer-model.md`
+
+**P2P Commentary:**
+
+- "1,000 True Fans" mindset shift
+- Customer type complexity warnings
+- P2P-specific constraints (channels, async communication)
+- P2P examples: Plausible Analytics vs. Ridwell
+- AI enablement for solo operation
 
 ### Content Inheritance vs. Replacement
 
@@ -276,6 +295,39 @@ p2p/
 - Not required but powerful when genuine
 - Cuts through noise in crowded markets
 
+## Content Format
+
+P2P files follow same frontmatter pattern as Generic:
+
+```yaml
+---
+title: ". customer Model" # Note: some titles use period prefix for P2P
+tags:
+  - customer-model
+  - video-content
+  - business-model-design
+---
+# P2P Script: 3.2.2 Customer Model
+
+#CTX program:p2p | example:micro | visual:3 | cta:off | tag_line:on
+
+## P2P FRAMING
+[P2P-specific introduction...]
+---
+[INSERT CORE CONTENT: Customer Model]
+---
+## P2P COMMENTARY
+[P2P-specific application and examples...]
+```
+
+**P2P-Specific Elements:**
+
+- Context header: `#CTX program:p2p | example:micro | visual:3 | cta:off | tag_line:on`
+- Video markers: `<span style="color:green">p2p 3.2.2 customer-model 1.webm.02.mp4.webm</span>`
+- Visual cues: `**[MAIN PANEL: ...]**`, `**[VISUAL TEXT: ...]**`
+- Tag lines: `**Tag line:** **Value creation starts here.**`
+- Core content directives: `[INSERT CORE CONTENT: Topic]`
+
 ## Using This README
 
 ### For the AI Advisor
@@ -294,7 +346,6 @@ p2p/
 - Core content (when referenced) is in `generic/content/`
 - P2P examples are in `p2p/examples/`
 - P2P examples show solo/small-team patterns
-- See [Content README](content/readme.md) for P2P script structure details
 
 **Module Mapping:**
 
@@ -318,6 +369,17 @@ p2p/
 - Maintain clear Core content references
 - Ensure P2P commentary provides tactical application
 - Use P2P examples to illustrate points
+
+## Known Issues
+
+**Content Organization:**
+
+- Mix of folder-based examples (buy-me-once/, plausible-analytics/) and standalone files (tally.md, the-generalist.md)
+- Inconsistent depth: Module 4.0 is flat while Generic nests deeper
+
+**Suggested Fixes:**
+
+- Standardize example format (all folders vs. all standalone)
 
 ## See Also
 

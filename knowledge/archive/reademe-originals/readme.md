@@ -324,26 +324,6 @@ content/
 
 ---
 
-## File Naming Convention
-
-Pattern: `[Module.Number] [descriptive-kebab-case-title].md`
-
-Examples:
-
-- `2.0 intro.md`
-- `3.1 understanding-business-model-design.md`
-- `3.2.1 purpose.md`
-- `4.2.3 improvement-levers.md`
-- `5.1.4 customer-model-validation.md`
-
-### Content Types
-
-- **video-content:** Video script with spoken narration and visual direction
-- **program-content:** General program educational material e.g the example library
-- Module-specific tags: `business-model-design`, `improving`, `strategy`
-
----
-
 ## Using This README
 
 ### For the AI Advisor
@@ -396,20 +376,6 @@ Use tags to locate section-specific content:
 - Second-level (X.Y): Sub-program or major concept
 - Third-level (X.Y.Z): Specific canvas sections or sub-topics
 - Fourth-level (X.Y.Z.N): Detailed breakdowns (use sparingly)
-
----
-
-## Known Issues
-
-**Orphaned Content:**
-
-- `4-build/4-build.md` folder appears orphaned - unclear relationship to `4.0 improving-your-business-model/`
-- May represent legacy naming or alternate entry point
-
-**Directory Depth:**
-
-- Some modules nest 4 levels deep (e.g., `4.4.3.1 types-of-leverage.md`)
-- Deep nesting can make navigation complex
 
 ---
 

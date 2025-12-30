@@ -35,7 +35,25 @@ The Generic program serves ventures across all sectors, stages, and legal struct
 
 **The 11 Canvas Sections:**
 
-See [Content README](content/readme.md) for detailed breakdown of all 11 canvas sections and the Three Models framework.
+1. **Purpose** - The venture's mission and reason for existing
+2. **Customers** - Target customer segments - includes **early adopters** sub heading for who the first customers will be
+3. **Jobs To Be Done (JTBD)** - Customer needs being served - includes **existing alternatives** sub heading for how customers are currently getting their jobs done
+4. **Unique Value Proposition (UVP)** - The benefit - why customers choose this solution
+5. **Solution** - The product/service delivered
+6. **Impact** - Theory of change and measurable outcomes - breaks into 7 steps **1. Issue, 2. Participants, 3. Activities, 4. Short-term outcomes, 5. Medium-term outcomes, 6. Long-term outcomes, 7. Impact**
+7. **Channels** - How customers find and receive the solution
+8. **Revenue** - Money sources and revenue model
+9. **Costs** - Resources required to deliver solution and impact
+10. **Advantage** - Sustainable competitive advantage
+11. **Key Metrics** - Critical success measures
+
+**Canvas models**
+For teaching purposes the 11 canvas sections are grouped into 3 main models
+
+1. **Customer Model** - Customers, JTBD, UVP & Solution
+2. **Impact Model** - Issue, Participants, Activities, Short-term outcomes, Medium-term outcomes, Long-term outcomes, Impact
+3. **Economic Model** - Channels, Revenue, Costs, Advantage
+4. Note - Purpose & Key Metrics are independent of these three models
 
 **Pedagogical Approach:** Video-guided instruction walking entrepreneurs through each concept and canvas section, supported by venture examples from the example library.
 
@@ -112,10 +130,6 @@ generic/
 │       │   ├── 5.1.5 impact-model-validation.md
 │       │   └── 5.1.6 economic-model-validation.md
 │       └── 5.2 building-your-strategy/
-│           ├── 5.2 building-your-strategy.md
-│           ├── 5.2.1 intro-strategy-model.md
-│           ├── 5.2.2 strategy-model-overview.md
-│           └── 5.2.3 building-your-strategy-model.md
 │
 └── examples/                          # ~22 venture example files + index
     ├── core-venture-example-library.md
@@ -125,7 +139,6 @@ generic/
     │   └── patagonia-report.md
     ├── age-co-uk/
     ├── auticon/
-    ├── ness-labs/
     ├── opensourceecology/
     ├── toast-ale/
     ├── tonys-chocolonely/
@@ -134,9 +147,7 @@ generic/
 
 ## The Three Models Framework
 
-The Social Lean Canvas organizes ventures into three interconnected models. See [Content README](content/readme.md) for detailed canvas sections and module navigation.
-
-**Brief Overview:**
+The Social Lean Canvas organizes ventures into three interconnected models:
 
 ### 1. Customer Model
 
@@ -144,11 +155,19 @@ The Social Lean Canvas organizes ventures into three interconnected models. See 
 
 **Model Purpose:** Maps how the venture creates value for customers - who they serve, what needs they address, why customers choose this solution, and what's delivered.
 
+**Complexity Range:**
+
+- Simple: One product, one customer type
+- Complex: Multiple customer types (users vs. payers vs. partners)
+- Very Complex: Multi-sided platforms with distinct roles
+
 ### 2. Impact Model
 
 **Canvas Sections:** Impact (7-field causality chain)
 
 **Model Purpose:** Theory of change showing how venture activities lead to measurable social/environmental outcomes over time.
+
+**Components:** Issue → Participants → Activities → Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact
 
 ### 3. Economic Model
 
@@ -157,6 +176,41 @@ The Social Lean Canvas organizes ventures into three interconnected models. See 
 **Model Purpose:** Maps how money flows through the venture - customer acquisition/delivery channels, revenue sources, cost structure, and sustainable competitive advantage.
 
 **These three models plus Purpose and Key Metrics constitute the complete 11-section Social Lean Canvas.**
+
+## Content Format
+
+All content files use markdown with YAML frontmatter for metadata:
+
+```yaml
+---
+title: "Module Title"
+tags:
+  - video-content # Content type
+  - business-model-design # Module/topic
+  - customer-model # Canvas section (when applicable)
+---
+# Module Content
+
+[Educational script content with video references...]
+```
+
+### File Naming Convention
+
+Pattern: `[Module.Number] [descriptive-kebab-case-title].md`
+
+Examples:
+
+- `2.0 intro.md`
+- `3.1 understanding-business-model-design.md`
+- `3.2.1 purpose.md`
+- `4.2.3 improvement-levers.md`
+- `5.1.4 customer-model-validation.md`
+
+### Content Types
+
+- **video-content:** Video script with spoken narration and visual direction
+- **program-content:** General program educational material e.g the example library
+- Module-specific tags: `business-model-design`, `improving`, `strategy`
 
 ## Using This README
 
@@ -168,7 +222,6 @@ The Social Lean Canvas organizes ventures into three interconnected models. See 
 - Filter by tags to find canvas-section-specific content
 - Distinguish between Canvas program (2.0-3.2) and Build program (4.0-5.3)
 - Reference venture examples from `examples/` to illustrate concepts, determine relevance based on matching tags and concepts
-- See [Content README](content/readme.md) for file naming conventions and tagging patterns
 
 **User Guidance:**
 
@@ -193,6 +246,18 @@ The Social Lean Canvas organizes ventures into three interconnected models. See 
 **Tagging Strategy:**
 
 - TBD
+
+## Known Issues
+
+**Orphaned Content:**
+
+- `4-build/4-build.md` folder appears orphaned - unclear relationship to `4.0 improving-your-business-model/`
+- May represent legacy naming or alternate entry point
+
+**Directory Depth:**
+
+- Some modules nest 4 levels deep (e.g., `4.4.3.1 types-of-leverage.md`)
+- Deep nesting can make navigation complex
 
 ## See Also
 

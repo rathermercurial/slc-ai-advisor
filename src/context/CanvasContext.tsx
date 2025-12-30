@@ -150,8 +150,11 @@ function applySnapshotToCanvas(canvas: CanvasState, snapshot: CanvasSnapshot): C
 export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const [canvas, setCanvas] = useState<CanvasState | null>(null);
   const [canvasUpdatedAt, setCanvasUpdatedAt] = useState<string | null>(null);
-  const [agentStatus, setAgentStatus] = useState<AgentState['status']>('idle');
-  const [agentStatusMessage, setAgentStatusMessage] = useState('');
+  // Status is kept for context interface but not updated from WebSocket
+  // (status updates were causing "Maximum update depth exceeded" errors)
+  // UI feedback uses isGenerating from Chat's useAgentChat status instead
+  const [agentStatus] = useState<AgentState['status']>('idle');
+  const [agentStatusMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingSections, setEditingSections] = useState<Set<CanvasSectionId>>(new Set());
@@ -169,14 +172,6 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const historyRef = useRef(history);
   historyRef.current = history;
 
-  // Refs for status to avoid unnecessary re-renders during rapid updates
-  const agentStatusRef = useRef(agentStatus);
-  agentStatusRef.current = agentStatus;
-  const agentStatusMessageRef = useRef(agentStatusMessage);
-  agentStatusMessageRef.current = agentStatusMessage;
-
-  // Re-entrancy guard to prevent cascading updates
-  const isUpdatingFromAgentRef = useRef(false);
 
   // Initialize canvas from API on mount (ensures canvas is set for progress calculation)
   useEffect(() => {
@@ -228,54 +223,28 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   }, []);
 
   // Update from agent state sync
-  // Optimized to only trigger React re-renders when values actually change
-  // Uses re-entrancy guard to prevent cascading update loops
+  // ONLY syncs canvas updates - status is derived from useAgentChat in Chat.tsx
+  // Status updates were causing "Maximum update depth exceeded" errors
   const updateFromAgent = useCallback((state: AgentState) => {
-    // Prevent re-entrant calls that can cause infinite loops
-    if (isUpdatingFromAgentRef.current) {
-      console.log('[CanvasContext] Skipping re-entrant updateFromAgent call');
-      return;
-    }
-    isUpdatingFromAgentRef.current = true;
-
-    try {
-      console.log('[CanvasContext] updateFromAgent called', {
-        hasCanvas: !!state.canvas,
+    // Only update canvas if timestamp changed (actual update)
+    // Use refs to avoid stale closure issues with rapid updates
+    if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
+      console.log('[CanvasContext] updating canvas state', {
         newTimestamp: state.canvasUpdatedAt,
         currentTimestamp: canvasUpdatedAtRef.current,
-        willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
       });
+      setCanvas(state.canvas);
+      setCanvasUpdatedAt(state.canvasUpdatedAt);
 
-      // Only update status if changed (reduces re-renders during rapid streaming)
-      if (state.status !== agentStatusRef.current) {
-        setAgentStatus(state.status);
-      }
-      if (state.statusMessage !== agentStatusMessageRef.current) {
-        setAgentStatusMessage(state.statusMessage);
-      }
-
-      // Only update canvas if timestamp changed (actual update)
-      // Use refs to avoid stale closure issues with rapid updates
-      if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
-        console.log('[CanvasContext] updating canvas state');
-        setCanvas(state.canvas);
-        setCanvasUpdatedAt(state.canvasUpdatedAt);
-
-        // Initialize or push to history (skip if we're restoring from undo/redo)
-        if (!isRestoringRef.current) {
-          if (!historyInitializedRef.current) {
-            historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
-            historyInitializedRef.current = true;
-          } else {
-            historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
-          }
+      // Initialize or push to history (skip if we're restoring from undo/redo)
+      if (!isRestoringRef.current) {
+        if (!historyInitializedRef.current) {
+          historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
+          historyInitializedRef.current = true;
+        } else {
+          historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
         }
       }
-    } finally {
-      // Reset guard after React's batch processing completes
-      setTimeout(() => {
-        isUpdatingFromAgentRef.current = false;
-      }, 0);
     }
   }, []); // No dependencies - uses refs for all external values
 

@@ -57,7 +57,7 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-slow: 0.3s ease;
-  --transition-theme: 0.4s ease;
+  --transition-theme: 0.8s ease;
 
   /* Spacing */
   --section-gap: 0.8rem; /* 13px - breathing room between major sections */
@@ -212,11 +212,13 @@ body,
 .app-header,
 .sidebar,
 .chat,
+.slc-canvas,
 .canvas-section,
 .venture-header,
 .message-bubble,
 .canvas-container,
-.chat-input-container {
+.chat-input-container,
+.impact-inline {
   transition:
     background-color var(--transition-theme),
     border-color var(--transition-theme),
@@ -1244,12 +1246,12 @@ code, .mono {
   --ripple-color-transparent: rgba(124, 179, 232, 0);
 }
 
-[data-theme='purple'] .canvas-section.just-updated {
+[data-theme='midnight'] .canvas-section.just-updated {
   --ripple-color: rgba(167, 139, 250, 0.4);
   --ripple-color-transparent: rgba(167, 139, 250, 0);
 }
 
-[data-theme='salmon'] .canvas-section.just-updated {
+[data-theme='daybreak'] .canvas-section.just-updated {
   --ripple-color: rgba(217, 136, 136, 0.4);
   --ripple-color-transparent: rgba(217, 136, 136, 0);
 }
@@ -3724,23 +3726,18 @@ code, .mono {
   /* backwards fill mode ensures opacity: 0 is applied before animation starts */
 }
 
-/* Stagger delays by 50ms increments following canvas layout */
-/* Row 1: Purpose, Impact */
-.slc-row-top .canvas-section:nth-child(1) { animation-delay: 0ms; }
-.slc-row-top .canvas-section:nth-child(2) { animation-delay: 50ms; }
-
-/* Row 2: Middle columns (Jobs, Solution+Metrics, Value Prop, Advantage+Channels, Customers) */
-.slc-row-middle .slc-col:nth-child(1) .canvas-section { animation-delay: 100ms; }
-.slc-row-middle .slc-col:nth-child(2) .canvas-section:nth-child(1) { animation-delay: 150ms; }
-.slc-row-middle .slc-col:nth-child(2) .canvas-section:nth-child(2) { animation-delay: 200ms; }
-.slc-row-middle .slc-col:nth-child(3) .canvas-section { animation-delay: 250ms; }
-.slc-row-middle .slc-col:nth-child(4) .canvas-section:nth-child(1) { animation-delay: 300ms; }
-.slc-row-middle .slc-col:nth-child(4) .canvas-section:nth-child(2) { animation-delay: 350ms; }
-.slc-row-middle .slc-col:nth-child(5) .canvas-section { animation-delay: 400ms; }
-
-/* Row 3: Costs, Revenue */
-.slc-row-bottom .canvas-section:nth-child(1) { animation-delay: 450ms; }
-.slc-row-bottom .canvas-section:nth-child(2) { animation-delay: 500ms; }
+/* Stagger delays by 50ms increments following section numbers (1-11) */
+.canvas-section[data-section="purpose"]        { animation-delay: 0ms; }    /* 1 */
+.canvas-section[data-section="customers"]      { animation-delay: 50ms; }   /* 2 */
+.canvas-section[data-section="jobsToBeDone"]   { animation-delay: 100ms; }  /* 3 */
+.canvas-section[data-section="valueProposition"] { animation-delay: 150ms; } /* 4 */
+.canvas-section[data-section="solution"]       { animation-delay: 200ms; }  /* 5 */
+.canvas-section[data-section="channels"]       { animation-delay: 250ms; }  /* 6 */
+.canvas-section[data-section="revenue"]        { animation-delay: 300ms; }  /* 7 */
+.canvas-section[data-section="costs"]          { animation-delay: 350ms; }  /* 8 */
+.canvas-section[data-section="keyMetrics"]     { animation-delay: 400ms; }  /* 9 */
+.canvas-section[data-section="advantage"]      { animation-delay: 450ms; }  /* 10 */
+.canvas-section[data-section="impact"]         { animation-delay: 500ms; }  /* 11 */
 
 /* Message slide-in animations */
 @keyframes messageSlideIn {

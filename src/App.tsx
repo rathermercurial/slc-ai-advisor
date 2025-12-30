@@ -76,7 +76,7 @@ function AppContent({
   theme: Theme;
   toggleTheme: () => void;
 }) {
-  const { canvas, undo, redo, canUndo, canRedo, isConnected, isGenerating } = useCanvasContext();
+  const { canvas, undo, redo, canUndo, canRedo, isConnected, isGenerating, agentStatusMessage } = useCanvasContext();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // Canvas/chat split percentage (stored in localStorage)
@@ -418,7 +418,7 @@ function AppContent({
               onNameChange={handleNameChange}
               showProfile={showProfile}
               onProfileClick={handleProfileClick}
-              helperText={helperText || (isGenerating ? 'Thinking...' : hoveredModel)}
+              helperText={helperText || (isGenerating ? (agentStatusMessage || 'Thinking...') : hoveredModel)}
             />
             {showProfile && (
               <VentureProfile

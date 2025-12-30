@@ -267,6 +267,7 @@ export function CanvasSection({
   return (
     <div
       className={`canvas-section ${className} ${isEditing ? 'editing' : ''} ${completed ? 'completed' : ''} ${isUpdating ? 'just-updated' : ''} ${saveState === 'saving' ? 'saving' : ''} ${saveState === 'error' ? 'has-error' : ''} ${readOnly ? 'read-only' : ''}`}
+      data-section={sectionKey}
       data-model={model || undefined}
       onClick={handleClick}
       onMouseEnter={onMouseEnter}

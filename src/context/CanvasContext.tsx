@@ -12,9 +12,14 @@
  * 4. Canvas consumes from context, merges with local edits
  */
 
-import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from 'react';
 import type { CanvasState, CanvasSectionId, ImpactModel, CanvasSection } from '../types/canvas';
 import { useCanvasHistory, type CanvasSnapshot } from '../hooks';
+
+/**
+ * Tone profile type (must match SLCAgent's ToneProfileId)
+ */
+export type ToneProfileId = 'beginner' | 'experienced';
 
 /**
  * Agent state structure (must match SLCAgent's AgentState)
@@ -24,6 +29,8 @@ export interface AgentState {
   statusMessage: string;
   canvas: CanvasState | null;
   canvasUpdatedAt: string | null;
+  /** Tone profile for AI communication style */
+  toneProfile: ToneProfileId;
 }
 
 /**
@@ -143,8 +150,11 @@ function applySnapshotToCanvas(canvas: CanvasState, snapshot: CanvasSnapshot): C
 export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const [canvas, setCanvas] = useState<CanvasState | null>(null);
   const [canvasUpdatedAt, setCanvasUpdatedAt] = useState<string | null>(null);
-  const [agentStatus, setAgentStatus] = useState<AgentState['status']>('idle');
-  const [agentStatusMessage, setAgentStatusMessage] = useState('');
+  // Status is kept for context interface but not updated from WebSocket
+  // (status updates were causing "Maximum update depth exceeded" errors)
+  // UI feedback uses isGenerating from Chat's useAgentChat status instead
+  const [agentStatus] = useState<AgentState['status']>('idle');
+  const [agentStatusMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingSections, setEditingSections] = useState<Set<CanvasSectionId>>(new Set());
@@ -161,6 +171,7 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   // Ref for history to avoid stale closure
   const historyRef = useRef(history);
   historyRef.current = history;
+
 
   // Initialize canvas from API on mount (ensures canvas is set for progress calculation)
   useEffect(() => {
@@ -211,33 +222,39 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     });
   }, []);
 
+  // Pending history update ref - deferred to avoid cascading re-renders
+  const pendingHistoryUpdateRef = useRef<CanvasState | null>(null);
+
   // Update from agent state sync
+  // ONLY syncs canvas updates - status is derived from useAgentChat in Chat.tsx
+  // Status updates were causing "Maximum update depth exceeded" errors
   const updateFromAgent = useCallback((state: AgentState) => {
-    console.log('[CanvasContext] updateFromAgent called', {
-      hasCanvas: !!state.canvas,
-      newTimestamp: state.canvasUpdatedAt,
-      currentTimestamp: canvasUpdatedAtRef.current,
-      willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
-    });
-
-    setAgentStatus(state.status);
-    setAgentStatusMessage(state.statusMessage);
-
     // Only update canvas if timestamp changed (actual update)
     // Use refs to avoid stale closure issues with rapid updates
     if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
-      console.log('[CanvasContext] updating canvas state');
+      console.log('[CanvasContext] updating canvas state', {
+        newTimestamp: state.canvasUpdatedAt,
+        currentTimestamp: canvasUpdatedAtRef.current,
+      });
       setCanvas(state.canvas);
       setCanvasUpdatedAt(state.canvasUpdatedAt);
 
-      // Initialize or push to history (skip if we're restoring from undo/redo)
+      // Defer history update to next frame to avoid cascading re-renders
+      // History hook has its own state that causes re-renders
       if (!isRestoringRef.current) {
-        if (!historyInitializedRef.current) {
-          historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
-          historyInitializedRef.current = true;
-        } else {
-          historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
-        }
+        pendingHistoryUpdateRef.current = state.canvas;
+        requestAnimationFrame(() => {
+          const canvasToUpdate = pendingHistoryUpdateRef.current;
+          if (canvasToUpdate) {
+            pendingHistoryUpdateRef.current = null;
+            if (!historyInitializedRef.current) {
+              historyRef.current.initialize(canvasToSnapshot(canvasToUpdate, 'ai'));
+              historyInitializedRef.current = true;
+            } else {
+              historyRef.current.pushSnapshot(canvasToSnapshot(canvasToUpdate, 'ai'));
+            }
+          }
+        });
       }
     }
   }, []); // No dependencies - uses refs for all external values
@@ -248,8 +265,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   }, []);
 
   // Set generating status (called by Chat component)
+  // Uses functional form to bail out if value unchanged (prevents cascading re-renders)
   const setGenerating = useCallback((generating: boolean) => {
-    setIsGenerating(generating);
+    setIsGenerating(prev => prev === generating ? prev : generating);
   }, []);
 
   // Save section locally and to server
@@ -401,7 +419,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     return true;
   }, [canvas, history]);
 
-  const value: CanvasContextValue = {
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  // This breaks the cascade: history update → context change → consumer re-render → loop
+  const value: CanvasContextValue = useMemo(() => ({
     canvas,
     canvasUpdatedAt,
     agentStatus,
@@ -419,7 +439,25 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     redo: handleRedo,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
-  };
+  }), [
+    canvas,
+    canvasUpdatedAt,
+    agentStatus,
+    agentStatusMessage,
+    isConnected,
+    isGenerating,
+    setGenerating,
+    editingSections,
+    setEditing,
+    updateFromAgent,
+    setConnected,
+    saveSection,
+    saveImpactModel,
+    handleUndo,
+    handleRedo,
+    history.canUndo,
+    history.canRedo,
+  ]);
 
   return (
     <CanvasContext.Provider value={value}>

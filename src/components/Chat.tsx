@@ -104,20 +104,23 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
     updateFromAgentRef.current = updateFromAgent;
   }, [updateFromAgent]);
 
+  // Memoize onStateUpdate to prevent useAgent from re-subscribing on each render
+  const handleStateUpdate = useCallback((state: AgentState) => {
+    console.log('[Chat] onStateUpdate received', {
+      status: state.status,
+      hasCanvas: !!state.canvas,
+      canvasUpdatedAt: state.canvasUpdatedAt
+    });
+    // Push state to context (includes canvas sync)
+    // Use ref to always call latest version of updateFromAgent
+    updateFromAgentRef.current(state);
+  }, []);
+
   // Connect to agent via WebSocket
   const agent = useAgent<AgentState>({
     agent: 'slc-agent',
     name: agentName,
-    onStateUpdate: (state) => {
-      console.log('[Chat] onStateUpdate received', {
-        status: state.status,
-        hasCanvas: !!state.canvas,
-        canvasUpdatedAt: state.canvasUpdatedAt
-      });
-      // Push state to context (includes canvas sync)
-      // Use ref to always call latest version of updateFromAgent
-      updateFromAgentRef.current(state);
-    },
+    onStateUpdate: handleStateUpdate,
   });
 
   // Track connection status in context
@@ -155,16 +158,31 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  // Track previous messages to avoid re-render loop
+  // (useAgentChat may return new array reference on each render)
+  const prevMessagesRef = useRef<string>('');
+
   // Notify parent when messages change (for export functionality)
+  // CRITICAL: Skip during streaming to prevent cascade:
+  // onMessagesChange → App re-render → Chat re-render → SDK state update → loop
   useEffect(() => {
+    // Don't sync during streaming - content changes rapidly and causes cascade
+    if (isLoading) return;
+
     if (onMessagesChange) {
       const exportMessages: ChatMessageForExport[] = messages.map((message) => ({
         role: message.role as 'user' | 'assistant' | 'system',
         content: getMessageText(message),
       }));
-      onMessagesChange(exportMessages);
+
+      // Only call if content actually changed
+      const serialized = JSON.stringify(exportMessages);
+      if (serialized !== prevMessagesRef.current) {
+        prevMessagesRef.current = serialized;
+        onMessagesChange(exportMessages);
+      }
     }
-  }, [messages, onMessagesChange]);
+  }, [messages, onMessagesChange, isLoading]);
 
   // The canvasId is passed as the agent 'name', so the agent instance
   // is already scoped to this canvas. No need to call setCanvas.

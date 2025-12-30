@@ -12,7 +12,7 @@
  * 4. Canvas consumes from context, merges with local edits
  */
 
-import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from 'react';
 import type { CanvasState, CanvasSectionId, ImpactModel, CanvasSection } from '../types/canvas';
 import { useCanvasHistory, type CanvasSnapshot } from '../hooks';
 
@@ -419,7 +419,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     return true;
   }, [canvas, history]);
 
-  const value: CanvasContextValue = {
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  // This breaks the cascade: history update → context change → consumer re-render → loop
+  const value: CanvasContextValue = useMemo(() => ({
     canvas,
     canvasUpdatedAt,
     agentStatus,
@@ -437,7 +439,25 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     redo: handleRedo,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
-  };
+  }), [
+    canvas,
+    canvasUpdatedAt,
+    agentStatus,
+    agentStatusMessage,
+    isConnected,
+    isGenerating,
+    setGenerating,
+    editingSections,
+    setEditing,
+    updateFromAgent,
+    setConnected,
+    saveSection,
+    saveImpactModel,
+    handleUndo,
+    handleRedo,
+    history.canUndo,
+    history.canRedo,
+  ]);
 
   return (
     <CanvasContext.Provider value={value}>

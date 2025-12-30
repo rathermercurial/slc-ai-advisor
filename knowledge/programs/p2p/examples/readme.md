@@ -11,7 +11,7 @@ The P2P example library contains **7 venture examples** organized by business mo
 - **Folder-based:** 3-4 files per venture (SLC + Impact Model + Report + optional overview)
 - **Standalone:** Single .md files for brief examples
 
-**Purpose:** Help solo founders see how ventures like theirs have structured Customer, Impact, and Economic models while maintaining simplicity and solo-operability.
+**Purpose:** Help solo founders see how ventures like theirs have structured Customer, Impact, and Economic models while maintaining simplicity and solo-operability. Allow AI agent to research specific examples to suggest to users or use examples to inform advice given to users.
 
 ## How to Use This Library
 
@@ -38,12 +38,12 @@ When serving P2P users, filter examples by:
    - Local, Regenerative & Physical (local-first, circular economy)
 
 3. **Selection Matrix Dimensions:**
-   - Stage: growth-stage, scale-stage (rarely idea-stage examples)
-   - Mechanism: product-service-impact, education-awareness
-   - Legal: standard-limited-company, benefit-corporation
-   - Revenue: subscriptions, product-sales, membership-dues
-   - Funding: bootstrapped, impact-equity
-   - Industry: ict, retail, education, consulting
+   - Stage: growth-stage, scale-stage (rarely idea-stage or early-stage examples)
+   - Mechanism: product-service-impact, education-awareness...
+   - Legal: standard-limited-company, benefit-corporation...
+   - Revenue: subscriptions, product-sales, membership-dues...
+   - Funding: bootstrapped, impact-equity...
+   - Industry: ict, retail, education, consulting...
 
 **Matching Strategy:**
 
@@ -436,16 +436,6 @@ tags:
 ---
 ```
 
-**P2P-Specific Tags to Look For:**
-
-- **Funding:** bootstrapped, impact-equity (not traditional-investment)
-- **Stage:** growth-stage, scale-stage
-- **Revenue:** subscriptions, product-sales, membership-dues, course-sales
-- **Legal:** standard-limited-company, benefit-corporation
-- **Channels:** content-marketing, seo, community (implicit in model)
-
----
-
 ## P2P Example Selection Criteria
 
 Good P2P examples demonstrate:
@@ -554,28 +544,6 @@ Examples are referenced in P2P commentary sections:
 3. **Highlight P2P patterns:** 1,000 True Fans, simplicity, purpose integration
 4. **Reference in context:** Use examples to illustrate specific points in P2P commentary
 
-**When to Use Ridwell:**
-
-- To show WHEN complexity (2 customer types) is justified
-- To illustrate multi-sided models and trade-offs
-- To warn about multiplied validation work
-- NOT as ideal simple solo model
-
-**When to Use Plausible Analytics:**
-
-- As ideal simple model (ONE customer type)
-- For SaaS/software examples
-- For bootstrapped growth
-- For content marketing channel
-
-**Example Selection by User Query:**
-
-- "Solo SaaS ideas" → Plausible Analytics
-- "Service business models" → Design Joy
-- "Education/course business" → Ness Labs, Linking Your Thinking, The Pathless Path
-- "E-commerce for impact" → Buy Me Once
-- "Is my model too complex?" → Compare to Plausible (simple) vs. Ridwell (complex)
-
 ### For Human Maintainers
 
 **Adding New P2P Examples:**
@@ -586,12 +554,6 @@ Examples are referenced in P2P commentary sections:
 4. Identify archetype (Software, Services, Content, Commerce, Local)
 5. Tag comprehensively (especially solo-viability indicators)
 6. Write analysis highlighting P2P-specific patterns
-
-**Folder vs. Standalone Decision:**
-
-- **Folder:** Full examples with complete SLC + Impact Model + Report
-- **Standalone:** Brief examples or quick references
-- **Recommendation:** Standardize to folders for completeness
 
 ---
 

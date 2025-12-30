@@ -12,7 +12,7 @@
  * 4. Canvas consumes from context, merges with local edits
  */
 
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { CanvasState, CanvasSectionId, ImpactModel, CanvasSection } from '../types/canvas';
 import { useCanvasHistory, type CanvasSnapshot } from '../hooks';
 
@@ -161,6 +161,42 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   // Ref for history to avoid stale closure
   const historyRef = useRef(history);
   historyRef.current = history;
+
+  // Initialize canvas from API on mount (ensures canvas is set for progress calculation)
+  useEffect(() => {
+    // Skip for frontend-only dev mode
+    if (import.meta.env.VITE_FRONTEND_ONLY === 'true') {
+      return;
+    }
+
+    async function loadCanvas() {
+      try {
+        const response = await fetch(`/api/canvas/${canvasId}`);
+        if (response.ok) {
+          const data = await response.json() as CanvasState;
+          // Only initialize if canvas hasn't been set yet (avoid overwriting agent sync)
+          setCanvas(prev => {
+            if (prev === null && data) {
+              // Initialize history with loaded state
+              if (!historyInitializedRef.current) {
+                historyRef.current.initialize(canvasToSnapshot(data, 'ai'));
+                historyInitializedRef.current = true;
+              }
+              return data;
+            }
+            return prev;
+          });
+          if (data.updatedAt) {
+            setCanvasUpdatedAt(prev => prev === null ? data.updatedAt : prev);
+          }
+        }
+      } catch (err) {
+        console.error('[CanvasContext] Failed to load canvas:', err);
+      }
+    }
+
+    loadCanvas();
+  }, [canvasId]);
 
   // Mark section as editing/not editing
   const setEditing = useCallback((section: CanvasSectionId, editing: boolean) => {

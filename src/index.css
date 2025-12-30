@@ -3742,13 +3742,13 @@ code, .mono {
 }
 
 .profile-dim-header:hover .profile-dim-label {
-  color: var(--text-primary);
+  color: var(--slc-accent);
 }
 
 .profile-dim-label {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--text-muted);
+  color: var(--slc-accent);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

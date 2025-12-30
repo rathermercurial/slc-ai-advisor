@@ -2,7 +2,10 @@
  * System prompts for SLCAgent
  *
  * Templates for AI conversation context.
+ * Supports tone profile injection for beginner/experienced users.
  */
+
+import { buildToneModifier, type ToneProfileId, DEFAULT_TONE_PROFILE } from '../config/tone-profiles';
 
 export const SYSTEM_PROMPT = `You are an AI advisor helping social entrepreneurs build their Social Lean Canvas.
 
@@ -167,8 +170,15 @@ Start with a natural, friendly conversation. Do NOT list all the sections or ove
 }
 
 /**
- * Build system prompt with canvas context
+ * Build system prompt with canvas context and optional tone profile
  */
-export function buildSystemPrompt(canvasContext: string): string {
-  return SYSTEM_PROMPT.replace('{canvasContext}', canvasContext);
+export function buildSystemPrompt(
+  canvasContext: string,
+  toneProfile: ToneProfileId = DEFAULT_TONE_PROFILE
+): string {
+  const toneModifier = buildToneModifier(toneProfile);
+  return SYSTEM_PROMPT.replace('{canvasContext}', canvasContext) + '\n\n' + toneModifier;
 }
+
+// Re-export tone types for use in SLCAgent
+export { type ToneProfileId, DEFAULT_TONE_PROFILE } from '../config/tone-profiles';

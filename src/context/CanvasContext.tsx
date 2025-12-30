@@ -17,6 +17,11 @@ import type { CanvasState, CanvasSectionId, ImpactModel, CanvasSection } from '.
 import { useCanvasHistory, type CanvasSnapshot } from '../hooks';
 
 /**
+ * Tone profile type (must match SLCAgent's ToneProfileId)
+ */
+export type ToneProfileId = 'beginner' | 'experienced';
+
+/**
  * Agent state structure (must match SLCAgent's AgentState)
  */
 export interface AgentState {
@@ -24,6 +29,8 @@ export interface AgentState {
   statusMessage: string;
   canvas: CanvasState | null;
   canvasUpdatedAt: string | null;
+  /** Tone profile for AI communication style */
+  toneProfile: ToneProfileId;
 }
 
 /**

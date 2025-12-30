@@ -14,7 +14,7 @@ import {
 import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
-import { formatCanvasContext, buildSystemPrompt } from './prompts';
+import { formatCanvasContext, buildSystemPrompt, type ToneProfileId, DEFAULT_TONE_PROFILE } from './prompts';
 import { ANTHROPIC_TOOLS, executeToolWithBroadcast } from './anthropic-tools';
 import { createLogger, createMetrics, type Logger, type Metrics } from '../observability';
 
@@ -32,6 +32,8 @@ export interface AgentState {
   canvas: import('../../src/types/canvas').CanvasState | null;
   /** Timestamp of last canvas update for change detection */
   canvasUpdatedAt: string | null;
+  /** Tone profile for AI communication style */
+  toneProfile: ToneProfileId;
 }
 
 /**
@@ -43,6 +45,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     statusMessage: '',
     canvas: null,
     canvasUpdatedAt: null,
+    toneProfile: DEFAULT_TONE_PROFILE,
   };
 
   /**
@@ -73,6 +76,18 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       success: false,
     });
     this.setStatus('error', error.message);
+  }
+
+  /**
+   * Handle new WebSocket connection - broadcast canvas state
+   * This ensures clients get canvas data immediately on connect
+   */
+  async onConnect(connection: Connection): Promise<void> {
+    const logger = this.getLogger();
+    logger.info('Client connected', { connectionId: connection.id });
+
+    // Broadcast canvas state so the client gets it immediately
+    await this.broadcastCanvasUpdate();
   }
 
   /**
@@ -211,7 +226,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       // Get canvas context
       this.setStatus('searching', 'Gathering context...');
       const canvasContext = await this.getCanvasContext();
-      const systemPrompt = buildSystemPrompt(canvasContext);
+      const systemPrompt = buildSystemPrompt(canvasContext, this.state.toneProfile);
 
       // Create Anthropic client via AI Gateway (per design.md specification)
       // If CF_AIG_TOKEN is set, the gateway has Authenticated Gateway enabled

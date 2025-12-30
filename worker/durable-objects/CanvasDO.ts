@@ -390,26 +390,50 @@ export class CanvasDO extends DurableObject<Env> {
 
     // Route impact section to Impact Model Manager
     if (section === 'impact') {
-      return this.impactManager.updateSection('impact', content);
+      const result = this.impactManager.updateSection('impact', content);
+      if (result.success) {
+        this.touchCanvasMeta();
+      }
+      return result;
     }
 
     // Route to appropriate Model Manager
     const model = SECTION_TO_MODEL[section];
+    let result: UpdateResult;
 
     if (model === 'customer') {
-      return this.customerManager.updateSection(section, content);
+      result = this.customerManager.updateSection(section, content);
+    } else if (model === 'economic') {
+      result = this.economicManager.updateSection(section, content);
+    } else {
+      // Should not reach here
+      return {
+        success: false,
+        errors: [`Unknown section: ${section}`],
+        completion: { percentage: 0, completedSections: [], missingSections: [], suggestions: [] },
+      };
     }
 
-    if (model === 'economic') {
-      return this.economicManager.updateSection(section, content);
+    // Update canvas_meta timestamp on successful Model Manager updates
+    // This ensures canvas.updatedAt changes for real-time sync detection
+    if (result.success) {
+      this.touchCanvasMeta();
     }
 
-    // Should not reach here
-    return {
-      success: false,
-      errors: [`Unknown section: ${section}`],
-      completion: { percentage: 0, completedSections: [], missingSections: [], suggestions: [] },
-    };
+    return result;
+  }
+
+  /**
+   * Update canvas_meta.updated_at timestamp
+   * Called after Model Manager updates to ensure canvas.updatedAt reflects changes
+   */
+  private touchCanvasMeta(): void {
+    const sql = this.ctx.storage.sql;
+    const now = new Date().toISOString();
+    sql.exec(
+      `UPDATE canvas_meta SET updated_at = ? WHERE id = 'canvas'`,
+      now
+    );
   }
 
   /**
@@ -480,7 +504,11 @@ export class CanvasDO extends DurableObject<Env> {
     content: string
   ): Promise<UpdateResult> {
     await this.ensureInitialized();
-    return this.impactManager.updateSection(field, content);
+    const result = this.impactManager.updateSection(field, content);
+    if (result.success) {
+      this.touchCanvasMeta();
+    }
+    return result;
   }
 
   /**
@@ -607,6 +635,9 @@ export class CanvasDO extends DurableObject<Env> {
       isComplete ? 1 : 0,
       now
     );
+
+    // Update canvas_meta timestamp for real-time sync detection
+    this.touchCanvasMeta();
 
     return {
       success: true,

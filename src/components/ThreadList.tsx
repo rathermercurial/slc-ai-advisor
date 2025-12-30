@@ -231,11 +231,18 @@ export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: Threa
             type="button"
             className="sidebar-add-btn"
             onClick={handleCreateThread}
+            onMouseEnter={() => onHoverChange?.('New chat')}
+            onMouseLeave={() => onHoverChange?.(null)}
             title="New Thread"
           >
             +
           </button>
-          <FilterDropdown value={filter} onChange={setFilter} />
+          <FilterDropdown
+            value={filter}
+            onChange={setFilter}
+            onHoverChange={onHoverChange}
+            hoverLabel="Filter chats"
+          />
         </div>
       </div>
 

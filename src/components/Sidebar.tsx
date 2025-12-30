@@ -51,6 +51,8 @@ export function Sidebar({ onHoverChange }: SidebarProps) {
           type="button"
           className="sidebar-expand-btn"
           onClick={handleToggleSidebar}
+          onMouseEnter={() => onHoverChange?.('Expand sidebar')}
+          onMouseLeave={() => onHoverChange?.(null)}
           title="Expand sidebar"
           aria-label="Expand sidebar"
         >
@@ -67,6 +69,8 @@ export function Sidebar({ onHoverChange }: SidebarProps) {
           type="button"
           className="sidebar-collapse-btn"
           onClick={handleToggleSidebar}
+          onMouseEnter={() => onHoverChange?.('Collapse sidebar')}
+          onMouseLeave={() => onHoverChange?.(null)}
           title="Collapse sidebar"
           aria-label="Collapse sidebar"
         >

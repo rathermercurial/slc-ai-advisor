@@ -262,11 +262,18 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
             type="button"
             className="sidebar-add-btn"
             onClick={handleCreateCanvas}
+            onMouseEnter={() => onHoverChange?.('New canvas')}
+            onMouseLeave={() => onHoverChange?.(null)}
             title="New Canvas"
           >
             +
           </button>
-          <FilterDropdown value={filter} onChange={setFilter} />
+          <FilterDropdown
+            value={filter}
+            onChange={setFilter}
+            onHoverChange={onHoverChange}
+            hoverLabel="Filter canvases"
+          />
         </div>
       </div>
 

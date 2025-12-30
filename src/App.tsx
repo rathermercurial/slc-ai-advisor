@@ -419,6 +419,7 @@ function AppContent({
               showProfile={showProfile}
               onProfileClick={handleProfileClick}
               helperText={helperText || (isGenerating ? (agentStatusMessage || 'Thinking...') : hoveredModel)}
+              onHoverChange={setHelperText}
             />
             {showProfile && (
               <VentureProfile

@@ -57,7 +57,7 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-slow: 0.3s ease;
-  --transition-theme: 0.8s ease;
+  --transition-theme: 1.2s ease;
 
   /* Spacing */
   --section-gap: 0.8rem; /* 13px - breathing room between major sections */

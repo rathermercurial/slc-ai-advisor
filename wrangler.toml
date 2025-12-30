@@ -42,7 +42,7 @@ index_name = "slc-knowledge-base"
 # Create via: wrangler kv:namespace create "CANVAS_REGISTRY"
 [[kv_namespaces]]
 binding = "CANVAS_REGISTRY"
-id = "placeholder-create-via-wrangler"
+id = "3a294ccc29af428da7b851b3a74eb2cf"
 
 # Durable Objects
 # - CANVAS: Goal artifact (canvas state with Model Managers)

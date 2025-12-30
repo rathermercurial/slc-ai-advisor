@@ -315,95 +315,95 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
     initializedRef.current = true;
   }, []);
 
-  // Track whether we should increment index (false for skip/replace cases)
-  const shouldIncrementRef = useRef(true);
-
-  // Push new snapshot
+  // Push new snapshot - uses atomic update to keep entries and index in sync
   const pushSnapshot = useCallback((snapshot: CanvasSnapshot) => {
-    shouldIncrementRef.current = true;
     console.log('[History] pushSnapshot called', { source: snapshot.source });
 
-    setEntries((prev) => {
-      // Use ref to get latest currentIndex (avoid stale closure)
-      const idx = currentIndexRef.current;
-      console.log('[History] pushSnapshot processing', { prevLength: prev.length, idx });
+    // Compute new entries and index together, then update both atomically
+    const idx = currentIndexRef.current;
+    const prevEntries = entriesRef.current;
 
-      // Get current snapshot for comparison
-      const currentSnapshot = idx >= 0 ? rebuildSnapshot(prev, idx) : null;
+    console.log('[History] pushSnapshot processing', { prevLength: prevEntries.length, idx });
 
-      // Skip if no change
-      if (currentSnapshot && snapshotsEqual(currentSnapshot, snapshot)) {
-        shouldIncrementRef.current = false; // No change, don't increment
-        return prev;
-      }
+    // Get current snapshot for comparison
+    const currentSnapshot = idx >= 0 ? rebuildSnapshot(prevEntries, idx) : null;
 
-      // Handle AI batch collapsing - if last update was AI within timeout, replace it
-      const now = Date.now();
-      if (
-        snapshot.source === 'ai' &&
-        idx >= 0 &&
-        prev[idx]?.type === 'snapshot' &&
-        (prev[idx].data as CanvasSnapshot).source === 'ai' &&
-        now - lastAiUpdateRef.current < AI_BATCH_TIMEOUT_MS
-      ) {
-        // Replace last AI entry instead of adding new one
-        const newEntries = [...prev.slice(0, idx)];
-        newEntries.push({ type: 'snapshot', data: snapshot });
-        lastAiUpdateRef.current = now;
-        shouldIncrementRef.current = false; // Replacing, don't increment index
-        return newEntries;
-      }
-
-      if (snapshot.source === 'ai') {
-        lastAiUpdateRef.current = now;
-      }
-
-      // Truncate any redo history when pushing new state
-      let newEntries = prev.slice(0, idx + 1);
-
-      // Convert older full snapshots to diffs (keep last FULL_SNAPSHOT_COUNT as full)
-      if (newEntries.length > FULL_SNAPSHOT_COUNT) {
-        const convertIndex = newEntries.length - FULL_SNAPSHOT_COUNT;
-        const entryToConvert = newEntries[convertIndex];
-
-        if (entryToConvert.type === 'snapshot' && convertIndex > 0) {
-          // Find previous snapshot to calculate diff from
-          const prevSnapshot = rebuildSnapshot(newEntries, convertIndex - 1);
-          if (prevSnapshot) {
-            const diff = calculateDiff(prevSnapshot, entryToConvert.data);
-            newEntries[convertIndex] = { type: 'diff', data: diff };
-          }
-        }
-      }
-
-      // Add new entry
-      newEntries.push({ type: 'snapshot', data: snapshot });
-
-      // Enforce history limit
-      if (newEntries.length > HISTORY_LIMIT) {
-        // Remove oldest entries but ensure we keep at least one full snapshot
-        const removeCount = newEntries.length - HISTORY_LIMIT;
-        newEntries = newEntries.slice(removeCount);
-
-        // Ensure first entry is a full snapshot
-        if (newEntries[0].type === 'diff') {
-          // Rebuild the first entry as a full snapshot
-          const firstSnapshot = rebuildSnapshot(prev, removeCount);
-          if (firstSnapshot) {
-            newEntries[0] = { type: 'snapshot', data: firstSnapshot };
-          }
-        }
-      }
-
-      return newEntries;
-    });
-
-    // Only increment index if we actually added a new entry
-    if (shouldIncrementRef.current) {
-      setCurrentIndex((prev) => {
-        return prev + 1;
-      });
+    // Skip if no change
+    if (currentSnapshot && snapshotsEqual(currentSnapshot, snapshot)) {
+      console.log('[History] pushSnapshot skipped - no change');
+      return;
     }
+
+    // Handle AI batch collapsing - if last update was AI within timeout, replace it
+    const now = Date.now();
+    if (
+      snapshot.source === 'ai' &&
+      idx >= 0 &&
+      prevEntries[idx]?.type === 'snapshot' &&
+      (prevEntries[idx].data as CanvasSnapshot).source === 'ai' &&
+      now - lastAiUpdateRef.current < AI_BATCH_TIMEOUT_MS
+    ) {
+      // Replace last AI entry instead of adding new one
+      const newEntries = [...prevEntries.slice(0, idx)];
+      newEntries.push({ type: 'snapshot', data: snapshot });
+      lastAiUpdateRef.current = now;
+
+      // Update entries but NOT index (replacing at same position)
+      setEntries(newEntries);
+      entriesRef.current = newEntries;
+      console.log('[History] pushSnapshot replaced AI entry', { newLength: newEntries.length, idx });
+      return;
+    }
+
+    if (snapshot.source === 'ai') {
+      lastAiUpdateRef.current = now;
+    }
+
+    // Truncate any redo history when pushing new state
+    let newEntries = prevEntries.slice(0, idx + 1);
+
+    // Convert older full snapshots to diffs (keep last FULL_SNAPSHOT_COUNT as full)
+    if (newEntries.length > FULL_SNAPSHOT_COUNT) {
+      const convertIndex = newEntries.length - FULL_SNAPSHOT_COUNT;
+      const entryToConvert = newEntries[convertIndex];
+
+      if (entryToConvert.type === 'snapshot' && convertIndex > 0) {
+        // Find previous snapshot to calculate diff from
+        const prevSnapshot = rebuildSnapshot(newEntries, convertIndex - 1);
+        if (prevSnapshot) {
+          const diff = calculateDiff(prevSnapshot, entryToConvert.data);
+          newEntries[convertIndex] = { type: 'diff', data: diff };
+        }
+      }
+    }
+
+    // Add new entry
+    newEntries.push({ type: 'snapshot', data: snapshot });
+    const newIndex = newEntries.length - 1;
+
+    // Enforce history limit
+    if (newEntries.length > HISTORY_LIMIT) {
+      // Remove oldest entries but ensure we keep at least one full snapshot
+      const removeCount = newEntries.length - HISTORY_LIMIT;
+      newEntries = newEntries.slice(removeCount);
+
+      // Ensure first entry is a full snapshot
+      if (newEntries[0].type === 'diff') {
+        // Rebuild the first entry as a full snapshot
+        const firstSnapshot = rebuildSnapshot(prevEntries, removeCount);
+        if (firstSnapshot) {
+          newEntries[0] = { type: 'snapshot', data: firstSnapshot };
+        }
+      }
+    }
+
+    // Update both entries and index atomically via refs, then sync state
+    entriesRef.current = newEntries;
+    currentIndexRef.current = newIndex;
+    setEntries(newEntries);
+    setCurrentIndex(newIndex);
+
+    console.log('[History] pushSnapshot added entry', { newLength: newEntries.length, newIndex });
   }, []); // No deps - uses refs for all external values
 
   // Undo

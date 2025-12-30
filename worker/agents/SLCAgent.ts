@@ -254,7 +254,6 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       logger.info('Sending messages to Anthropic', { messageCount: anthropicMessages.length });
 
       // Use Vercel AI SDK utilities to create UI message stream
-      const textPartId = crypto.randomUUID();
       const toolContext = this; // For tool execution
       const messageTimer = metrics.startTimer('message_sent', { sessionId });
 
@@ -269,6 +268,10 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
             while (continueLoop && step < maxSteps) {
               step++;
               logger.info('Processing step', { step, maxSteps });
+
+              // Generate unique ID for this step's text part
+              // Each agentic step needs its own ID to avoid confusing the AI SDK
+              const stepTextPartId = crypto.randomUUID();
 
               // Create streaming response with tools
               const stream = client.messages.stream({
@@ -287,14 +290,14 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
               for await (const event of stream) {
                 if (event.type === 'content_block_start') {
                   if (event.content_block.type === 'text' && !hasStartedText) {
-                    writer.write({ type: 'text-start', id: textPartId });
+                    writer.write({ type: 'text-start', id: stepTextPartId });
                     hasStartedText = true;
                   }
                 } else if (event.type === 'content_block_delta') {
                   if (event.delta.type === 'text_delta') {
                     const text = event.delta.text;
                     fullText += text;
-                    writer.write({ type: 'text-delta', id: textPartId, delta: text });
+                    writer.write({ type: 'text-delta', id: stepTextPartId, delta: text });
                   } else if (event.delta.type === 'input_json_delta') {
                     // Tool input is being streamed - we'll get full input at end
                   }
@@ -313,7 +316,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
               // Close text if we started it
               if (hasStartedText) {
-                writer.write({ type: 'text-end', id: textPartId });
+                writer.write({ type: 'text-end', id: stepTextPartId });
               }
 
               // Check for tool use

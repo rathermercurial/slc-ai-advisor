@@ -4,6 +4,7 @@ import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
 import { ArrowUp, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
+import { ThinkingStatus } from './ThinkingStatus';
 import { ToolInvocationCard } from './ToolInvocationCard';
 import { useCanvasContext, type AgentState } from '../context';
 
@@ -91,8 +92,13 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Track if we've already triggered auto-naming for this thread
+  const autoNamingTriggeredRef = useRef<string | null>(null);
+  // Store the first user message for auto-naming
+  const firstUserMessageRef = useRef<string | null>(null);
+
   // Get canvas context to push agent state updates
-  const { updateFromAgent, setConnected, setGenerating } = useCanvasContext();
+  const { updateFromAgent, setConnected, setGenerating, agentStatus, agentStatusMessage, refreshThreads } = useCanvasContext();
 
   // Agent name includes threadId for multi-thread support
   // Format: canvasId or canvasId--threadId (using -- to avoid PartySocket routing issues with /)
@@ -158,6 +164,66 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
       onMessagesChange(exportMessages);
     }
   }, [messages, onMessagesChange]);
+
+  // Auto-naming: trigger when we have first user message + first assistant response
+  useEffect(() => {
+    // Only proceed if we have a threadId and haven't triggered for this thread yet
+    if (!threadId || autoNamingTriggeredRef.current === threadId) {
+      return;
+    }
+
+    // Find first user message
+    const firstUserMsg = messages.find(m => m.role === 'user');
+    if (!firstUserMsg) {
+      return;
+    }
+
+    // Store the first user message
+    if (!firstUserMessageRef.current) {
+      firstUserMessageRef.current = getMessageText(firstUserMsg);
+    }
+
+    // Check if we have at least one assistant response (means AI has started responding)
+    const hasAssistantResponse = messages.some(m => m.role === 'assistant');
+    if (!hasAssistantResponse) {
+      return;
+    }
+
+    // Only trigger when not actively streaming
+    if (isLoading) {
+      return;
+    }
+
+    // Trigger auto-naming
+    autoNamingTriggeredRef.current = threadId;
+    const messageForNaming = firstUserMessageRef.current;
+
+    if (messageForNaming) {
+      // Fire and forget - don't block the UI
+      fetch(`/api/canvas/${canvasId}/threads/${threadId}/generate-name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageForNaming }),
+      })
+        .then(response => response.json())
+        .then((result) => {
+          if (result.generated) {
+            console.log('[Chat] Thread auto-named:', result.name);
+            // Refresh threads list to show new name
+            refreshThreads();
+          }
+        })
+        .catch(err => {
+          console.error('[Chat] Auto-naming failed:', err);
+        });
+    }
+  }, [messages, threadId, canvasId, isLoading, refreshThreads]);
+
+  // Reset auto-naming state when threadId changes
+  useEffect(() => {
+    firstUserMessageRef.current = null;
+    // Don't reset autoNamingTriggeredRef here - it persists which threads we've already named
+  }, [threadId]);
 
   // The canvasId is passed as the agent 'name', so the agent instance
   // is already scoped to this canvas. No need to call setCanvas.
@@ -283,7 +349,14 @@ Tell me about your social venture idea - what problem are you trying to solve, a
           </div>
         ))}
 
-        {/* Loading state shown via orb glow + header text */}
+        {/* Context-aware thinking status */}
+        {isLoading && (
+          <ThinkingStatus
+            status={agentStatus}
+            statusMessage={agentStatusMessage}
+            isGenerating={isLoading}
+          />
+        )}
 
         {/* Error message */}
         {error && (

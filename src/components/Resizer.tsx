@@ -3,6 +3,7 @@
  *
  * Draggable divider for adjusting panel sizes.
  * Uses mouse events for desktop, touch events for mobile.
+ * Supports keyboard navigation with Arrow keys.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -22,7 +23,12 @@ interface ResizerProps {
   minPixels?: number;
   /** Maximum pixels (only used in pixelMode) */
   maxPixels?: number;
+  /** Current value (percentage or pixels) for aria-valuenow */
+  currentValue?: number;
 }
+
+/** Step size for keyboard navigation */
+const KEYBOARD_STEP = 20;
 
 export function Resizer({
   direction = 'horizontal',
@@ -32,6 +38,7 @@ export function Resizer({
   pixelMode = false,
   minPixels = 100,
   maxPixels = 500,
+  currentValue,
 }: ResizerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -133,15 +140,57 @@ export function Resizer({
     };
   }, [isDragging, direction, minPercentage, maxPercentage, pixelMode, minPixels, maxPixels, onResize]);
 
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (currentValue === undefined) return;
+
+    const minValue = pixelMode ? minPixels : minPercentage;
+    const maxValue = pixelMode ? maxPixels : maxPercentage;
+
+    let newValue = currentValue;
+
+    // For horizontal resizers: Left decreases, Right increases
+    // For vertical resizers: Up decreases, Down increases
+    if (direction === 'horizontal') {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        newValue = Math.max(minValue, currentValue - KEYBOARD_STEP);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        newValue = Math.min(maxValue, currentValue + KEYBOARD_STEP);
+      }
+    } else {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        newValue = Math.max(minValue, currentValue - KEYBOARD_STEP);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        newValue = Math.min(maxValue, currentValue + KEYBOARD_STEP);
+      }
+    }
+
+    if (newValue !== currentValue) {
+      onResize(newValue);
+    }
+  }, [currentValue, pixelMode, minPixels, maxPixels, minPercentage, maxPercentage, direction, onResize]);
+
+  // Calculate ARIA values
+  const ariaValueMin = pixelMode ? minPixels : minPercentage;
+  const ariaValueMax = pixelMode ? maxPixels : maxPercentage;
+
   return (
     <div
       ref={containerRef}
       className={`resizer resizer-${direction} ${isDragging ? 'resizer-active' : ''}`}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onKeyDown={handleKeyDown}
       role="separator"
       aria-orientation={direction}
       aria-label={`Resize ${direction === 'horizontal' ? 'panels' : 'sections'}`}
+      aria-valuenow={currentValue}
+      aria-valuemin={ariaValueMin}
+      aria-valuemax={ariaValueMax}
       tabIndex={0}
     >
       <div className="resizer-handle" />

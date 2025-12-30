@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Undo2, Redo2 } from 'lucide-react';
-import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader, VentureProfile } from './components';
+import { Canvas, Chat, ConnectionStatus, ExportMenu, ProgressCelebration, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader, VentureProfile } from './components';
 import type { Theme } from './components/ThemeToggle';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
@@ -339,8 +339,14 @@ function AppContent({
     setToast({ message: `Downloaded ${filename}`, type: 'success' });
   }, [chatMessages, ventureName]);
 
+  // Show toast for progress celebrations
+  const handleProgressToast = useCallback((message: string, type: ToastType) => {
+    setToast({ message, type });
+  }, []);
+
   return (
     <div className="app" style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <header className="app-header">
         <div className="app-header-left">
           <h1>SLC AI Advisor</h1>
@@ -392,7 +398,7 @@ function AppContent({
         </div>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" id="main-content" tabIndex={-1}>
         <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
           <Sidebar onHoverChange={setHelperText} />
           <Resizer
@@ -401,6 +407,7 @@ function AppContent({
             pixelMode
             minPixels={180}
             maxPixels={400}
+            currentValue={sidebarWidth}
           />
         </div>
         <div className="layout-content">
@@ -431,6 +438,7 @@ function AppContent({
               onResize={handleResize}
               minPercentage={30}
               maxPercentage={70}
+              currentValue={splitPercentage}
             />
           )}
           <div className={`layout-chat ${chatCollapsed ? 'collapsed' : ''}`} style={{ flex: chatCollapsed ? 'none' : `0 0 ${100 - splitPercentage}%` }}>
@@ -445,6 +453,13 @@ function AppContent({
           </div>
         </div>
       </main>
+
+      {/* Progress celebration component - watches progress and shows toasts/confetti */}
+      <ProgressCelebration
+        canvasId={canvasId}
+        progress={progress}
+        onShowToast={handleProgressToast}
+      />
 
       {toast && (
         <Toast

@@ -9,6 +9,10 @@ import {
 /** Save state for tracking async save operations */
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+/** Content size thresholds in bytes */
+const WARNING_THRESHOLD = 45000; // 45KB - show warning
+const MAX_SIZE = 50000; // 50KB - disable save
+
 interface CanvasSectionProps {
   sectionKey: CanvasSectionId;
   content: string;
@@ -60,6 +64,11 @@ export function CanvasSection({
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Calculate content size in bytes
+  const contentSize = new Blob([draft]).size;
+  const isOverWarning = contentSize > WARNING_THRESHOLD;
+  const isOverLimit = contentSize > MAX_SIZE;
 
   // Track mounted state to prevent state updates after unmount
   const mountedRef = useRef(true);
@@ -139,6 +148,12 @@ export function CanvasSection({
       return;
     }
 
+    // Prevent save when content exceeds limit
+    if (isOverLimit) {
+      setSaveError('Content too large (max 50KB)');
+      return;
+    }
+
     if (draft === content) {
       setIsEditing(false);
       return;
@@ -181,6 +196,11 @@ export function CanvasSection({
       e.preventDefault();
       // Prevent concurrent saves
       if (saveState === 'saving') {
+        return;
+      }
+      // Prevent navigation when content exceeds limit
+      if (isOverLimit) {
+        setSaveError('Content too large (max 50KB)');
         return;
       }
       // Save current content first
@@ -283,7 +303,7 @@ export function CanvasSection({
               autoResize();
             }}
             onKeyDown={handleKeyDown}
-            onBlur={saveState !== 'saving' ? handleSave : undefined}
+            onBlur={saveState !== 'saving' && !isOverLimit ? handleSave : undefined}
             placeholder={helperText || `Enter ${label.toLowerCase()}...`}
             disabled={saveState === 'saving'}
           />
@@ -303,12 +323,17 @@ export function CanvasSection({
               className="save"
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleSave}
-              disabled={saveState === 'saving'}
-              title="Save (Cmd+Enter)"
-              aria-label="Save"
+              disabled={saveState === 'saving' || isOverLimit}
+              title={isOverLimit ? 'Content too large' : 'Save (Cmd+Enter)'}
+              aria-label={isOverLimit ? 'Content too large - cannot save' : 'Save'}
             >
               {saveState === 'saving' ? '⏳' : '✓'}
             </button>
+            {isOverWarning && (
+              <span className={`canvas-section-size ${isOverLimit ? 'over-limit' : 'warning'}`}>
+                {Math.round(contentSize / 1000)}KB / 50KB
+              </span>
+            )}
           </div>
         </>
       ) : (

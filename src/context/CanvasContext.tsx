@@ -72,6 +72,10 @@ interface CanvasContextValue {
   canUndo: boolean;
   /** Whether redo is available */
   canRedo: boolean;
+  /** Callback to refresh threads list (called after auto-naming) */
+  refreshThreads: () => void;
+  /** Set refresh threads callback */
+  setRefreshThreadsCallback: (callback: () => void) => void;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);
@@ -148,6 +152,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingSections, setEditingSections] = useState<Set<CanvasSectionId>>(new Set());
+
+  // Callback ref for refreshing threads (set by ThreadList)
+  const refreshThreadsCallbackRef = useRef<() => void>(() => {});
 
   // History management
   const history = useCanvasHistory(canvasId);
@@ -401,6 +408,16 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     return true;
   }, [canvas, history]);
 
+  // Refresh threads callback - call the registered callback
+  const refreshThreads = useCallback(() => {
+    refreshThreadsCallbackRef.current();
+  }, []);
+
+  // Set refresh threads callback
+  const setRefreshThreadsCallback = useCallback((callback: () => void) => {
+    refreshThreadsCallbackRef.current = callback;
+  }, []);
+
   const value: CanvasContextValue = {
     canvas,
     canvasUpdatedAt,
@@ -419,6 +436,8 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     redo: handleRedo,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
+    refreshThreads,
+    setRefreshThreadsCallback,
   };
 
   return (

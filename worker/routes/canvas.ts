@@ -16,7 +16,8 @@
  * - GET /api/canvas/:id/export/:format - Export canvas
  * - GET /api/canvas/:id/threads - List threads (with filter query param)
  * - POST /api/canvas/:id/threads - Create new thread
- * - PATCH /api/canvas/:id/threads/:threadId - Update thread (name, starred, archived)
+ * - PATCH /api/canvas/:id/threads/:threadId - Update thread (name, starred, archived, isCustomName)
+ * - POST /api/canvas/:id/threads/:threadId/generate-name - Auto-generate thread name using AI
  */
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
@@ -340,18 +341,74 @@ export async function handleCanvasRoute(
 
       const body = await request.json().catch(() => ({})) as {
         name?: string;
+        isCustomName?: boolean;
         starred?: boolean;
         archived?: boolean;
       };
 
+      // When user manually renames (name provided without explicit isCustomName: false),
+      // automatically mark as custom name
+      const updates: {
+        name?: string;
+        isCustomName?: boolean;
+        starred?: boolean;
+        archived?: boolean;
+      } = { ...body };
+
+      if (body.name !== undefined && body.isCustomName === undefined) {
+        updates.isCustomName = true;
+      }
+
       try {
-        const thread = await stub.updateThread(threadId, body);
+        const thread = await stub.updateThread(threadId, updates);
         return jsonResponse(thread, 200, requestId);
       } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
           return jsonResponse({ error: error.message }, 404, requestId);
         }
         throw error;
+      }
+    }
+
+    // POST /api/canvas/:id/threads/:threadId/generate-name - Generate thread name from message
+    if (parts.length === 6 && parts[3] === 'threads' && parts[5] === 'generate-name' && request.method === 'POST') {
+      const threadId = parts[4];
+
+      if (!UUID_REGEX.test(threadId)) {
+        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
+      }
+
+      // Check thread exists and is not a custom name
+      const thread = await stub.getThread(threadId);
+      if (!thread) {
+        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
+      }
+
+      // Skip if user has already renamed the thread
+      if (thread.isCustomName) {
+        return jsonResponse({ skipped: true, reason: 'Thread has custom name', thread }, 200, requestId);
+      }
+
+      const body = await request.json().catch(() => ({})) as { message?: string };
+      if (!body.message || typeof body.message !== 'string') {
+        return jsonResponse({ error: 'message is required' }, 400, requestId);
+      }
+
+      // Generate name using AI
+      try {
+        const generatedName = await generateThreadName(body.message, env);
+
+        if (generatedName) {
+          // Update thread name (but keep isCustomName as false since this is auto-generated)
+          await stub.updateThread(threadId, { name: generatedName, isCustomName: false });
+          const updatedThread = await stub.getThread(threadId);
+          return jsonResponse({ generated: true, name: generatedName, thread: updatedThread }, 200, requestId);
+        } else {
+          return jsonResponse({ generated: false, reason: 'AI could not generate name' }, 200, requestId);
+        }
+      } catch (error) {
+        logger.error('Failed to generate thread name', error);
+        return jsonResponse({ generated: false, reason: 'AI generation failed' }, 200, requestId);
       }
     }
 
@@ -371,6 +428,52 @@ export async function handleCanvasRoute(
  */
 function getCanvasStub(env: Env, canvasId: string): DurableObjectStub<CanvasDO> {
   return env.CANVAS.get(env.CANVAS.idFromName(canvasId)) as DurableObjectStub<CanvasDO>;
+}
+
+/**
+ * Generate a 2-3 word thread name from a user message using AI
+ */
+async function generateThreadName(message: string, env: Env): Promise<string | null> {
+  // Truncate long messages to save tokens
+  const truncatedMessage = message.length > 500 ? message.slice(0, 500) + '...' : message;
+
+  try {
+    // Use Workers AI for fast, cheap inference
+    const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a thread naming assistant. Generate a 2-3 word title that captures the main topic of the user\'s message. Reply with ONLY the title, no quotes, no explanation. Examples: "Revenue Strategy", "Customer Segments", "Impact Metrics", "Launch Timeline".'
+        },
+        {
+          role: 'user',
+          content: `Generate a 2-3 word title for this message:\n\n${truncatedMessage}`
+        }
+      ],
+      max_tokens: 20
+    }) as { response?: string };
+
+    if (response.response) {
+      // Clean up the response - remove quotes, trim, and limit length
+      const name = response.response
+        .replace(/^["']|["']$/g, '') // Remove surrounding quotes
+        .replace(/^Title:\s*/i, '') // Remove "Title:" prefix if present
+        .trim()
+        .split('\n')[0] // Take only first line
+        .slice(0, 50); // Limit length
+
+      // Validate it looks like a reasonable title (2-5 words)
+      const wordCount = name.split(/\s+/).length;
+      if (wordCount >= 2 && wordCount <= 5 && name.length >= 3) {
+        return name;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('AI thread naming failed:', error);
+    return null;
+  }
 }
 
 /**

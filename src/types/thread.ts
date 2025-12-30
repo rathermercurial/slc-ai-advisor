@@ -16,6 +16,7 @@ export type ThreadFilter = 'all' | 'active' | 'starred' | 'archived';
 export interface Thread {
   id: string;
   name: string;
+  isCustomName: boolean;
   starred: boolean;
   archived: boolean;
   createdAt: string;
@@ -51,6 +52,7 @@ export function createMainThread(id?: string): Thread {
   return {
     id: id || crypto.randomUUID(),
     name: 'Main',
+    isCustomName: true, // Main is considered a custom name
     starred: false,
     archived: false,
     createdAt: now,

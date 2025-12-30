@@ -169,6 +169,12 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const historyRef = useRef(history);
   historyRef.current = history;
 
+  // Refs for status to avoid unnecessary re-renders during rapid updates
+  const agentStatusRef = useRef(agentStatus);
+  agentStatusRef.current = agentStatus;
+  const agentStatusMessageRef = useRef(agentStatusMessage);
+  agentStatusMessageRef.current = agentStatusMessage;
+
   // Initialize canvas from API on mount (ensures canvas is set for progress calculation)
   useEffect(() => {
     // Skip for frontend-only dev mode
@@ -219,6 +225,7 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   }, []);
 
   // Update from agent state sync
+  // Optimized to only trigger React re-renders when values actually change
   const updateFromAgent = useCallback((state: AgentState) => {
     console.log('[CanvasContext] updateFromAgent called', {
       hasCanvas: !!state.canvas,
@@ -227,8 +234,13 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
       willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
     });
 
-    setAgentStatus(state.status);
-    setAgentStatusMessage(state.statusMessage);
+    // Only update status if changed (reduces re-renders during rapid streaming)
+    if (state.status !== agentStatusRef.current) {
+      setAgentStatus(state.status);
+    }
+    if (state.statusMessage !== agentStatusMessageRef.current) {
+      setAgentStatusMessage(state.statusMessage);
+    }
 
     // Only update canvas if timestamp changed (actual update)
     // Use refs to avoid stale closure issues with rapid updates

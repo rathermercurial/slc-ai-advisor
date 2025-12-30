@@ -286,6 +286,10 @@ export function useCanvasHistory(canvasId: string): UseCanvasHistoryReturn {
     if (stored && stored.entries.length > 0) {
       setEntries(stored.entries);
       setCurrentIndex(stored.currentIndex);
+      // CRITICAL: Update refs immediately so undo/redo work before next render
+      // React state updates are async, but refs need to be sync for callbacks
+      entriesRef.current = stored.entries;
+      currentIndexRef.current = stored.currentIndex;
       initializedRef.current = true;
       console.log('[History] loaded from localStorage successfully');
     }

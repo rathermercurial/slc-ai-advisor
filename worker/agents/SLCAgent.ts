@@ -402,6 +402,17 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
             // when the execute function completes successfully
             messageTimer(); // End message_sent timer
             logger.info('Stream finished');
+
+            // Persist messages - required when using custom streaming
+            // The SDK auto-persists with streamText().toUIMessageStreamResponse(),
+            // but with createUIMessageStream we need to save explicitly
+            try {
+              await this.saveMessages(this.messages);
+              logger.info('Messages persisted', { count: this.messages.length });
+            } catch (saveError) {
+              logger.error('Failed to persist messages', saveError);
+            }
+
             this.setStatus('idle', '');
           } catch (error) {
             logger.error('Stream error', error);

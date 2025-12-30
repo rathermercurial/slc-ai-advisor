@@ -37,6 +37,13 @@ enabled = true
 binding = "VECTORIZE"
 index_name = "slc-knowledge-base"
 
+# KV Namespace for Canvas Registry
+# Stores metadata for all canvases (id, name, starred, archived, timestamps)
+# Create via: wrangler kv:namespace create "CANVAS_REGISTRY"
+[[kv_namespaces]]
+binding = "CANVAS_REGISTRY"
+id = "placeholder-create-via-wrangler"
+
 # Durable Objects
 # - CANVAS: Goal artifact (canvas state with Model Managers)
 # - SLC_AGENT: AI conversation orchestrator

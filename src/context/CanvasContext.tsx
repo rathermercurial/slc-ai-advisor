@@ -222,6 +222,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
     });
   }, []);
 
+  // Pending history update ref - deferred to avoid cascading re-renders
+  const pendingHistoryUpdateRef = useRef<CanvasState | null>(null);
+
   // Update from agent state sync
   // ONLY syncs canvas updates - status is derived from useAgentChat in Chat.tsx
   // Status updates were causing "Maximum update depth exceeded" errors
@@ -236,14 +239,22 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
       setCanvas(state.canvas);
       setCanvasUpdatedAt(state.canvasUpdatedAt);
 
-      // Initialize or push to history (skip if we're restoring from undo/redo)
+      // Defer history update to next frame to avoid cascading re-renders
+      // History hook has its own state that causes re-renders
       if (!isRestoringRef.current) {
-        if (!historyInitializedRef.current) {
-          historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
-          historyInitializedRef.current = true;
-        } else {
-          historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
-        }
+        pendingHistoryUpdateRef.current = state.canvas;
+        requestAnimationFrame(() => {
+          const canvasToUpdate = pendingHistoryUpdateRef.current;
+          if (canvasToUpdate) {
+            pendingHistoryUpdateRef.current = null;
+            if (!historyInitializedRef.current) {
+              historyRef.current.initialize(canvasToSnapshot(canvasToUpdate, 'ai'));
+              historyInitializedRef.current = true;
+            } else {
+              historyRef.current.pushSnapshot(canvasToSnapshot(canvasToUpdate, 'ai'));
+            }
+          }
+        });
       }
     }
   }, []); // No dependencies - uses refs for all external values

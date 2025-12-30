@@ -6,14 +6,18 @@
  */
 
 /**
+ * Venture stage values matching the Selection Matrix
+ */
+export type VentureStage = 'idea' | 'validation' | 'growth' | 'scale';
+
+/**
  * Venture Properties for Selection Matrix filtering.
  *
  * TERMINOLOGY:
  * - "Properties" = all 7 characteristics (open-ended classification)
  * - "Dimension" = property with pre-defined, mutually exclusive values
  *
- * Currently only `ventureStage` is a dimension (4 valid values:
- * idea-stage, early-stage, growth-stage, scale-stage).
+ * Currently only `ventureStage` is a dimension (4 valid values).
  * All others are properties accepting open-ended tag values.
  */
 export interface VentureProperties {

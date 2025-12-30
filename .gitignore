@@ -10,6 +10,9 @@ dist/
 .env.local
 .env.*.local
 .dev.vars
+*.vars
+*.vars.*
+*.dev.vars*
 
 # OS files
 .DS_Store
@@ -30,6 +33,12 @@ tmp/
 # IDE/Editor
 .vscode/
 .idea/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Claude Code
 .claude/settings.local.json

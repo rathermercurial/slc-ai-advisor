@@ -12,8 +12,9 @@
  * 4. Canvas consumes from context, merges with local edits
  */
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import type { CanvasState, CanvasSectionId, ImpactModel } from '../types/canvas';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import type { CanvasState, CanvasSectionId, ImpactModel, CanvasSection } from '../types/canvas';
+import { useCanvasHistory, type CanvasSnapshot } from '../hooks';
 
 /**
  * Agent state structure (must match SLCAgent's AgentState)
@@ -47,6 +48,10 @@ interface CanvasContextValue {
   agentStatusMessage: string;
   /** Whether agent is connected */
   isConnected: boolean;
+  /** Whether AI is currently generating a response */
+  isGenerating: boolean;
+  /** Set generating state (from Chat component) */
+  setGenerating: (generating: boolean) => void;
   /** Set of sections currently being edited locally */
   editingSections: Set<CanvasSectionId>;
   /** Mark a section as being edited (prevents overwrite from sync) */
@@ -59,6 +64,14 @@ interface CanvasContextValue {
   saveSection: (section: CanvasSectionId, content: string, canvasId: string) => Promise<SaveResult>;
   /** Save impact model - returns success/failure with optional error messages */
   saveImpactModel: (impactModel: ImpactModel, canvasId: string) => Promise<SaveResult>;
+  /** Undo last change - returns true if successful */
+  undo: () => boolean;
+  /** Redo undone change - returns true if successful */
+  redo: () => boolean;
+  /** Whether undo is available */
+  canUndo: boolean;
+  /** Whether redo is available */
+  canRedo: boolean;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);
@@ -75,15 +88,115 @@ export function useCanvasContext(): CanvasContextValue {
 }
 
 /**
+ * Provider props
+ */
+interface CanvasProviderProps {
+  children: ReactNode;
+  canvasId: string;
+}
+
+/**
+ * Convert canvas state to snapshot for history
+ */
+function canvasToSnapshot(canvas: CanvasState, source: 'user' | 'ai'): CanvasSnapshot {
+  const sections: Record<CanvasSectionId, string> = {} as Record<CanvasSectionId, string>;
+  for (const section of canvas.sections) {
+    sections[section.sectionKey] = section.content;
+  }
+  // Impact section content comes from impactModel.impact
+  sections.impact = canvas.impactModel.impact;
+
+  return {
+    sections,
+    impactModel: canvas.impactModel,
+    timestamp: Date.now(),
+    source,
+  };
+}
+
+/**
+ * Apply snapshot to canvas state
+ */
+function applySnapshotToCanvas(canvas: CanvasState, snapshot: CanvasSnapshot): CanvasState {
+  const now = new Date().toISOString();
+
+  const sections: CanvasSection[] = canvas.sections.map((section) => ({
+    ...section,
+    content: snapshot.sections[section.sectionKey] ?? section.content,
+    updatedAt: now,
+  }));
+
+  return {
+    ...canvas,
+    sections,
+    impactModel: {
+      ...snapshot.impactModel,
+      updatedAt: now,
+    },
+    updatedAt: now,
+  };
+}
+
+/**
  * Provider component
  */
-export function CanvasProvider({ children }: { children: ReactNode }) {
+export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const [canvas, setCanvas] = useState<CanvasState | null>(null);
   const [canvasUpdatedAt, setCanvasUpdatedAt] = useState<string | null>(null);
   const [agentStatus, setAgentStatus] = useState<AgentState['status']>('idle');
   const [agentStatusMessage, setAgentStatusMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [editingSections, setEditingSections] = useState<Set<CanvasSectionId>>(new Set());
+
+  // History management
+  const history = useCanvasHistory(canvasId);
+  const historyInitializedRef = useRef(false);
+  const isRestoringRef = useRef(false);
+
+  // Ref for canvasUpdatedAt to avoid stale closure in updateFromAgent
+  const canvasUpdatedAtRef = useRef(canvasUpdatedAt);
+  canvasUpdatedAtRef.current = canvasUpdatedAt;
+
+  // Ref for history to avoid stale closure
+  const historyRef = useRef(history);
+  historyRef.current = history;
+
+  // Initialize canvas from API on mount (ensures canvas is set for progress calculation)
+  useEffect(() => {
+    // Skip for frontend-only dev mode
+    if (import.meta.env.VITE_FRONTEND_ONLY === 'true') {
+      return;
+    }
+
+    async function loadCanvas() {
+      try {
+        const response = await fetch(`/api/canvas/${canvasId}`);
+        if (response.ok) {
+          const data = await response.json() as CanvasState;
+          // Only initialize if canvas hasn't been set yet (avoid overwriting agent sync)
+          setCanvas(prev => {
+            if (prev === null && data) {
+              // Initialize history with loaded state
+              if (!historyInitializedRef.current) {
+                historyRef.current.initialize(canvasToSnapshot(data, 'ai'));
+                historyInitializedRef.current = true;
+              }
+              return data;
+            }
+            return prev;
+          });
+          if (data.updatedAt) {
+            setCanvasUpdatedAt(prev => prev === null ? data.updatedAt : prev);
+          }
+        }
+      } catch (err) {
+        console.error('[CanvasContext] Failed to load canvas:', err);
+      }
+    }
+
+    loadCanvas();
+  }, [canvasId]);
 
   // Mark section as editing/not editing
   const setEditing = useCallback((section: CanvasSectionId, editing: boolean) => {
@@ -100,30 +213,54 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
 
   // Update from agent state sync
   const updateFromAgent = useCallback((state: AgentState) => {
+    console.log('[CanvasContext] updateFromAgent called', {
+      hasCanvas: !!state.canvas,
+      newTimestamp: state.canvasUpdatedAt,
+      currentTimestamp: canvasUpdatedAtRef.current,
+      willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
+    });
+
     setAgentStatus(state.status);
     setAgentStatusMessage(state.statusMessage);
 
     // Only update canvas if timestamp changed (actual update)
-    if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAt) {
+    // Use refs to avoid stale closure issues with rapid updates
+    if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
+      console.log('[CanvasContext] updating canvas state');
       setCanvas(state.canvas);
       setCanvasUpdatedAt(state.canvasUpdatedAt);
+
+      // Initialize or push to history (skip if we're restoring from undo/redo)
+      if (!isRestoringRef.current) {
+        if (!historyInitializedRef.current) {
+          historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
+          historyInitializedRef.current = true;
+        } else {
+          historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
+        }
+      }
     }
-  }, [canvasUpdatedAt]);
+  }, []); // No dependencies - uses refs for all external values
 
   // Set connection status
   const setConnected = useCallback((connected: boolean) => {
     setIsConnected(connected);
   }, []);
 
+  // Set generating status (called by Chat component)
+  const setGenerating = useCallback((generating: boolean) => {
+    setIsGenerating(generating);
+  }, []);
+
   // Save section locally and to server
   const saveSection = useCallback(async (
     section: CanvasSectionId,
     content: string,
-    canvasId: string
+    _canvasId: string
   ): Promise<SaveResult> => {
     // Persist to backend first (no more optimistic updates for accurate feedback)
     try {
-      const response = await fetch(`/api/canvas/${canvasId}/section/${section}`, {
+      const response = await fetch(`/api/canvas/${_canvasId}/section/${section}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
@@ -135,7 +272,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
         // Update local state only on successful save
         setCanvas(prev => {
           if (!prev) return prev;
-          return {
+          const updated = {
             ...prev,
             sections: prev.sections.map(s =>
               s.sectionKey === section
@@ -144,6 +281,18 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             ),
             updatedAt: new Date().toISOString(),
           };
+
+          // Push to history
+          if (!isRestoringRef.current) {
+            if (!historyInitializedRef.current) {
+              history.initialize(canvasToSnapshot(updated, 'user'));
+              historyInitializedRef.current = true;
+            } else {
+              history.pushSnapshot(canvasToSnapshot(updated, 'user'));
+            }
+          }
+
+          return updated;
         });
         return { success: true };
       }
@@ -154,16 +303,16 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save section:', err);
       return { success: false, errors: ['Network error saving section'] };
     }
-  }, []);
+  }, [history]);
 
   // Save impact model
   const saveImpactModel = useCallback(async (
     impactModel: ImpactModel,
-    canvasId: string
+    _canvasId: string
   ): Promise<SaveResult> => {
     // Persist to backend first
     try {
-      const response = await fetch(`/api/canvas/${canvasId}/impact`, {
+      const response = await fetch(`/api/canvas/${_canvasId}/impact`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(impactModel),
@@ -175,11 +324,23 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
         // Update local state only on successful save
         setCanvas(prev => {
           if (!prev) return prev;
-          return {
+          const updated = {
             ...prev,
             impactModel,
             updatedAt: new Date().toISOString(),
           };
+
+          // Push to history
+          if (!isRestoringRef.current) {
+            if (!historyInitializedRef.current) {
+              history.initialize(canvasToSnapshot(updated, 'user'));
+              historyInitializedRef.current = true;
+            } else {
+              history.pushSnapshot(canvasToSnapshot(updated, 'user'));
+            }
+          }
+
+          return updated;
         });
         return { success: true };
       }
@@ -189,7 +350,56 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save impact model:', err);
       return { success: false, errors: ['Network error saving impact model'] };
     }
-  }, []);
+  }, [history]);
+
+  // Undo last change
+  const handleUndo = useCallback((): boolean => {
+    if (!canvas || !history.canUndo) return false;
+
+    const snapshot = history.undo();
+    if (!snapshot) return false;
+
+    // Mark as restoring to prevent pushing this change to history
+    isRestoringRef.current = true;
+
+    // Apply snapshot to canvas state
+    const restoredCanvas = applySnapshotToCanvas(canvas, snapshot);
+    setCanvas(restoredCanvas);
+    setCanvasUpdatedAt(new Date().toISOString());
+
+    // TODO: Persist restored state to backend
+    // For now, the backend will be synced on next user save
+
+    // Reset restoring flag after state update
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 0);
+
+    return true;
+  }, [canvas, history]);
+
+  // Redo undone change
+  const handleRedo = useCallback((): boolean => {
+    if (!canvas || !history.canRedo) return false;
+
+    const snapshot = history.redo();
+    if (!snapshot) return false;
+
+    // Mark as restoring to prevent pushing this change to history
+    isRestoringRef.current = true;
+
+    // Apply snapshot to canvas state
+    const restoredCanvas = applySnapshotToCanvas(canvas, snapshot);
+    setCanvas(restoredCanvas);
+    setCanvasUpdatedAt(new Date().toISOString());
+
+    // Reset restoring flag after state update
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 0);
+
+    return true;
+  }, [canvas, history]);
 
   const value: CanvasContextValue = {
     canvas,
@@ -197,12 +407,18 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
     agentStatus,
     agentStatusMessage,
     isConnected,
+    isGenerating,
+    setGenerating,
     editingSections,
     setEditing,
     updateFromAgent,
     setConnected,
     saveSection,
     saveImpactModel,
+    undo: handleUndo,
+    redo: handleRedo,
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
   };
 
   return (

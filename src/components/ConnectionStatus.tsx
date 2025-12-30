@@ -1,27 +1,52 @@
 /**
  * WebSocket connection status indicator
  *
- * Displays the current connection state of the agent WebSocket.
+ * Pulsing orb design that shows AI agent connection state.
+ * - Connected: Green glowing orb with subtle pulse
+ * - Connecting: Yellow orb with active pulse ring
+ * - Disconnected: Gray dim orb, no animation
  */
 
 interface ConnectionStatusProps {
   readyState: number;
+  isGenerating?: boolean;
+  onHoverChange?: (text: string | null) => void;
 }
 
-const STATUS_CONFIG: Record<number, { label: string; className: string }> = {
-  0: { label: 'Connecting...', className: 'connecting' },
-  1: { label: 'Connected', className: 'connected' },
-  2: { label: 'Closing', className: 'closing' },
-  3: { label: 'Disconnected', className: 'disconnected' },
-};
+export function ConnectionStatus({ readyState, isGenerating = false, onHoverChange }: ConnectionStatusProps) {
+  const connected = readyState === 1;
+  const connecting = readyState === 0;
 
-export function ConnectionStatus({ readyState }: ConnectionStatusProps) {
-  const status = STATUS_CONFIG[readyState] || { label: 'Unknown', className: 'unknown' };
+  // Generating takes priority over connected for visual state
+  const statusClass = isGenerating
+    ? 'generating'
+    : connected
+    ? 'connected'
+    : connecting
+    ? 'connecting'
+    : 'disconnected';
+
+  const statusText = isGenerating
+    ? 'AI is thinking...'
+    : connected
+    ? 'AI Agent Connected'
+    : connecting
+    ? 'Connecting to AI...'
+    : 'AI Agent Offline';
 
   return (
-    <div className={`connection-status connection-${status.className}`}>
-      <span className="connection-dot" aria-hidden="true" />
-      <span className="connection-label">{status.label}</span>
-    </div>
+    <span
+      className={`connection-orb ${statusClass}`}
+      aria-label={statusText}
+      onMouseEnter={() => onHoverChange?.(statusText)}
+      onMouseLeave={() => onHoverChange?.(null)}
+      onFocus={() => onHoverChange?.(statusText)}
+      onBlur={() => onHoverChange?.(null)}
+      tabIndex={0}
+      role="status"
+    >
+      <span className="connection-orb-core" />
+      {(connected || connecting || isGenerating) && <span className="connection-orb-ring" />}
+    </span>
   );
 }

@@ -13,11 +13,17 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:chromium": "playwright test --project=chromium"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.19.0",
     "@cloudflare/workers-types": "^4.20251223.0",
+    "@playwright/test": "^1.57.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
@@ -33,9 +39,11 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "agents": "^0.3.0",
     "ai": "^6.0.3",
+    "lucide-react": "^0.562.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.11.0",
     "zod": "^4.2.1"
   }
 }

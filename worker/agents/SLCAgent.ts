@@ -97,11 +97,20 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   }
 
   /**
+   * Extract canvasId from agent name (format: canvasId or canvasId--threadId)
+   * Using -- separator to avoid PartySocket routing issues with /
+   */
+  private getCanvasId(): string | null {
+    if (!this.name) return null;
+    return this.name.split('--')[0];
+  }
+
+  /**
    * Broadcast canvas state to all connected clients
    * Called after tool execution modifies the canvas
    */
   async broadcastCanvasUpdate(): Promise<void> {
-    const canvasId = this.name;
+    const canvasId = this.getCanvasId();
     if (!canvasId) return;
 
     const logger = this.getLogger();
@@ -124,7 +133,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
    * Also broadcasts canvas state to clients for initial sync
    */
   private async getCanvasContext(): Promise<string> {
-    const canvasId = this.name;
+    const canvasId = this.getCanvasId();
     const logger = this.getLogger();
 
     if (!canvasId) {
@@ -239,7 +248,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
           try {
             let currentMessages = [...anthropicMessages];
             let continueLoop = true;
-            const maxSteps = 5;
+            const maxSteps = 25; // Enough for full canvas population (~20 tool calls)
             let step = 0;
 
             while (continueLoop && step < maxSteps) {
@@ -304,11 +313,17 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
                 const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
                 for (const toolBlock of toolUseBlocks) {
+                  console.log(`[SLCAgent] Executing tool: ${toolBlock.name}`);
+                  console.log(`[SLCAgent] Tool context name: ${toolContext.name}`);
                   const toolTimer = logger.startTimer(`tool:${toolBlock.name}`);
                   try {
                     const result = await executeToolWithBroadcast(
                       {
-                        ...toolContext,
+                        name: toolContext.name, // Explicitly pass name (not copied by spread)
+                        state: toolContext.state,
+                        setState: (s) => toolContext.setState(s),
+                        getCanvasStub: (id) => toolContext.getCanvasStub(id),
+                        env: toolContext.env,
                         broadcastCanvasUpdate: () => toolContext.broadcastCanvasUpdate(),
                       },
                       toolBlock.name,

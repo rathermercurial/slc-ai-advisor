@@ -276,7 +276,8 @@ export async function executeTool(
   toolName: string,
   toolInput: Record<string, unknown>
 ): Promise<unknown> {
-  const canvasId = ctx.name;
+  // Extract canvasId from agent name (format: canvasId or canvasId--threadId)
+  const canvasId = ctx.name?.split('--')[0];
   if (!canvasId) {
     throw new Error('No canvas selected. Please create or select a canvas first.');
   }

@@ -1,14 +1,24 @@
-import { useState, useRef, useEffect, FormEvent, ChangeEvent, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, FormEvent, ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 import { useAgent } from 'agents/react';
 import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
+import { ArrowUp, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
-import { StatusBar } from './StatusBar';
 import { ToolInvocationCard } from './ToolInvocationCard';
 import { useCanvasContext, type AgentState } from '../context';
 
+/**
+ * Simplified message structure for export
+ */
+export interface ChatMessageForExport {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface ChatProps {
   canvasId: string;
+  threadId?: string;
+  onMessagesChange?: (messages: ChatMessageForExport[]) => void;
 }
 
 /**
@@ -76,21 +86,37 @@ function getToolCardState(sdkState: string): 'pending' | 'executing' | 'complete
  * Agent state (status updates + canvas) syncs automatically via the agents SDK.
  * Canvas state is pushed to CanvasContext for the Canvas component to consume.
  */
-export function Chat({ canvasId }: ChatProps) {
+export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Get canvas context to push agent state updates
-  const { updateFromAgent, setConnected, agentStatus, agentStatusMessage } = useCanvasContext();
+  const { updateFromAgent, setConnected, setGenerating } = useCanvasContext();
+
+  // Agent name includes threadId for multi-thread support
+  // Format: canvasId or canvasId--threadId (using -- to avoid PartySocket routing issues with /)
+  const agentName = threadId ? `${canvasId}--${threadId}` : canvasId;
+
+  // Keep a ref to the latest updateFromAgent to avoid stale closures in useAgent callback
+  const updateFromAgentRef = useRef(updateFromAgent);
+  useLayoutEffect(() => {
+    updateFromAgentRef.current = updateFromAgent;
+  }, [updateFromAgent]);
 
   // Connect to agent via WebSocket
   const agent = useAgent<AgentState>({
     agent: 'slc-agent',
-    name: canvasId,
+    name: agentName,
     onStateUpdate: (state) => {
+      console.log('[Chat] onStateUpdate received', {
+        status: state.status,
+        hasCanvas: !!state.canvas,
+        canvasUpdatedAt: state.canvasUpdatedAt
+      });
       // Push state to context (includes canvas sync)
-      updateFromAgent(state);
+      // Use ref to always call latest version of updateFromAgent
+      updateFromAgentRef.current(state);
     },
   });
 
@@ -112,10 +138,26 @@ export function Chat({ canvasId }: ChatProps) {
   // Determine loading state from status
   const isLoading = status === 'streaming' || status === 'submitted';
 
+  // Sync generating state with context (for orb glow)
+  useEffect(() => {
+    setGenerating(isLoading);
+  }, [isLoading, setGenerating]);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Notify parent when messages change (for export functionality)
+  useEffect(() => {
+    if (onMessagesChange) {
+      const exportMessages: ChatMessageForExport[] = messages.map((message) => ({
+        role: message.role as 'user' | 'assistant' | 'system',
+        content: getMessageText(message),
+      }));
+      onMessagesChange(exportMessages);
+    }
+  }, [messages, onMessagesChange]);
 
   // The canvasId is passed as the agent 'name', so the agent instance
   // is already scoped to this canvas. No need to call setCanvas.
@@ -160,17 +202,41 @@ export function Chat({ canvasId }: ChatProps) {
     await sendMessage({ text: userMessage });
   };
 
+  /**
+   * Focus input when clicking on chat area, but not when:
+   * - Clicking on interactive elements (buttons, links, inputs)
+   * - Selecting text in messages
+   */
+  const handleChatClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+
+    // Don't focus if clicking on interactive elements
+    const interactiveElements = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'SELECT'];
+    if (interactiveElements.includes(target.tagName)) {
+      return;
+    }
+
+    // Don't focus if clicking inside an interactive element (e.g., button icon)
+    if (target.closest('button, a, input, textarea, select')) {
+      return;
+    }
+
+    // Don't focus if user is selecting text
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
+
+    // Focus the textarea
+    textareaRef.current?.focus();
+  }, []);
+
   return (
-    <div className="chat">
+    <div className="chat" onClick={handleChatClick}>
       {/* Connection status */}
       <div className="chat-header">
         <ConnectionStatus readyState={agent.readyState} />
       </div>
-
-      {/* Agent status bar (when not idle) */}
-      {agentStatus !== 'idle' && (
-        <StatusBar status={agentStatus} message={agentStatusMessage} />
-      )}
 
       {/* Messages */}
       <div className="chat-messages">
@@ -217,16 +283,11 @@ Tell me about your social venture idea - what problem are you trying to solve, a
           </div>
         ))}
 
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="chat-message assistant">
-            <span className="typing-indicator">Thinking...</span>
-          </div>
-        )}
+        {/* Loading state shown via orb glow + header text */}
 
         {/* Error message */}
         {error && (
-          <div className="chat-message error">
+          <div className="chat-message error" role="alert">
             Error: {error.message}
           </div>
         )}
@@ -243,16 +304,17 @@ Tell me about your social venture idea - what problem are you trying to solve, a
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about your canvas... (Shift+Enter for newline)"
+            placeholder="(Shift+Enter for new line)"
             disabled={isLoading || agent.readyState !== 1}
             rows={1}
+            aria-label="Type a message"
           />
           <button
             type="submit"
             className="chat-send"
             disabled={isLoading || !input.trim() || agent.readyState !== 1}
           >
-            {isLoading ? 'Sending...' : 'Send'}
+            {isLoading ? <Loader2 size={18} className="spin" /> : <ArrowUp size={18} />}
           </button>
         </form>
       </div>

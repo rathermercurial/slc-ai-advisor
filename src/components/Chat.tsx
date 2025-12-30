@@ -138,9 +138,16 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   // Determine loading state from status
   const isLoading = status === 'streaming' || status === 'submitted';
 
+  // Track previous loading state to avoid unnecessary context updates
+  const prevIsLoadingRef = useRef(isLoading);
+
   // Sync generating state with context (for orb glow)
+  // Only update when isLoading actually changes to prevent cascading re-renders
   useEffect(() => {
-    setGenerating(isLoading);
+    if (prevIsLoadingRef.current !== isLoading) {
+      prevIsLoadingRef.current = isLoading;
+      setGenerating(isLoading);
+    }
   }, [isLoading, setGenerating]);
 
   // Auto-scroll to bottom when messages change

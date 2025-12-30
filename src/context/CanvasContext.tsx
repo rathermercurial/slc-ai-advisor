@@ -175,6 +175,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   const agentStatusMessageRef = useRef(agentStatusMessage);
   agentStatusMessageRef.current = agentStatusMessage;
 
+  // Re-entrancy guard to prevent cascading updates
+  const isUpdatingFromAgentRef = useRef(false);
+
   // Initialize canvas from API on mount (ensures canvas is set for progress calculation)
   useEffect(() => {
     // Skip for frontend-only dev mode
@@ -226,38 +229,53 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
 
   // Update from agent state sync
   // Optimized to only trigger React re-renders when values actually change
+  // Uses re-entrancy guard to prevent cascading update loops
   const updateFromAgent = useCallback((state: AgentState) => {
-    console.log('[CanvasContext] updateFromAgent called', {
-      hasCanvas: !!state.canvas,
-      newTimestamp: state.canvasUpdatedAt,
-      currentTimestamp: canvasUpdatedAtRef.current,
-      willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
-    });
-
-    // Only update status if changed (reduces re-renders during rapid streaming)
-    if (state.status !== agentStatusRef.current) {
-      setAgentStatus(state.status);
+    // Prevent re-entrant calls that can cause infinite loops
+    if (isUpdatingFromAgentRef.current) {
+      console.log('[CanvasContext] Skipping re-entrant updateFromAgent call');
+      return;
     }
-    if (state.statusMessage !== agentStatusMessageRef.current) {
-      setAgentStatusMessage(state.statusMessage);
-    }
+    isUpdatingFromAgentRef.current = true;
 
-    // Only update canvas if timestamp changed (actual update)
-    // Use refs to avoid stale closure issues with rapid updates
-    if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
-      console.log('[CanvasContext] updating canvas state');
-      setCanvas(state.canvas);
-      setCanvasUpdatedAt(state.canvasUpdatedAt);
+    try {
+      console.log('[CanvasContext] updateFromAgent called', {
+        hasCanvas: !!state.canvas,
+        newTimestamp: state.canvasUpdatedAt,
+        currentTimestamp: canvasUpdatedAtRef.current,
+        willUpdate: state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current
+      });
 
-      // Initialize or push to history (skip if we're restoring from undo/redo)
-      if (!isRestoringRef.current) {
-        if (!historyInitializedRef.current) {
-          historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
-          historyInitializedRef.current = true;
-        } else {
-          historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
+      // Only update status if changed (reduces re-renders during rapid streaming)
+      if (state.status !== agentStatusRef.current) {
+        setAgentStatus(state.status);
+      }
+      if (state.statusMessage !== agentStatusMessageRef.current) {
+        setAgentStatusMessage(state.statusMessage);
+      }
+
+      // Only update canvas if timestamp changed (actual update)
+      // Use refs to avoid stale closure issues with rapid updates
+      if (state.canvas && state.canvasUpdatedAt !== canvasUpdatedAtRef.current) {
+        console.log('[CanvasContext] updating canvas state');
+        setCanvas(state.canvas);
+        setCanvasUpdatedAt(state.canvasUpdatedAt);
+
+        // Initialize or push to history (skip if we're restoring from undo/redo)
+        if (!isRestoringRef.current) {
+          if (!historyInitializedRef.current) {
+            historyRef.current.initialize(canvasToSnapshot(state.canvas, 'ai'));
+            historyInitializedRef.current = true;
+          } else {
+            historyRef.current.pushSnapshot(canvasToSnapshot(state.canvas, 'ai'));
+          }
         }
       }
+    } finally {
+      // Reset guard after React's batch processing completes
+      setTimeout(() => {
+        isUpdatingFromAgentRef.current = false;
+      }, 0);
     }
   }, []); // No dependencies - uses refs for all external values
 
@@ -267,8 +285,9 @@ export function CanvasProvider({ children, canvasId }: CanvasProviderProps) {
   }, []);
 
   // Set generating status (called by Chat component)
+  // Uses functional form to bail out if value unchanged (prevents cascading re-renders)
   const setGenerating = useCallback((generating: boolean) => {
-    setIsGenerating(generating);
+    setIsGenerating(prev => prev === generating ? prev : generating);
   }, []);
 
   // Save section locally and to server

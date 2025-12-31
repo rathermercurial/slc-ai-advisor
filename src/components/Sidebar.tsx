@@ -41,6 +41,9 @@ export function Sidebar({ onHoverChange }: SidebarProps) {
   }, [threadsCollapsed]);
 
   const handleToggleSidebar = () => {
+    // Clear helper text before toggling to prevent stale tooltip
+    // (the button unmounts before onMouseLeave can fire)
+    onHoverChange?.(null);
     setSidebarCollapsed((prev) => !prev);
   };
 

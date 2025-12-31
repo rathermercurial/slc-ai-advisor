@@ -258,7 +258,7 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
             }}
           />
           <DimensionRow
-            label="Legal"
+            label="Legal Structure"
             options={LEGAL_STRUCTURES}
             selected={legalStructures}
             onToggle={createArrayToggle(legalStructures, setLegalStructures, 'legalStructures')}

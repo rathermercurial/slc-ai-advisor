@@ -2,20 +2,17 @@
  * SLC Agent - AI Conversation Orchestrator
  *
  * Extends AIChatAgent to handle AI conversations with tool execution.
- * Uses @anthropic-ai/sdk for API calls through Cloudflare AI Gateway.
+ * Uses Vercel AI SDK with @ai-sdk/anthropic for SDK-native streaming.
  */
 
 import { AIChatAgent } from 'agents/ai-chat-agent';
-import Anthropic from '@anthropic-ai/sdk';
-import {
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-} from 'ai';
-import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { streamText, convertToModelMessages, stepCountIs } from 'ai';
+import type { StreamTextOnFinishCallback, ToolSet } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
 import { formatCanvasContext, buildSystemPrompt, type ToneProfileId, DEFAULT_TONE_PROFILE } from './prompts';
-import { ANTHROPIC_TOOLS, executeToolWithBroadcast } from './anthropic-tools';
+import { createTools } from './tools';
 import { createLogger, createMetrics, type Logger, type Metrics } from '../observability';
 
 /**
@@ -48,6 +45,9 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     toneProfile: DEFAULT_TONE_PROFILE,
   };
 
+  /** Counter for tracking duplicate onChatMessage invocations */
+  private chatInvocationCount = 0;
+
   /**
    * Get logger for this agent instance
    * Uses canvasId (this.name) as request ID for correlation
@@ -65,17 +65,37 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
   /**
    * Handle errors - logs and updates state
+   * Overrides base class method which has overloaded signatures:
+   * - onError(connection: Connection, error: unknown): void | Promise<void>
+   * - onError(error: unknown): void | Promise<void>
    */
-  onError(connection: Connection, error: Error): void {
+  onError(connectionOrError: Connection | unknown, error?: unknown): void {
     const logger = this.getLogger();
     const metrics = this.getMetrics();
-    logger.error('Agent error', error, { connectionId: connection.id });
+
+    // Handle both overload signatures
+    let theError: unknown;
+    let connectionId: string | undefined;
+
+    if (error !== undefined) {
+      // Called with (connection, error)
+      theError = error;
+      connectionId = (connectionOrError as Connection).id;
+    } else {
+      // Called with (error) only
+      theError = connectionOrError;
+    }
+
+    const errorMessage = theError instanceof Error ? theError.message : String(theError);
+    const errorName = theError instanceof Error ? theError.name : 'Unknown';
+
+    logger.error('Agent error', theError, { connectionId });
     metrics.trackEvent('error', {
       sessionId: this.name,
-      errorType: error.name,
+      errorType: errorName,
       success: false,
     });
-    this.setStatus('error', error.message);
+    this.setStatus('error', errorMessage);
   }
 
   /**
@@ -84,7 +104,10 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
    */
   async onConnect(connection: Connection): Promise<void> {
     const logger = this.getLogger();
-    logger.info('Client connected', { connectionId: connection.id });
+    logger.info('Client connected', {
+      connectionId: connection.id,
+      chatInvocationCount: this.chatInvocationCount,
+    });
 
     // Broadcast canvas state so the client gets it immediately
     await this.broadcastCanvasUpdate();
@@ -188,20 +211,13 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
   }
 
   /**
-   * Extract text content from a UIMessage
-   */
-  private getMessageText(message: UIMessage): string {
-    if (!message.parts) return '';
-    return message.parts
-      .filter((part): part is { type: 'text'; text: string } =>
-        part.type === 'text' && 'text' in part
-      )
-      .map((part) => part.text)
-      .join('');
-  }
-
-  /**
    * Handle incoming chat message with streaming response
+   *
+   * Uses Vercel AI SDK's streamText() for SDK-native streaming and
+   * automatic message persistence. The SDK handles:
+   * - Message history management
+   * - Tool execution loop (via maxSteps)
+   * - Stream formatting for UI consumption
    */
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<ToolSet>
@@ -209,6 +225,21 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     const logger = this.getLogger();
     const metrics = this.getMetrics();
     const sessionId = this.name || 'unknown';
+
+    // Track invocation for debugging duplicate calls
+    this.chatInvocationCount++;
+    const invocationId = this.chatInvocationCount;
+    const lastMessage = this.messages[this.messages.length - 1];
+
+    logger.info('onChatMessage INVOKED', {
+      invocationId,
+      canvasId: this.name,
+      messageCount: this.messages.length,
+      lastMessageRole: lastMessage?.role,
+      lastMessageId: lastMessage?.id,
+      // Capture stack trace to see what triggered this call
+      stack: new Error().stack?.split('\n').slice(1, 6).join(' | '),
+    });
 
     logger.info('Chat message received', {
       canvasId: this.name,
@@ -228,210 +259,82 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       const canvasContext = await this.getCanvasContext();
       const systemPrompt = buildSystemPrompt(canvasContext, this.state.toneProfile);
 
-      // Create Anthropic client via AI Gateway (per design.md specification)
+      // Create Anthropic provider via AI Gateway
       // If CF_AIG_TOKEN is set, the gateway has Authenticated Gateway enabled
-      const defaultHeaders: Record<string, string> = {};
+      const headers: Record<string, string> = {};
       if (this.env.CF_AIG_TOKEN) {
-        defaultHeaders['cf-aig-authorization'] = `Bearer ${this.env.CF_AIG_TOKEN}`;
+        headers['cf-aig-authorization'] = `Bearer ${this.env.CF_AIG_TOKEN}`;
       }
 
-      const client = new Anthropic({
+      const anthropic = createAnthropic({
         apiKey: this.env.ANTHROPIC_API_KEY,
         baseURL: `https://gateway.ai.cloudflare.com/v1/${this.env.CF_ACCOUNT_ID}/${this.env.CF_GATEWAY_ID}/anthropic`,
-        defaultHeaders,
+        headers,
       });
 
       this.setStatus('thinking', 'Generating response...');
 
-      // Convert UIMessages to Anthropic message format
-      const anthropicMessages: Anthropic.MessageParam[] = this.messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((m) => ({
-          role: m.role as 'user' | 'assistant',
-          content: this.getMessageText(m),
-        }));
+      // Create tool context for tool execution
+      const toolContext = {
+        name: this.name,
+        state: this.state,
+        setState: (s: AgentState) => this.setState(s),
+        getCanvasStub: (id: string) => this.getCanvasStub(id),
+        env: this.env,
+        broadcastCanvasUpdate: () => this.broadcastCanvasUpdate(),
+      };
 
-      logger.info('Sending messages to Anthropic', { messageCount: anthropicMessages.length });
+      // Create tools with context
+      const tools = createTools(toolContext);
 
-      // Use Vercel AI SDK utilities to create UI message stream
-      const toolContext = this; // For tool execution
       const messageTimer = metrics.startTimer('message_sent', { sessionId });
 
-      const uiStream = createUIMessageStream({
-        execute: async ({ writer }) => {
-          try {
-            let currentMessages = [...anthropicMessages];
-            let continueLoop = true;
-            const maxSteps = 25; // Enough for full canvas population (~20 tool calls)
-            let step = 0;
+      // Convert UIMessages to ModelMessages using SDK's proper conversion
+      // This preserves tool calls, tool results, and all message structure
+      const modelMessages = await convertToModelMessages(this.messages, {
+        tools,
+        ignoreIncompleteToolCalls: true, // Handle in-progress tool calls gracefully
+      });
 
-            while (continueLoop && step < maxSteps) {
-              step++;
-              logger.info('Processing step', { step, maxSteps });
+      logger.info('Starting single-stream response with tools', {
+        count: modelMessages.length,
+        roles: modelMessages.map(m => m.role),
+      });
 
-              // Generate unique ID for this step's text part
-              // Each agentic step needs its own ID to avoid confusing the AI SDK
-              const stepTextPartId = crypto.randomUUID();
-
-              // Create streaming response with tools
-              const stream = client.messages.stream({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 4096,
-                system: systemPrompt,
-                messages: currentMessages,
-                tools: ANTHROPIC_TOOLS,
+      // Single streamText with tools - SDK handles tool loops automatically
+      const result = streamText({
+        model: anthropic('claude-sonnet-4-20250514'),
+        maxOutputTokens: 4096,
+        system: systemPrompt,
+        messages: modelMessages,
+        tools,
+        stopWhen: stepCountIs(5),
+        onStepFinish: async (stepResult) => {
+          // Track tool executions and broadcast canvas updates
+          if (stepResult.toolResults && stepResult.toolResults.length > 0) {
+            for (const toolResult of stepResult.toolResults) {
+              metrics.trackEvent('tool_executed', {
+                sessionId,
+                toolName: toolResult.toolName,
+                success: !('error' in toolResult),
               });
-
-              let fullText = '';
-              let hasStartedText = false;
-              const toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = [];
-
-              // Process stream events
-              for await (const event of stream) {
-                if (event.type === 'content_block_start') {
-                  if (event.content_block.type === 'text' && !hasStartedText) {
-                    writer.write({ type: 'text-start', id: stepTextPartId });
-                    hasStartedText = true;
-                  }
-                } else if (event.type === 'content_block_delta') {
-                  if (event.delta.type === 'text_delta') {
-                    const text = event.delta.text;
-                    fullText += text;
-                    writer.write({ type: 'text-delta', id: stepTextPartId, delta: text });
-                  } else if (event.delta.type === 'input_json_delta') {
-                    // Tool input is being streamed - we'll get full input at end
-                  }
-                } else if (event.type === 'content_block_stop') {
-                  // Content block finished
-                } else if (event.type === 'message_delta') {
-                  // Check stop reason
-                  if (event.delta.stop_reason === 'tool_use') {
-                    logger.info('Tool use detected');
-                  }
-                }
-              }
-
-              // Get final message to extract tool calls
-              const finalMessage = await stream.finalMessage();
-
-              // Close text if we started it
-              if (hasStartedText) {
-                writer.write({ type: 'text-end', id: stepTextPartId });
-              }
-
-              // Check for tool use
-              const toolUseBlocks = finalMessage.content.filter(
-                (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
-              );
-
-              if (toolUseBlocks.length > 0) {
-                logger.info('Executing tools', { count: toolUseBlocks.length });
-
-                // Build tool results
-                const toolResults: Anthropic.ToolResultBlockParam[] = [];
-
-                for (const toolBlock of toolUseBlocks) {
-                  console.log(`[SLCAgent] Executing tool: ${toolBlock.name}`);
-                  console.log(`[SLCAgent] Tool context name: ${toolContext.name}`);
-                  const toolTimer = logger.startTimer(`tool:${toolBlock.name}`);
-                  try {
-                    const result = await executeToolWithBroadcast(
-                      {
-                        name: toolContext.name, // Explicitly pass name (not copied by spread)
-                        state: toolContext.state,
-                        setState: (s) => toolContext.setState(s),
-                        getCanvasStub: (id) => toolContext.getCanvasStub(id),
-                        env: toolContext.env,
-                        broadcastCanvasUpdate: () => toolContext.broadcastCanvasUpdate(),
-                      },
-                      toolBlock.name,
-                      toolBlock.input as Record<string, unknown>
-                    );
-                    toolResults.push({
-                      type: 'tool_result',
-                      tool_use_id: toolBlock.id,
-                      content: JSON.stringify(result),
-                    });
-                    const durationMs = toolTimer.end({ success: true });
-                    metrics.trackEvent('tool_executed', {
-                      sessionId,
-                      toolName: toolBlock.name,
-                      success: true,
-                      durationMs,
-                    });
-                  } catch (error) {
-                    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-                    const durationMs = toolTimer.end({ success: false, error: errorMsg });
-                    logger.error(`Tool ${toolBlock.name} failed`, error);
-                    metrics.trackEvent('tool_executed', {
-                      sessionId,
-                      toolName: toolBlock.name,
-                      success: false,
-                      durationMs,
-                    });
-                    toolResults.push({
-                      type: 'tool_result',
-                      tool_use_id: toolBlock.id,
-                      content: `Error: ${errorMsg}`,
-                      is_error: true,
-                    });
-                  }
-                }
-
-                // Add assistant message and tool results to continue conversation
-                currentMessages.push({
-                  role: 'assistant',
-                  content: finalMessage.content,
-                });
-                currentMessages.push({
-                  role: 'user',
-                  content: toolResults,
-                });
-
-                // Continue loop to get Claude's response after tool execution
-                continueLoop = true;
-              } else {
-                // No tool use, we're done
-                continueLoop = false;
-              }
-
-              logger.info('Step complete', { step, textLength: fullText.length });
             }
-
-            // Note: Don't manually write 'finish' - createUIMessageStream handles it
-            // when the execute function completes successfully
-            messageTimer(); // End message_sent timer
-            logger.info('Stream finished');
-
-            // Persist messages - required when using custom streaming
-            // The SDK auto-persists with streamText().toUIMessageStreamResponse(),
-            // but with createUIMessageStream we need to save explicitly
-            try {
-              await this.saveMessages(this.messages);
-              logger.info('Messages persisted', { count: this.messages.length });
-            } catch (saveError) {
-              logger.error('Failed to persist messages', saveError);
-            }
-
-            this.setStatus('idle', '');
-          } catch (error) {
-            logger.error('Stream error', error);
-            metrics.trackEvent('error', {
-              sessionId,
-              errorType: 'StreamError',
-              success: false,
-            });
-            writer.write({
-              type: 'error',
-              errorText: error instanceof Error ? error.message : 'Unknown error',
-            });
-            this.setStatus('error', 'Stream failed');
+            await this.broadcastCanvasUpdate();
           }
+        },
+        onFinish: async (event) => {
+          messageTimer();
+          logger.info('Stream finished', {
+            invocationId,
+            finishReason: event.finishReason,
+            usage: event.usage,
+          });
+          this.setStatus('idle', '');
+          await onFinish(event);
         },
       });
 
-      // Return as UI message stream response
-      return createUIMessageStreamResponse({ stream: uiStream });
+      return result.toUIMessageStreamResponse();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Chat error', error);

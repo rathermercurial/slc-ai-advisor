@@ -114,14 +114,23 @@ function generateDocumentId(filePath) {
  * - tags: sorted, space-separated venture properties
  *
  * Program filtering uses Vectorize namespace, not metadata field.
+ *
+ * Content is stored truncated (max 8KB) to stay under Vectorize 10KB limit.
  */
-function mapFrontmatterToMetadata(filePath, frontmatter) {
+function mapFrontmatterToMetadata(filePath, frontmatter, content) {
   const tags = frontmatter.tags || [];
   const relativePath = getRelativePath(filePath);
+
+  // Vectorize metadata limit is 10KB. Reserve ~2KB for other fields.
+  const MAX_CONTENT_LENGTH = 8000;
 
   const metadata = {
     title: frontmatter.title || path.basename(filePath, '.md'),
     file_path: relativePath,  // Store original path for reference
+    // Store truncated content for RAG retrieval
+    content: content.length > MAX_CONTENT_LENGTH
+      ? content.substring(0, MAX_CONTENT_LENGTH) + '\n...[truncated]'
+      : content,
   };
 
   // 1. content_type: Check for example markers
@@ -234,7 +243,8 @@ async function processFile(filePath, config, verbose) {
     const { data: frontmatter, content } = matter(fileContent);
 
     const documentId = generateDocumentId(filePath);
-    const metadata = mapFrontmatterToMetadata(filePath, frontmatter);
+    // Pass content to store in metadata for RAG retrieval
+    const metadata = mapFrontmatterToMetadata(filePath, frontmatter, content);
 
     // Combine title and content for embedding
     const textToEmbed = `${metadata.title}\n\n${content}`.substring(0, 30000); // Truncate for safety

@@ -320,6 +320,17 @@ export interface ToolSearchOptions {
 }
 
 /**
+ * Result from searchForTools with optional warning
+ */
+export interface ToolSearchResult {
+  results: Array<{ content: string; metadata: Record<string, unknown>; score: number }>;
+  /** Warning message if results have issues (e.g., empty content) */
+  warning?: string;
+  /** Total results found before limiting */
+  totalFound: number;
+}
+
+/**
  * Simplified search for AI tools
  * Wraps searchKnowledgeBase with a tool-friendly interface
  */
@@ -327,7 +338,9 @@ export async function searchForTools(
   env: Env,
   options: ToolSearchOptions,
   sessionId?: string
-): Promise<{ results: Array<{ content: string; metadata: Record<string, unknown>; score: number }> }> {
+): Promise<ToolSearchResult> {
+  const logger = createLogger('vector-search', sessionId);
+  const metrics = createMetrics(env.SLC_ANALYTICS);
   const { query, contentType, filters, limit = 5 } = options;
 
   // Map contentType to QueryIntent
@@ -364,6 +377,36 @@ export async function searchForTools(
   // Take only the requested limit
   const limitedDocs = docs.slice(0, limit);
 
+  // Check for empty content and log warning
+  const resultsWithContent = limitedDocs.filter(doc => doc.content && doc.content.length > 0);
+  const emptyContentCount = limitedDocs.length - resultsWithContent.length;
+
+  let warning: string | undefined;
+
+  if (limitedDocs.length === 0) {
+    logger.info('RAG search returned no results', {
+      query: query.substring(0, 100),
+      contentType,
+      filtersApplied: !!filters,
+    });
+    metrics.trackEvent('rag_no_results', {
+      sessionId,
+      contentType: contentType || 'general',
+    });
+  } else if (emptyContentCount > 0) {
+    logger.warn('RAG results have empty content', {
+      totalResults: limitedDocs.length,
+      emptyContent: emptyContentCount,
+      resultIds: limitedDocs.map(d => d.id),
+    });
+    metrics.trackEvent('rag_empty_content', {
+      sessionId,
+      totalResults: limitedDocs.length,
+      emptyContentCount,
+    });
+    warning = `Found ${limitedDocs.length} results but ${emptyContentCount} have empty content. The knowledge base may need to be re-indexed.`;
+  }
+
   // Format for tool response
   return {
     results: limitedDocs.map((doc) => ({
@@ -371,6 +414,8 @@ export async function searchForTools(
       metadata: doc.metadata,
       score: doc.score,
     })),
+    warning,
+    totalFound: docs.length,
   };
 }
 

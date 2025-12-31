@@ -41,6 +41,9 @@ export function Sidebar({ onHoverChange }: SidebarProps) {
   }, [threadsCollapsed]);
 
   const handleToggleSidebar = () => {
+    // Clear helper text before toggling to prevent stale tooltip
+    // (the button unmounts before onMouseLeave can fire)
+    onHoverChange?.(null);
     setSidebarCollapsed((prev) => !prev);
   };
 
@@ -51,6 +54,8 @@ export function Sidebar({ onHoverChange }: SidebarProps) {
           type="button"
           className="sidebar-expand-btn"
           onClick={handleToggleSidebar}
+          onMouseEnter={() => onHoverChange?.('Expand sidebar')}
+          onMouseLeave={() => onHoverChange?.(null)}
           title="Expand sidebar"
           aria-label="Expand sidebar"
         >
@@ -67,6 +72,8 @@ export function Sidebar({ onHoverChange }: SidebarProps) {
           type="button"
           className="sidebar-collapse-btn"
           onClick={handleToggleSidebar}
+          onMouseEnter={() => onHoverChange?.('Collapse sidebar')}
+          onMouseLeave={() => onHoverChange?.(null)}
           title="Collapse sidebar"
           aria-label="Collapse sidebar"
         >

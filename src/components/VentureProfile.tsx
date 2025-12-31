@@ -294,7 +294,7 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
             onToggle={handleStageToggle}
           />
           <DimensionRow
-            label="Legal"
+            label="Legal Structure"
             options={LEGAL_STRUCTURES}
             selected={legalStructure ? [legalStructure] : []}
             onToggle={handleLegalToggle}

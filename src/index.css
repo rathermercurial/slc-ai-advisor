@@ -512,7 +512,8 @@ code, .mono {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 1000px;
+  width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 6px;
   background: #9a9a9a;  /* lighter grey for less jarring borders */
@@ -538,8 +539,8 @@ code, .mono {
 }
 
 .slc-row-top {
-  min-height: 100px;
-  height: 100px;
+  min-height: 140px;
+  height: 140px;
 }
 
 .slc-row-middle {
@@ -547,8 +548,8 @@ code, .mono {
 }
 
 .slc-row-bottom {
-  min-height: 100px;
-  height: 100px;
+  min-height: 140px;
+  height: 140px;
 }
 
 /* Ensure top/bottom row sections fill their row and handle overflow */
@@ -1306,13 +1307,13 @@ code, .mono {
    ============================================ */
 
 .impact-inline {
-  max-width: 1000px;
+  width: 100%;
+  max-width: 1600px;
   margin: var(--section-gap) auto 0;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border: 6px solid #9a9a9a;  /* lighter grey to match canvas */
   border-radius: var(--radius-lg);
-  transition: background-color var(--transition-fast);
 }
 
 [data-theme='dark'] .impact-inline {
@@ -2138,8 +2139,8 @@ code, .mono {
 
   /* Reduce row heights on mobile */
   .slc-row-top {
-    min-height: 80px;
-    height: 80px;
+    min-height: 110px;
+    height: 110px;
   }
 
   .slc-row-middle {
@@ -2147,8 +2148,8 @@ code, .mono {
   }
 
   .slc-row-bottom {
-    min-height: 80px;
-    height: 80px;
+    min-height: 110px;
+    height: 110px;
   }
 
   /* Chat adjustments */
@@ -3746,7 +3747,7 @@ code, .mono {
 }
 
 .profile-dim-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--slc-accent);
   text-transform: uppercase;

@@ -61,7 +61,6 @@ type ThreadFilter = 'all' | 'active' | 'starred' | 'archived';
 interface Thread {
   id: string;
   name: string;
-  isCustomName: boolean;
   starred: boolean;
   archived: boolean;
   createdAt: string;
@@ -128,20 +127,12 @@ export class CanvasDO extends DurableObject<Env> {
       CREATE TABLE IF NOT EXISTS chat_threads (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL DEFAULT 'Main',
-        is_custom_name INTEGER NOT NULL DEFAULT 0,
         starred INTEGER NOT NULL DEFAULT 0,
         archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         last_message_at TEXT
       )
     `);
-
-    // Add is_custom_name column if it doesn't exist (migration for existing databases)
-    try {
-      sql.exec(`ALTER TABLE chat_threads ADD COLUMN is_custom_name INTEGER NOT NULL DEFAULT 0`);
-    } catch {
-      // Column already exists, ignore error
-    }
 
     // Canvas sections (10 standard sections, not impact)
     sql.exec(`
@@ -202,11 +193,11 @@ export class CanvasDO extends DurableObject<Env> {
         now
       );
 
-      // Create default "Main" thread (Main thread is considered a custom name)
+      // Create default "Main" thread
       const mainThreadId = crypto.randomUUID();
       sql.exec(
-        `INSERT INTO chat_threads (id, name, is_custom_name, starred, archived, created_at, last_message_at)
-         VALUES (?, 'Main', 1, 0, 0, ?, NULL)`,
+        `INSERT INTO chat_threads (id, name, starred, archived, created_at, last_message_at)
+         VALUES (?, 'Main', 0, 0, ?, NULL)`,
         mainThreadId,
         now
       );
@@ -959,7 +950,6 @@ ${impactExport}
       .exec<{
         id: string;
         name: string;
-        is_custom_name: number;
         starred: number;
         archived: number;
         created_at: string;
@@ -970,7 +960,6 @@ ${impactExport}
     return rows.map((row) => ({
       id: row.id,
       name: row.name,
-      isCustomName: row.is_custom_name === 1,
       starred: row.starred === 1,
       archived: row.archived === 1,
       createdAt: row.created_at,
@@ -989,7 +978,6 @@ ${impactExport}
       .exec<{
         id: string;
         name: string;
-        is_custom_name: number;
         starred: number;
         archived: number;
         created_at: string;
@@ -1002,7 +990,6 @@ ${impactExport}
     return {
       id: row.id,
       name: row.name,
-      isCustomName: row.is_custom_name === 1,
       starred: row.starred === 1,
       archived: row.archived === 1,
       createdAt: row.created_at,
@@ -1029,22 +1016,18 @@ ${impactExport}
     const now = new Date().toISOString();
     const id = crypto.randomUUID();
     const threadName = name || this.generateThreadName();
-    // If name was explicitly provided, mark as custom
-    const isCustomName = name ? 1 : 0;
 
     sql.exec(
-      `INSERT INTO chat_threads (id, name, is_custom_name, starred, archived, created_at, last_message_at)
-       VALUES (?, ?, ?, 0, 0, ?, NULL)`,
+      `INSERT INTO chat_threads (id, name, starred, archived, created_at, last_message_at)
+       VALUES (?, ?, 0, 0, ?, NULL)`,
       id,
       threadName,
-      isCustomName,
       now
     );
 
     return {
       id,
       name: threadName,
-      isCustomName: isCustomName === 1,
       starred: false,
       archived: false,
       createdAt: now,
@@ -1067,7 +1050,7 @@ ${impactExport}
   /**
    * Update thread properties
    */
-  async updateThread(threadId: string, updates: Partial<Pick<Thread, 'name' | 'isCustomName' | 'starred' | 'archived'>>): Promise<Thread> {
+  async updateThread(threadId: string, updates: Partial<Pick<Thread, 'name' | 'starred' | 'archived'>>): Promise<Thread> {
     await this.ensureInitialized();
     const sql = this.ctx.storage.sql;
 
@@ -1081,14 +1064,6 @@ ${impactExport}
       sql.exec(
         `UPDATE chat_threads SET name = ? WHERE id = ?`,
         updates.name,
-        threadId
-      );
-    }
-
-    if (updates.isCustomName !== undefined) {
-      sql.exec(
-        `UPDATE chat_threads SET is_custom_name = ? WHERE id = ?`,
-        updates.isCustomName ? 1 : 0,
         threadId
       );
     }

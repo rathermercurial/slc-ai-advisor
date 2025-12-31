@@ -57,7 +57,7 @@ export default {
           return handleSessionRoute(request, env, requestId);
         }
 
-        // Canvas routes
+        // Canvas routes (handles both /api/canvas and /api/canvases)
         if (url.pathname.startsWith('/api/canvas')) {
           logger.info('Routing to canvas', { path: url.pathname, method: request.method });
           const response = await handleCanvasRoute(request, env, requestId);

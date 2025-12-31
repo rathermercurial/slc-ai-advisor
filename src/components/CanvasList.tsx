@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, KeyboardEvent, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, KeyboardEvent, ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Star, Pencil, Archive, ArchiveRestore } from 'lucide-react';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
@@ -13,6 +13,7 @@ interface CanvasListProps {
 /**
  * Canvas list component for sidebar.
  * Shows list of canvases with filter, star/archive controls.
+ * Data is fetched from backend API /api/canvases.
  */
 export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: CanvasListProps) {
   const { canvasId } = useParams<{ canvasId: string }>();
@@ -25,57 +26,37 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
   const [editValue, setEditValue] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
 
-  // Load canvases from localStorage index
-  useEffect(() => {
-    const loadCanvases = () => {
-      try {
-        const stored = localStorage.getItem('canvasIndex');
-        if (stored) {
-          const parsed = JSON.parse(stored) as CanvasMeta[];
-          setCanvases(parsed);
-        }
-      } catch (err) {
-        console.error('Failed to load canvas index:', err);
-      } finally {
-        setIsLoading(false);
+  // Fetch canvases from backend API
+  const fetchCanvases = useCallback(async (filterValue: FilterOption) => {
+    try {
+      const response = await fetch(`/api/canvases?filter=${filterValue}`);
+      if (response.ok) {
+        const data = await response.json() as CanvasMeta[];
+        setCanvases(data);
       }
-    };
-
-    loadCanvases();
-
-    // Listen for storage changes from other tabs
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'canvasIndex') {
-        loadCanvases();
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-
-    // Listen for same-tab sync (when name changes in header)
-    const handleCanvasIndexUpdate = () => {
-      loadCanvases();
-    };
-    window.addEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('canvasIndexUpdated', handleCanvasIndexUpdate);
-    };
+    } catch (err) {
+      console.error('Failed to load canvases:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Filter canvases
-  const filteredCanvases = canvases.filter((canvas) => {
-    switch (filter) {
-      case 'active':
-        return !canvas.archived;
-      case 'starred':
-        return canvas.starred;
-      case 'archived':
-        return canvas.archived;
-      default:
-        return true;
-    }
-  });
+  // Load canvases on mount and when filter changes
+  useEffect(() => {
+    fetchCanvases(filter);
+  }, [filter, fetchCanvases]);
+
+  // Listen for canvas updates from other components (e.g., header rename)
+  useEffect(() => {
+    const handleCanvasUpdate = () => {
+      fetchCanvases(filter);
+    };
+    window.addEventListener('canvasIndexUpdated', handleCanvasUpdate);
+    return () => window.removeEventListener('canvasIndexUpdated', handleCanvasUpdate);
+  }, [filter, fetchCanvases]);
+
+  // Canvases are already filtered by the API
+  const filteredCanvases = canvases;
 
   const handleCanvasClick = (id: string) => {
     navigate(`/canvas/${id}`);
@@ -116,6 +97,11 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
       return;
     }
 
+    // Optimistic update
+    setCanvases((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c))
+    );
+
     try {
       const response = await fetch(`/api/canvas/${id}`, {
         method: 'PATCH',
@@ -125,27 +111,25 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
 
       if (!response.ok) {
         console.error('Failed to rename canvas:', response.status);
-        setEditingId(null);
-        return;
+        // Revert on error
+        fetchCanvases(filter);
+      } else {
+        // Dispatch event for header sync
+        window.dispatchEvent(new Event('canvasIndexUpdated'));
       }
-
-      // Update local state
-      setCanvases((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c))
-      );
-      // Update localStorage
-      updateCanvasIndex((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c))
-      );
-      // Dispatch event for header sync
-      window.dispatchEvent(new Event('canvasIndexUpdated'));
     } catch (err) {
       console.error('Failed to rename canvas:', err);
+      fetchCanvases(filter);
     }
     setEditingId(null);
   };
 
   const handleToggleStar = async (id: string, starred: boolean) => {
+    // Optimistic update
+    setCanvases((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
+    );
+
     try {
       const response = await fetch(`/api/canvas/${id}`, {
         method: 'PATCH',
@@ -155,21 +139,20 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
 
       if (!response.ok) {
         console.error('Failed to toggle star:', response.status);
-        return;
+        fetchCanvases(filter);
       }
-
-      setCanvases((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
-      );
-      updateCanvasIndex((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, starred: !starred } : c))
-      );
     } catch (err) {
       console.error('Failed to toggle star:', err);
+      fetchCanvases(filter);
     }
   };
 
   const handleArchive = async (id: string) => {
+    // Optimistic update
+    setCanvases((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
+    );
+
     try {
       const response = await fetch(`/api/canvas/${id}`, {
         method: 'PATCH',
@@ -179,17 +162,34 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
 
       if (!response.ok) {
         console.error('Failed to archive canvas:', response.status);
-        return;
+        fetchCanvases(filter);
       }
-
-      setCanvases((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
-      );
-      updateCanvasIndex((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
-      );
     } catch (err) {
       console.error('Failed to archive canvas:', err);
+      fetchCanvases(filter);
+    }
+  };
+
+  const handleUnarchive = async (id: string) => {
+    // Optimistic update
+    setCanvases((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, archived: false } : c))
+    );
+
+    try {
+      const response = await fetch(`/api/canvas/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: false }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to unarchive canvas:', response.status);
+        fetchCanvases(filter);
+      }
+    } catch (err) {
+      console.error('Failed to unarchive canvas:', err);
+      fetchCanvases(filter);
     }
   };
 
@@ -207,38 +207,14 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
       }
 
       const data = await response.json();
-      const newCanvas: CanvasMeta = {
-        id: data.canvasId,
-        name: 'Untitled Canvas',
-        starred: false,
-        archived: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
 
-      setCanvases((prev) => [newCanvas, ...prev]);
-      updateCanvasIndex((prev) => [newCanvas, ...prev]);
-
-      // Dispatch event for header sync
-      window.dispatchEvent(new Event('canvasIndexUpdated'));
+      // Re-fetch to get the new canvas from backend
+      await fetchCanvases(filter);
 
       // Navigate to new canvas
       navigate(`/canvas/${data.canvasId}`);
     } catch (err) {
       console.error('Failed to create canvas:', err);
-    }
-  };
-
-  const updateCanvasIndex = (
-    updater: (prev: CanvasMeta[]) => CanvasMeta[]
-  ) => {
-    try {
-      const stored = localStorage.getItem('canvasIndex');
-      const current = stored ? JSON.parse(stored) : [];
-      const updated = updater(current);
-      localStorage.setItem('canvasIndex', JSON.stringify(updated));
-    } catch (err) {
-      console.error('Failed to update canvas index:', err);
     }
   };
 
@@ -262,18 +238,11 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
             type="button"
             className="sidebar-add-btn"
             onClick={handleCreateCanvas}
-            onMouseEnter={() => onHoverChange?.('New canvas')}
-            onMouseLeave={() => onHoverChange?.(null)}
             title="New Canvas"
           >
             +
           </button>
-          <FilterDropdown
-            value={filter}
-            onChange={setFilter}
-            onHoverChange={onHoverChange}
-            hoverLabel="Filter canvases"
-          />
+          <FilterDropdown value={filter} onChange={setFilter} />
         </div>
       </div>
 
@@ -351,7 +320,7 @@ export function CanvasList({ collapsed, onToggleCollapse, onHoverChange }: Canva
                     className="sidebar-unarchive-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: Implement unarchive
+                      handleUnarchive(canvas.id);
                     }}
                     onMouseEnter={() => onHoverChange?.('Restore')}
                     onMouseLeave={() => onHoverChange?.(null)}

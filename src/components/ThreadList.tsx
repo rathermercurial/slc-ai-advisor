@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Star, Pencil, Archive, ArchiveRestore } from 'lucide-react';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import type { Thread } from '../types/thread';
-import { useCanvasContext } from '../context';
 
 interface ThreadListProps {
   collapsed: boolean;
@@ -18,7 +17,6 @@ interface ThreadListProps {
 export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: ThreadListProps) {
   const { canvasId, threadId } = useParams<{ canvasId: string; threadId?: string }>();
   const navigate = useNavigate();
-  const { setRefreshThreadsCallback } = useCanvasContext();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [filter, setFilter] = useState<FilterOption>('active');
@@ -54,11 +52,6 @@ export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: Threa
   useEffect(() => {
     loadThreads();
   }, [loadThreads]);
-
-  // Register loadThreads with context so Chat can trigger refresh after auto-naming
-  useEffect(() => {
-    setRefreshThreadsCallback(loadThreads);
-  }, [loadThreads, setRefreshThreadsCallback]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -231,18 +224,11 @@ export function ThreadList({ collapsed, onToggleCollapse, onHoverChange }: Threa
             type="button"
             className="sidebar-add-btn"
             onClick={handleCreateThread}
-            onMouseEnter={() => onHoverChange?.('New chat')}
-            onMouseLeave={() => onHoverChange?.(null)}
             title="New Thread"
           >
             +
           </button>
-          <FilterDropdown
-            value={filter}
-            onChange={setFilter}
-            onHoverChange={onHoverChange}
-            hoverLabel="Filter chats"
-          />
+          <FilterDropdown value={filter} onChange={setFilter} />
         </div>
       </div>
 

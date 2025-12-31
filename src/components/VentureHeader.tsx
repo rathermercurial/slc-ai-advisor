@@ -21,8 +21,6 @@ interface VentureHeaderProps {
   onProfileClick?: () => void;
   /** Helper text displayed in header (model indicator, button hints, status) */
   helperText?: string | null;
-  /** Callback for hover text changes */
-  onHoverChange?: (text: string | null) => void;
 }
 
 const MODEL_LABELS: Record<string, string> = {
@@ -72,7 +70,6 @@ export function VentureHeader({
   showProfile = false,
   onProfileClick,
   helperText,
-  onHoverChange,
 }: VentureHeaderProps) {
   return (
     <div className="venture-header">
@@ -122,8 +119,6 @@ export function VentureHeader({
             type="button"
             className="venture-profile-btn"
             onClick={onProfileClick}
-            onMouseEnter={() => onHoverChange?.(showProfile ? 'Hide venture profile' : 'View venture profile')}
-            onMouseLeave={() => onHoverChange?.(null)}
             title={showProfile ? 'Hide venture profile' : 'Show venture profile'}
             aria-label={showProfile ? 'Hide venture profile' : 'Show venture profile'}
             aria-expanded={showProfile}

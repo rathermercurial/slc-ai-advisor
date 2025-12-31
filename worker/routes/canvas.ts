@@ -3,8 +3,10 @@
  *
  * REST endpoints for canvas operations.
  * Routes to CanvasDO via RPC methods.
+ * Canvas registry stored in KV (CANVAS_REGISTRY).
  *
  * Routes:
+ * - GET /api/canvases - List all canvases (with optional filter query param)
  * - POST /api/canvas - Create new canvas
  * - GET /api/canvas/:id - Get full canvas state
  * - PATCH /api/canvas/:id - Update canvas meta (name, starred, archived)
@@ -16,14 +18,20 @@
  * - GET /api/canvas/:id/export/:format - Export canvas
  * - GET /api/canvas/:id/threads - List threads (with filter query param)
  * - POST /api/canvas/:id/threads - Create new thread
- * - PATCH /api/canvas/:id/threads/:threadId - Update thread (name, starred, archived, isCustomName)
- * - POST /api/canvas/:id/threads/:threadId/generate-name - Auto-generate thread name using AI
+ * - PATCH /api/canvas/:id/threads/:threadId - Update thread (name, starred, archived)
  */
 
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import { CANVAS_SECTIONS, type CanvasSectionId } from '../../src/types/canvas';
 import type { VentureProperties } from '../../src/types/venture';
 import { createLogger, createMetrics } from '../observability';
+
+/**
+ * Canvas filter type (for list endpoint)
+ */
+type CanvasFilter = 'all' | 'active' | 'starred' | 'archived';
+
+const VALID_CANVAS_FILTERS: CanvasFilter[] = ['all', 'active', 'starred', 'archived'];
 
 /**
  * Thread filter type
@@ -56,6 +64,97 @@ const VALID_PROPERTIES: (keyof VentureProperties)[] = [
 const MAX_CONTENT_LENGTH = 50000;
 
 /**
+ * Canvas metadata stored in registry (KV)
+ */
+interface CanvasRegistryEntry {
+  id: string;
+  name: string;
+  starred: boolean;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * KV key for canvas registry index
+ */
+const CANVAS_INDEX_KEY = 'canvas-index';
+
+/**
+ * Get all canvas IDs from registry
+ */
+async function getCanvasIndex(kv: KVNamespace): Promise<string[]> {
+  const data = await kv.get(CANVAS_INDEX_KEY);
+  if (!data) return [];
+  try {
+    return JSON.parse(data) as string[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Add canvas ID to registry index
+ */
+async function addToCanvasIndex(kv: KVNamespace, canvasId: string): Promise<void> {
+  const index = await getCanvasIndex(kv);
+  if (!index.includes(canvasId)) {
+    index.unshift(canvasId); // Add to front (most recent first)
+    await kv.put(CANVAS_INDEX_KEY, JSON.stringify(index));
+  }
+}
+
+/**
+ * Get canvas registry entry
+ */
+async function getCanvasEntry(kv: KVNamespace, canvasId: string): Promise<CanvasRegistryEntry | null> {
+  const data = await kv.get(`canvas:${canvasId}`);
+  if (!data) return null;
+  try {
+    return JSON.parse(data) as CanvasRegistryEntry;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save canvas registry entry
+ */
+async function saveCanvasEntry(kv: KVNamespace, entry: CanvasRegistryEntry): Promise<void> {
+  await kv.put(`canvas:${entry.id}`, JSON.stringify(entry));
+}
+
+/**
+ * Get all canvases with optional filter
+ */
+async function listCanvases(kv: KVNamespace, filter: CanvasFilter): Promise<CanvasRegistryEntry[]> {
+  const index = await getCanvasIndex(kv);
+  const entries: CanvasRegistryEntry[] = [];
+
+  for (const canvasId of index) {
+    const entry = await getCanvasEntry(kv, canvasId);
+    if (entry) {
+      // Apply filter
+      switch (filter) {
+        case 'active':
+          if (!entry.archived) entries.push(entry);
+          break;
+        case 'starred':
+          if (entry.starred) entries.push(entry);
+          break;
+        case 'archived':
+          if (entry.archived) entries.push(entry);
+          break;
+        default:
+          entries.push(entry);
+      }
+    }
+  }
+
+  return entries;
+}
+
+/**
  * Handle canvas-related API routes
  */
 export async function handleCanvasRoute(
@@ -67,22 +166,46 @@ export async function handleCanvasRoute(
   const metrics = createMetrics(env.SLC_ANALYTICS);
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean);
-  // parts: ['api', 'canvas', ...rest]
+  // parts: ['api', 'canvas', ...rest] or ['api', 'canvases']
 
   try {
+    // GET /api/canvases - List all canvases
+    if (parts.length === 2 && parts[1] === 'canvases' && request.method === 'GET') {
+      const filterParam = url.searchParams.get('filter') || 'active';
+      const filter = VALID_CANVAS_FILTERS.includes(filterParam as CanvasFilter)
+        ? (filterParam as CanvasFilter)
+        : 'active';
+
+      const canvases = await listCanvases(env.CANVAS_REGISTRY, filter);
+      return jsonResponse(canvases, 200, requestId);
+    }
+
     // POST /api/canvas - Create new canvas
-    if (parts.length === 2 && request.method === 'POST') {
+    if (parts.length === 2 && parts[1] === 'canvas' && request.method === 'POST') {
       const canvasId = crypto.randomUUID();
       const stub = getCanvasStub(env, canvasId);
 
       const canvas = await stub.getFullCanvas();
+
+      // Register in KV
+      const now = new Date().toISOString();
+      const entry: CanvasRegistryEntry = {
+        id: canvasId,
+        name: 'Untitled Canvas',
+        starred: false,
+        archived: false,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await saveCanvasEntry(env.CANVAS_REGISTRY, entry);
+      await addToCanvasIndex(env.CANVAS_REGISTRY, canvasId);
 
       metrics.trackEvent('canvas_created', { sessionId: canvasId });
 
       return jsonResponse({
         canvasId,
         canvas,
-      }, 200, requestId);
+      }, 201, requestId);
     }
 
     // All other routes require a canvas ID
@@ -114,6 +237,20 @@ export async function handleCanvasRoute(
       };
 
       const meta = await stub.updateCanvasMeta(body);
+
+      // Update KV registry
+      const entry = await getCanvasEntry(env.CANVAS_REGISTRY, canvasId);
+      if (entry) {
+        const updated: CanvasRegistryEntry = {
+          ...entry,
+          ...(body.name !== undefined && { name: body.name }),
+          ...(body.starred !== undefined && { starred: body.starred }),
+          ...(body.archived !== undefined && { archived: body.archived }),
+          updatedAt: new Date().toISOString(),
+        };
+        await saveCanvasEntry(env.CANVAS_REGISTRY, updated);
+      }
+
       return jsonResponse(meta, 200, requestId);
     }
 
@@ -341,74 +478,18 @@ export async function handleCanvasRoute(
 
       const body = await request.json().catch(() => ({})) as {
         name?: string;
-        isCustomName?: boolean;
         starred?: boolean;
         archived?: boolean;
       };
 
-      // When user manually renames (name provided without explicit isCustomName: false),
-      // automatically mark as custom name
-      const updates: {
-        name?: string;
-        isCustomName?: boolean;
-        starred?: boolean;
-        archived?: boolean;
-      } = { ...body };
-
-      if (body.name !== undefined && body.isCustomName === undefined) {
-        updates.isCustomName = true;
-      }
-
       try {
-        const thread = await stub.updateThread(threadId, updates);
+        const thread = await stub.updateThread(threadId, body);
         return jsonResponse(thread, 200, requestId);
       } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
           return jsonResponse({ error: error.message }, 404, requestId);
         }
         throw error;
-      }
-    }
-
-    // POST /api/canvas/:id/threads/:threadId/generate-name - Generate thread name from message
-    if (parts.length === 6 && parts[3] === 'threads' && parts[5] === 'generate-name' && request.method === 'POST') {
-      const threadId = parts[4];
-
-      if (!UUID_REGEX.test(threadId)) {
-        return jsonResponse({ error: 'Invalid thread ID format' }, 400, requestId);
-      }
-
-      // Check thread exists and is not a custom name
-      const thread = await stub.getThread(threadId);
-      if (!thread) {
-        return jsonResponse({ error: 'Thread not found' }, 404, requestId);
-      }
-
-      // Skip if user has already renamed the thread
-      if (thread.isCustomName) {
-        return jsonResponse({ skipped: true, reason: 'Thread has custom name', thread }, 200, requestId);
-      }
-
-      const body = await request.json().catch(() => ({})) as { message?: string };
-      if (!body.message || typeof body.message !== 'string') {
-        return jsonResponse({ error: 'message is required' }, 400, requestId);
-      }
-
-      // Generate name using AI
-      try {
-        const generatedName = await generateThreadName(body.message, env);
-
-        if (generatedName) {
-          // Update thread name (but keep isCustomName as false since this is auto-generated)
-          await stub.updateThread(threadId, { name: generatedName, isCustomName: false });
-          const updatedThread = await stub.getThread(threadId);
-          return jsonResponse({ generated: true, name: generatedName, thread: updatedThread }, 200, requestId);
-        } else {
-          return jsonResponse({ generated: false, reason: 'AI could not generate name' }, 200, requestId);
-        }
-      } catch (error) {
-        logger.error('Failed to generate thread name', error);
-        return jsonResponse({ generated: false, reason: 'AI generation failed' }, 200, requestId);
       }
     }
 
@@ -428,52 +509,6 @@ export async function handleCanvasRoute(
  */
 function getCanvasStub(env: Env, canvasId: string): DurableObjectStub<CanvasDO> {
   return env.CANVAS.get(env.CANVAS.idFromName(canvasId)) as DurableObjectStub<CanvasDO>;
-}
-
-/**
- * Generate a 2-3 word thread name from a user message using AI
- */
-async function generateThreadName(message: string, env: Env): Promise<string | null> {
-  // Truncate long messages to save tokens
-  const truncatedMessage = message.length > 500 ? message.slice(0, 500) + '...' : message;
-
-  try {
-    // Use Workers AI for fast, cheap inference
-    const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a thread naming assistant. Generate a 2-3 word title that captures the main topic of the user\'s message. Reply with ONLY the title, no quotes, no explanation. Examples: "Revenue Strategy", "Customer Segments", "Impact Metrics", "Launch Timeline".'
-        },
-        {
-          role: 'user',
-          content: `Generate a 2-3 word title for this message:\n\n${truncatedMessage}`
-        }
-      ],
-      max_tokens: 20
-    }) as { response?: string };
-
-    if (response.response) {
-      // Clean up the response - remove quotes, trim, and limit length
-      const name = response.response
-        .replace(/^["']|["']$/g, '') // Remove surrounding quotes
-        .replace(/^Title:\s*/i, '') // Remove "Title:" prefix if present
-        .trim()
-        .split('\n')[0] // Take only first line
-        .slice(0, 50); // Limit length
-
-      // Validate it looks like a reasonable title (2-5 words)
-      const wordCount = name.split(/\s+/).length;
-      if (wordCount >= 2 && wordCount <= 5 && name.length >= 3) {
-        return name;
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('AI thread naming failed:', error);
-    return null;
-  }
 }
 
 /**

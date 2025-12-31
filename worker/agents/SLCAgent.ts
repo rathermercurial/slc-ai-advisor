@@ -14,7 +14,7 @@ import {
 import type { StreamTextOnFinishCallback, ToolSet, UIMessage } from 'ai';
 import type { CanvasDO } from '../durable-objects/CanvasDO';
 import type { Connection } from 'agents';
-import { formatCanvasContext, buildSystemPrompt } from './prompts';
+import { formatCanvasContext, buildSystemPrompt, type ToneProfileId, DEFAULT_TONE_PROFILE } from './prompts';
 import { ANTHROPIC_TOOLS, executeToolWithBroadcast } from './anthropic-tools';
 import { createLogger, createMetrics, type Logger, type Metrics } from '../observability';
 
@@ -32,6 +32,8 @@ export interface AgentState {
   canvas: import('../../src/types/canvas').CanvasState | null;
   /** Timestamp of last canvas update for change detection */
   canvasUpdatedAt: string | null;
+  /** Tone profile for AI communication style */
+  toneProfile: ToneProfileId;
 }
 
 /**
@@ -43,6 +45,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
     statusMessage: '',
     canvas: null,
     canvasUpdatedAt: null,
+    toneProfile: DEFAULT_TONE_PROFILE,
   };
 
   /**
@@ -73,6 +76,18 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       success: false,
     });
     this.setStatus('error', error.message);
+  }
+
+  /**
+   * Handle new WebSocket connection - broadcast canvas state
+   * This ensures clients get canvas data immediately on connect
+   */
+  async onConnect(connection: Connection): Promise<void> {
+    const logger = this.getLogger();
+    logger.info('Client connected', { connectionId: connection.id });
+
+    // Broadcast canvas state so the client gets it immediately
+    await this.broadcastCanvasUpdate();
   }
 
   /**
@@ -211,7 +226,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       // Get canvas context
       this.setStatus('searching', 'Gathering context...');
       const canvasContext = await this.getCanvasContext();
-      const systemPrompt = buildSystemPrompt(canvasContext);
+      const systemPrompt = buildSystemPrompt(canvasContext, this.state.toneProfile);
 
       // Create Anthropic client via AI Gateway (per design.md specification)
       // If CF_AIG_TOKEN is set, the gateway has Authenticated Gateway enabled
@@ -239,7 +254,6 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
       logger.info('Sending messages to Anthropic', { messageCount: anthropicMessages.length });
 
       // Use Vercel AI SDK utilities to create UI message stream
-      const textPartId = crypto.randomUUID();
       const toolContext = this; // For tool execution
       const messageTimer = metrics.startTimer('message_sent', { sessionId });
 
@@ -254,6 +268,10 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
             while (continueLoop && step < maxSteps) {
               step++;
               logger.info('Processing step', { step, maxSteps });
+
+              // Generate unique ID for this step's text part
+              // Each agentic step needs its own ID to avoid confusing the AI SDK
+              const stepTextPartId = crypto.randomUUID();
 
               // Create streaming response with tools
               const stream = client.messages.stream({
@@ -272,14 +290,14 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
               for await (const event of stream) {
                 if (event.type === 'content_block_start') {
                   if (event.content_block.type === 'text' && !hasStartedText) {
-                    writer.write({ type: 'text-start', id: textPartId });
+                    writer.write({ type: 'text-start', id: stepTextPartId });
                     hasStartedText = true;
                   }
                 } else if (event.type === 'content_block_delta') {
                   if (event.delta.type === 'text_delta') {
                     const text = event.delta.text;
                     fullText += text;
-                    writer.write({ type: 'text-delta', id: textPartId, delta: text });
+                    writer.write({ type: 'text-delta', id: stepTextPartId, delta: text });
                   } else if (event.delta.type === 'input_json_delta') {
                     // Tool input is being streamed - we'll get full input at end
                   }
@@ -298,7 +316,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
 
               // Close text if we started it
               if (hasStartedText) {
-                writer.write({ type: 'text-end', id: textPartId });
+                writer.write({ type: 'text-end', id: stepTextPartId });
               }
 
               // Check for tool use
@@ -384,6 +402,17 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
             // when the execute function completes successfully
             messageTimer(); // End message_sent timer
             logger.info('Stream finished');
+
+            // Persist messages - required when using custom streaming
+            // The SDK auto-persists with streamText().toUIMessageStreamResponse(),
+            // but with createUIMessageStream we need to save explicitly
+            try {
+              await this.saveMessages(this.messages);
+              logger.info('Messages persisted', { count: this.messages.length });
+            } catch (saveError) {
+              logger.error('Failed to persist messages', saveError);
+            }
+
             this.setStatus('idle', '');
           } catch (error) {
             logger.error('Stream error', error);

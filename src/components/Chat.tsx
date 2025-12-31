@@ -4,7 +4,6 @@ import { useAgentChat } from 'agents/ai-react';
 import ReactMarkdown from 'react-markdown';
 import { ArrowUp, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
-import { ThinkingStatus } from './ThinkingStatus';
 import { ToolInvocationCard } from './ToolInvocationCard';
 import { useCanvasContext, type AgentState } from '../context';
 
@@ -92,13 +91,8 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Track if we've already triggered auto-naming for this thread
-  const autoNamingTriggeredRef = useRef<string | null>(null);
-  // Store the first user message for auto-naming
-  const firstUserMessageRef = useRef<string | null>(null);
-
   // Get canvas context to push agent state updates
-  const { updateFromAgent, setConnected, setGenerating, agentStatus, agentStatusMessage, refreshThreads } = useCanvasContext();
+  const { updateFromAgent, setConnected, setGenerating } = useCanvasContext();
 
   // Agent name includes threadId for multi-thread support
   // Format: canvasId or canvasId--threadId (using -- to avoid PartySocket routing issues with /)
@@ -110,20 +104,23 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
     updateFromAgentRef.current = updateFromAgent;
   }, [updateFromAgent]);
 
+  // Memoize onStateUpdate to prevent useAgent from re-subscribing on each render
+  const handleStateUpdate = useCallback((state: AgentState) => {
+    console.log('[Chat] onStateUpdate received', {
+      status: state.status,
+      hasCanvas: !!state.canvas,
+      canvasUpdatedAt: state.canvasUpdatedAt
+    });
+    // Push state to context (includes canvas sync)
+    // Use ref to always call latest version of updateFromAgent
+    updateFromAgentRef.current(state);
+  }, []);
+
   // Connect to agent via WebSocket
   const agent = useAgent<AgentState>({
     agent: 'slc-agent',
     name: agentName,
-    onStateUpdate: (state) => {
-      console.log('[Chat] onStateUpdate received', {
-        status: state.status,
-        hasCanvas: !!state.canvas,
-        canvasUpdatedAt: state.canvasUpdatedAt
-      });
-      // Push state to context (includes canvas sync)
-      // Use ref to always call latest version of updateFromAgent
-      updateFromAgentRef.current(state);
-    },
+    onStateUpdate: handleStateUpdate,
   });
 
   // Track connection status in context
@@ -144,9 +141,16 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
   // Determine loading state from status
   const isLoading = status === 'streaming' || status === 'submitted';
 
+  // Track previous loading state to avoid unnecessary context updates
+  const prevIsLoadingRef = useRef(isLoading);
+
   // Sync generating state with context (for orb glow)
+  // Only update when isLoading actually changes to prevent cascading re-renders
   useEffect(() => {
-    setGenerating(isLoading);
+    if (prevIsLoadingRef.current !== isLoading) {
+      prevIsLoadingRef.current = isLoading;
+      setGenerating(isLoading);
+    }
   }, [isLoading, setGenerating]);
 
   // Auto-scroll to bottom when messages change
@@ -154,76 +158,31 @@ export function Chat({ canvasId, threadId, onMessagesChange }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  // Track previous messages to avoid re-render loop
+  // (useAgentChat may return new array reference on each render)
+  const prevMessagesRef = useRef<string>('');
+
   // Notify parent when messages change (for export functionality)
+  // CRITICAL: Skip during streaming to prevent cascade:
+  // onMessagesChange → App re-render → Chat re-render → SDK state update → loop
   useEffect(() => {
+    // Don't sync during streaming - content changes rapidly and causes cascade
+    if (isLoading) return;
+
     if (onMessagesChange) {
       const exportMessages: ChatMessageForExport[] = messages.map((message) => ({
         role: message.role as 'user' | 'assistant' | 'system',
         content: getMessageText(message),
       }));
-      onMessagesChange(exportMessages);
+
+      // Only call if content actually changed
+      const serialized = JSON.stringify(exportMessages);
+      if (serialized !== prevMessagesRef.current) {
+        prevMessagesRef.current = serialized;
+        onMessagesChange(exportMessages);
+      }
     }
-  }, [messages, onMessagesChange]);
-
-  // Auto-naming: trigger when we have first user message + first assistant response
-  useEffect(() => {
-    // Only proceed if we have a threadId and haven't triggered for this thread yet
-    if (!threadId || autoNamingTriggeredRef.current === threadId) {
-      return;
-    }
-
-    // Find first user message
-    const firstUserMsg = messages.find(m => m.role === 'user');
-    if (!firstUserMsg) {
-      return;
-    }
-
-    // Store the first user message
-    if (!firstUserMessageRef.current) {
-      firstUserMessageRef.current = getMessageText(firstUserMsg);
-    }
-
-    // Check if we have at least one assistant response (means AI has started responding)
-    const hasAssistantResponse = messages.some(m => m.role === 'assistant');
-    if (!hasAssistantResponse) {
-      return;
-    }
-
-    // Only trigger when not actively streaming
-    if (isLoading) {
-      return;
-    }
-
-    // Trigger auto-naming
-    autoNamingTriggeredRef.current = threadId;
-    const messageForNaming = firstUserMessageRef.current;
-
-    if (messageForNaming) {
-      // Fire and forget - don't block the UI
-      fetch(`/api/canvas/${canvasId}/threads/${threadId}/generate-name`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageForNaming }),
-      })
-        .then(response => response.json())
-        .then((result) => {
-          if (result.generated) {
-            console.log('[Chat] Thread auto-named:', result.name);
-            // Refresh threads list to show new name
-            refreshThreads();
-          }
-        })
-        .catch(err => {
-          console.error('[Chat] Auto-naming failed:', err);
-        });
-    }
-  }, [messages, threadId, canvasId, isLoading, refreshThreads]);
-
-  // Reset auto-naming state when threadId changes
-  useEffect(() => {
-    firstUserMessageRef.current = null;
-    // Don't reset autoNamingTriggeredRef here - it persists which threads we've already named
-  }, [threadId]);
+  }, [messages, onMessagesChange, isLoading]);
 
   // The canvasId is passed as the agent 'name', so the agent instance
   // is already scoped to this canvas. No need to call setCanvas.
@@ -349,14 +308,7 @@ Tell me about your social venture idea - what problem are you trying to solve, a
           </div>
         ))}
 
-        {/* Context-aware thinking status */}
-        {isLoading && (
-          <ThinkingStatus
-            status={agentStatus}
-            statusMessage={agentStatusMessage}
-            isGenerating={isLoading}
-          />
-        )}
+        {/* Loading state shown via orb glow + header text */}
 
         {/* Error message */}
         {error && (

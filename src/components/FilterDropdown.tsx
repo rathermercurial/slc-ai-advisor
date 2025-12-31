@@ -14,8 +14,6 @@ interface FilterDropdownProps {
   value: FilterOption;
   onChange: (value: FilterOption) => void;
   className?: string;
-  onHoverChange?: (text: string | null) => void;
-  hoverLabel?: string;
 }
 
 const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
@@ -29,7 +27,7 @@ const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
  * Filter dropdown for canvas and thread lists.
  * Options: All, Active, Starred, Archived
  */
-export function FilterDropdown({ value, onChange, className = '', onHoverChange, hoverLabel }: FilterDropdownProps) {
+export function FilterDropdown({ value, onChange, className = '' }: FilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -74,8 +72,6 @@ export function FilterDropdown({ value, onChange, className = '', onHoverChange,
         type="button"
         className="filter-menu-trigger"
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => hoverLabel && onHoverChange?.(hoverLabel)}
-        onMouseLeave={() => onHoverChange?.(null)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={`Filter: ${currentLabel}`}

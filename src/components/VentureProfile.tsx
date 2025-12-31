@@ -4,11 +4,13 @@
  * Compact display of all 7 venture dimensions.
  * Typography-based design - no pills, consistent interaction.
  * Each dimension shows selected items; click + to expand options.
+ *
+ * Data is persisted to backend via /api/canvas/:id/venture-profile
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
-import type { VentureStage } from '../types/venture';
+import type { VentureStage, VentureProperties } from '../types/venture';
 
 interface VentureProfileProps {
   canvasId: string;
@@ -119,28 +121,6 @@ const INDUSTRIES = [
   'Workforce Development',
 ];
 
-// Helper to load from localStorage
-function loadDimension<T>(canvasId: string, key: string, defaultValue: T): T {
-  try {
-    const stored = localStorage.getItem(`venture-${key}-${canvasId}`);
-    if (stored) {
-      return JSON.parse(stored) as T;
-    }
-  } catch (e) {
-    console.warn(`Failed to load ${key}:`, e);
-  }
-  return defaultValue;
-}
-
-// Helper to save to localStorage
-function saveDimension<T>(canvasId: string, key: string, value: T): void {
-  try {
-    localStorage.setItem(`venture-${key}-${canvasId}`, JSON.stringify(value));
-  } catch (e) {
-    console.warn(`Failed to save ${key}:`, e);
-  }
-}
-
 // Expandable dimension component
 interface DimensionRowProps {
   label: string;
@@ -162,7 +142,7 @@ function DimensionRow({ label, options, selected, onToggle }: DimensionRowProps)
         type="button"
         className="profile-dim-header"
         onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
+        aria-expanded={expanded ? 'true' : 'false'}
       >
         <span className="profile-dim-label">{label}</span>
         <span className="profile-dim-toggle">
@@ -189,54 +169,113 @@ function DimensionRow({ label, options, selected, onToggle }: DimensionRowProps)
 }
 
 export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
-  // Load all dimensions from localStorage
-  const [stage, setStage] = useState<VentureStage>(() =>
-    loadDimension(canvasId, 'stage', 'idea' as VentureStage)
-  );
-  const [legalStructures, setLegalStructures] = useState<string[]>(() =>
-    loadDimension(canvasId, 'legalStructures', [])
-  );
-  const [impactAreas, setImpactAreas] = useState<string[]>(() =>
-    loadDimension(canvasId, 'impactAreas', [])
-  );
-  const [impactMechanisms, setImpactMechanisms] = useState<string[]>(() =>
-    loadDimension(canvasId, 'impactMechanisms', [])
-  );
-  const [revenueSources, setRevenueSources] = useState<string[]>(() =>
-    loadDimension(canvasId, 'revenueSources', [])
-  );
-  const [fundingSources, setFundingSources] = useState<string[]>(() =>
-    loadDimension(canvasId, 'fundingSources', [])
-  );
-  const [industries, setIndustries] = useState<string[]>(() =>
-    loadDimension(canvasId, 'industries', [])
-  );
+  // State for all dimensions - loaded from backend
+  const [stage, setStage] = useState<VentureStage | null>(null);
+  const [legalStructure, setLegalStructure] = useState<string | null>(null);
+  const [impactAreas, setImpactAreas] = useState<string[]>([]);
+  const [impactMechanisms, setImpactMechanisms] = useState<string[]>([]);
+  const [revenueSources, setRevenueSources] = useState<string[]>([]);
+  const [fundingSources, setFundingSources] = useState<string[]>([]);
+  const [industries, setIndustries] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load venture profile from backend on mount
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await fetch(`/api/canvas/${canvasId}/venture-profile`);
+        if (response.ok) {
+          const data = await response.json() as { properties: VentureProperties };
+          const props = data.properties;
+          setStage(props.ventureStage as VentureStage | null);
+          setLegalStructure(props.legalStructure);
+          setImpactAreas(props.impactAreas || []);
+          setImpactMechanisms(props.impactMechanisms || []);
+          setRevenueSources(props.revenueSources || []);
+          setFundingSources(props.fundingSources || []);
+          setIndustries(props.industries || []);
+        }
+      } catch (err) {
+        console.error('Failed to load venture profile:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadProfile();
+  }, [canvasId]);
+
+  // Save property to backend
+  const saveProperty = useCallback(async (
+    property: keyof VentureProperties,
+    value: string | string[] | null
+  ) => {
+    try {
+      await fetch(`/api/canvas/${canvasId}/venture-profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property, value, confirmed: true }),
+      });
+    } catch (err) {
+      console.error(`Failed to save ${property}:`, err);
+    }
+  }, [canvasId]);
 
   // Stage is single-select
-  const handleStageToggle = useCallback((value: string) => {
-    const newStage = value as VentureStage;
-    setStage(newStage);
-    saveDimension(canvasId, 'stage', newStage);
-  }, [canvasId]);
+  const handleStageToggle = useCallback((label: string) => {
+    const found = STAGES.find(s => s.label === label);
+    if (found) {
+      setStage(found.value);
+      saveProperty('ventureStage', found.value);
+    }
+  }, [saveProperty]);
+
+  // Legal structure is single-select
+  const handleLegalToggle = useCallback((value: string) => {
+    const newValue = legalStructure === value ? null : value;
+    setLegalStructure(newValue);
+    saveProperty('legalStructure', newValue);
+  }, [legalStructure, saveProperty]);
 
   // Multi-select toggle helper
   const createArrayToggle = useCallback((
     arr: string[],
     setter: (v: string[]) => void,
-    key: string
+    property: keyof VentureProperties
   ) => (item: string) => {
     const newArr = arr.includes(item)
       ? arr.filter(i => i !== item)
       : [...arr, item];
     setter(newArr);
-    saveDimension(canvasId, key, newArr);
-  }, [canvasId]);
+    saveProperty(property, newArr);
+  }, [saveProperty]);
+
+  if (isLoading) {
+    return (
+      <div className="profile-inline">
+        <div className="profile-inline-header">
+          <span className="profile-inline-title">Venture Profile</span>
+          <button
+            type="button"
+            className="profile-inline-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <div className="profile-dims" style={{ padding: '1rem', opacity: 0.6 }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-inline">
       <div className="profile-inline-header">
         <span className="profile-inline-title">Venture Profile</span>
         <button
+          type="button"
           className="profile-inline-close"
           onClick={onClose}
           aria-label="Close"
@@ -251,17 +290,14 @@ export function VentureProfile({ canvasId, onClose }: VentureProfileProps) {
           <DimensionRow
             label="Stage"
             options={STAGES.map(s => s.label)}
-            selected={[STAGES.find(s => s.value === stage)?.label || 'Idea']}
-            onToggle={(label) => {
-              const found = STAGES.find(s => s.label === label);
-              if (found) handleStageToggle(found.value);
-            }}
+            selected={stage ? [STAGES.find(s => s.value === stage)?.label || ''] : []}
+            onToggle={handleStageToggle}
           />
           <DimensionRow
             label="Legal Structure"
             options={LEGAL_STRUCTURES}
-            selected={legalStructures}
-            onToggle={createArrayToggle(legalStructures, setLegalStructures, 'legalStructures')}
+            selected={legalStructure ? [legalStructure] : []}
+            onToggle={handleLegalToggle}
           />
           <DimensionRow
             label="Impact"

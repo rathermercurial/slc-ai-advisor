@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Undo2, Redo2 } from 'lucide-react';
-import { Canvas, Chat, ConnectionStatus, ExportMenu, ProgressCelebration, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader, VentureProfile } from './components';
+import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader, VentureProfile } from './components';
 import type { Theme } from './components/ThemeToggle';
 import type { ToastType } from './components/Toast';
 import { CanvasProvider, useCanvasContext } from './context';
@@ -76,7 +76,7 @@ function AppContent({
   theme: Theme;
   toggleTheme: () => void;
 }) {
-  const { canvas, undo, redo, canUndo, canRedo, isConnected, isGenerating, agentStatusMessage } = useCanvasContext();
+  const { canvas, undo, redo, canUndo, canRedo, isConnected, isGenerating } = useCanvasContext();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // Canvas/chat split percentage (stored in localStorage)
@@ -85,47 +85,36 @@ function AppContent({
     return saved ? parseFloat(saved) : 60;
   });
 
-  // Venture name from canvas index
-  const [ventureName, setVentureName] = useState(() => {
-    try {
-      const stored = localStorage.getItem('canvasIndex');
-      if (stored) {
-        const canvases = JSON.parse(stored) as CanvasMeta[];
-        const current = canvases.find((c) => c.id === canvasId);
-        return current?.name || 'Untitled Venture';
-      }
-    } catch (e) {
-      console.warn('Failed to read canvas name:', e);
-    }
-    return 'Untitled Venture';
-  });
+  // Venture name from canvas metadata
+  const [ventureName, setVentureName] = useState('Untitled Venture');
 
-  // Sync venture name when canvasId changes (component remounts via key)
+  // Fetch venture name from backend on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('canvasIndex');
-      if (stored) {
-        const canvases = JSON.parse(stored) as CanvasMeta[];
-        const current = canvases.find((c) => c.id === canvasId);
-        if (current) {
-          setVentureName(current.name);
+    async function fetchCanvasMeta() {
+      try {
+        const response = await fetch(`/api/canvas/${canvasId}/meta`);
+        if (response.ok) {
+          const meta = await response.json() as { name?: string };
+          if (meta.name) {
+            setVentureName(meta.name);
+          }
         }
+      } catch (e) {
+        console.warn('Failed to fetch canvas metadata:', e);
       }
-    } catch (e) {
-      console.warn('Failed to sync canvas name on mount:', e);
     }
+    fetchCanvasMeta();
   }, [canvasId]);
 
-  // Listen for name changes from sidebar
+  // Listen for name changes from sidebar (re-fetch from backend)
   useEffect(() => {
-    const handleCanvasIndexUpdate = () => {
+    const handleCanvasIndexUpdate = async () => {
       try {
-        const stored = localStorage.getItem('canvasIndex');
-        if (stored) {
-          const canvases = JSON.parse(stored) as CanvasMeta[];
-          const current = canvases.find((c) => c.id === canvasId);
-          if (current && current.name !== ventureName) {
-            setVentureName(current.name);
+        const response = await fetch(`/api/canvas/${canvasId}/meta`);
+        if (response.ok) {
+          const meta = await response.json() as { name?: string };
+          if (meta.name && meta.name !== ventureName) {
+            setVentureName(meta.name);
           }
         }
       } catch (e) {
@@ -173,18 +162,22 @@ function AppContent({
   }, []);
 
   // Handle venture name change
-  const handleNameChange = useCallback((name: string) => {
+  const handleNameChange = useCallback(async (name: string) => {
+    // Optimistic update
     setVentureName(name);
+
     try {
-      const stored = localStorage.getItem('canvasIndex');
-      if (stored) {
-        const canvases = JSON.parse(stored) as CanvasMeta[];
-        const updated = canvases.map((c) =>
-          c.id === canvasId ? { ...c, name, updatedAt: new Date().toISOString() } : c
-        );
-        localStorage.setItem('canvasIndex', JSON.stringify(updated));
-        // Dispatch event for same-tab sync (CanvasList listens for this)
+      const response = await fetch(`/api/canvas/${canvasId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+
+      if (response.ok) {
+        // Dispatch event for CanvasList sync
         window.dispatchEvent(new Event('canvasIndexUpdated'));
+      } else {
+        console.warn('Failed to save canvas name:', response.status);
       }
     } catch (e) {
       console.warn('Failed to save canvas name:', e);
@@ -339,14 +332,8 @@ function AppContent({
     setToast({ message: `Downloaded ${filename}`, type: 'success' });
   }, [chatMessages, ventureName]);
 
-  // Show toast for progress celebrations
-  const handleProgressToast = useCallback((message: string, type: ToastType) => {
-    setToast({ message, type });
-  }, []);
-
   return (
     <div className="app" style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}>
-      <a href="#main-content" className="skip-link">Skip to main content</a>
       <header className="app-header">
         <div className="app-header-left">
           <h1>SLC AI Advisor</h1>
@@ -398,7 +385,7 @@ function AppContent({
         </div>
       </header>
 
-      <main className="app-main" id="main-content" tabIndex={-1}>
+      <main className="app-main">
         <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
           <Sidebar onHoverChange={setHelperText} />
           <Resizer
@@ -407,7 +394,6 @@ function AppContent({
             pixelMode
             minPixels={180}
             maxPixels={400}
-            currentValue={sidebarWidth}
           />
         </div>
         <div className="layout-content">
@@ -418,8 +404,7 @@ function AppContent({
               onNameChange={handleNameChange}
               showProfile={showProfile}
               onProfileClick={handleProfileClick}
-              helperText={helperText || (isGenerating ? (agentStatusMessage || 'Thinking...') : hoveredModel)}
-              onHoverChange={setHelperText}
+              helperText={helperText || (isGenerating ? 'Thinking...' : hoveredModel)}
             />
             {showProfile && (
               <VentureProfile
@@ -439,7 +424,6 @@ function AppContent({
               onResize={handleResize}
               minPercentage={30}
               maxPercentage={70}
-              currentValue={splitPercentage}
             />
           )}
           <div className={`layout-chat ${chatCollapsed ? 'collapsed' : ''}`} style={{ flex: chatCollapsed ? 'none' : `0 0 ${100 - splitPercentage}%` }}>
@@ -454,13 +438,6 @@ function AppContent({
           </div>
         </div>
       </main>
-
-      {/* Progress celebration component - watches progress and shows toasts/confetti */}
-      <ProgressCelebration
-        canvasId={canvasId}
-        progress={progress}
-        onShowToast={handleProgressToast}
-      />
 
       {toast && (
         <Toast
@@ -562,20 +539,19 @@ function HomeRoute() {
         return;
       }
 
-      // Check for existing canvas in localStorage index
+      // Check for existing canvases from backend API
       try {
-        const stored = localStorage.getItem('canvasIndex');
-        if (stored) {
-          const canvases = JSON.parse(stored) as CanvasMeta[];
-          const activeCanvases = canvases.filter((c) => !c.archived);
-          if (activeCanvases.length > 0) {
+        const listResponse = await fetch('/api/canvases?filter=active');
+        if (listResponse.ok) {
+          const canvases = await listResponse.json() as CanvasMeta[];
+          if (canvases.length > 0) {
             // Navigate to most recent active canvas
-            navigate(`/canvas/${activeCanvases[0].id}`, { replace: true });
+            navigate(`/canvas/${canvases[0].id}`, { replace: true });
             return;
           }
         }
       } catch (err) {
-        console.warn('Failed to read canvas index:', err);
+        console.warn('Failed to fetch canvas list:', err);
       }
 
       // No existing canvas, create a new one
@@ -588,26 +564,6 @@ function HomeRoute() {
 
         if (response.ok) {
           const data = await response.json();
-
-          // Add to canvas index
-          const newCanvas: CanvasMeta = {
-            id: data.canvasId,
-            name: 'Untitled Canvas',
-            starred: false,
-            archived: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          try {
-            const stored = localStorage.getItem('canvasIndex');
-            const canvases = stored ? JSON.parse(stored) : [];
-            canvases.unshift(newCanvas);
-            localStorage.setItem('canvasIndex', JSON.stringify(canvases));
-          } catch (e) {
-            console.warn('Failed to update canvas index:', e);
-          }
-
           navigate(`/canvas/${data.canvasId}`, { replace: true });
         } else {
           setError('Failed to create canvas. Please refresh the page.');

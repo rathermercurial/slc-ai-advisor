@@ -12,7 +12,7 @@
 
 | Phase | Focus | Issues | Status |
 |-------|-------|--------|--------|
-| 1 | Critical Fixes | B1, B2 | In Progress |
+| 1 | Critical Fixes | B1, B2 | Complete |
 | 2 | Backend Optimization | B3-B8 | Not Started |
 | 3 | Frontend + Testing | F0-F4, T1-T2 | Not Started |
 | 4 | Polish + Knowledge | F3-F4, K1-K2, T3 | Not Started |
@@ -24,16 +24,16 @@
 
 **Goal:** Fix tone effectiveness and clean up codebase before other work.
 
-- [ ] [#89 - B1: Improve Tone Profile Effectiveness](https://github.com/rathermercurial/slc-ai-advisor/issues/89)
+- [x] [#89 - B1: Improve Tone Profile Effectiveness](https://github.com/rathermercurial/slc-ai-advisor/issues/89)
   - Move tone modifiers before canvas context in system prompt
   - Strengthen modifiers with explicit behavioral instructions
   - Files: `worker/agents/prompts.ts`, `worker/config/tone-profiles.ts`
 
-- [ ] [#90 - B2: Delete Unused Duplicate Prompts File](https://github.com/rathermercurial/slc-ai-advisor/issues/90)
+- [x] [#90 - B2: Delete Unused Duplicate Prompts File](https://github.com/rathermercurial/slc-ai-advisor/issues/90)
   - Delete `worker/llm/prompts.ts`
   - Verify no broken imports
 
-- [ ] **Verify Build & Manual Testing**
+- [x] **Verify Build & Manual Testing**
   - Run `npm run typecheck` and `npm run build`
   - Start dev server with `npm run dev`
   - **STOP HERE**: Provide preview URL to user (typically `http://localhost:5173`)

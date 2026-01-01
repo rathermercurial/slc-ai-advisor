@@ -203,13 +203,17 @@ Start with a natural, friendly conversation. Do NOT list all the sections or ove
 
 /**
  * Build system prompt with canvas context and optional tone profile
+ *
+ * Tone modifiers are prepended to ensure Claude prioritizes them.
+ * Claude gives more weight to instructions that appear earlier.
  */
 export function buildSystemPrompt(
   canvasContext: string,
   toneProfile: ToneProfileId = DEFAULT_TONE_PROFILE
 ): string {
   const toneModifier = buildToneModifier(toneProfile);
-  return SYSTEM_PROMPT.replace('{canvasContext}', canvasContext) + '\n\n' + toneModifier;
+  // PREPEND tone modifiers before the main prompt for higher priority
+  return toneModifier + '\n\n' + SYSTEM_PROMPT.replace('{canvasContext}', canvasContext);
 }
 
 // Re-export tone types for use in SLCAgent

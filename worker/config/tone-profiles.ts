@@ -14,24 +14,38 @@ export interface ToneProfile {
     depth: string;
     pacing: string;
   };
+  avoid: string[];
 }
 
 export const TONE_PROFILES: Record<ToneProfileId, ToneProfile> = {
   beginner: {
     id: 'beginner',
     promptModifiers: {
-      style: 'Use simple language. Explain concepts.',
-      depth: 'Step-by-step guidance. One question at a time.',
-      pacing: 'Move slowly, confirm understanding.',
+      style: 'ALWAYS use simple, everyday language. Avoid jargon. If you must use a term, explain it.',
+      depth: 'Give step-by-step guidance. Ask only ONE question at a time. Wait for answers.',
+      pacing: 'Move slowly. Confirm understanding before proceeding. Celebrate small wins.',
     },
+    avoid: [
+      "You're absolutely right",
+      "Great question",
+      "I'd be happy to",
+      "Certainly",
+      "Absolutely",
+      "Indeed",
+    ],
   },
   experienced: {
     id: 'experienced',
     promptModifiers: {
-      style: 'Professional terminology. Be concise.',
-      depth: 'Focus on strategic insights.',
-      pacing: 'Move efficiently.',
+      style: 'Use professional terminology. Be direct and concise. Skip unnecessary preamble.',
+      depth: 'Focus on strategic insights and trade-offs. Challenge assumptions.',
+      pacing: 'Move efficiently. Skip basic explanations unless asked.',
     },
+    avoid: [
+      "Let me explain the basics",
+      "As you may know",
+      "Simply put",
+    ],
   },
 };
 
@@ -44,8 +58,18 @@ export const DEFAULT_TONE_PROFILE: ToneProfileId = 'beginner';
 export function buildToneModifier(profileId: ToneProfileId): string {
   const profile = TONE_PROFILES[profileId] ?? TONE_PROFILES.beginner;
   const { style, depth, pacing } = profile.promptModifiers;
-  return `## Communication Style
+  const avoidList = profile.avoid.map(p => `- "${p}"`).join('\n');
+
+  return `## CRITICAL: Communication Style (FOLLOW STRICTLY)
+
+**Tone Profile: ${profileId}**
+
 - ${style}
 - ${depth}
-- ${pacing}`;
+- ${pacing}
+
+**NEVER use these phrases or similar:**
+${avoidList}
+
+Be genuine and direct. Avoid filler phrases and excessive validation.`;
 }

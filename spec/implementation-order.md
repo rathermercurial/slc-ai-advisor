@@ -2,11 +2,17 @@
 
 > **Maintaining this document:** When completing an issue, check off the corresponding item below and update the "Status" field. Use `gh issue close <number>` to close the GitHub issue.
 
+> **IMPORTANT - Manual Testing Workflow:** At the end of each phase, after `npm run typecheck` and `npm run build` pass, Claude must:
+> 1. Start the dev server (`npm run dev`)
+> 2. Provide the preview URL to the user (typically `http://localhost:5173`)
+> 3. **STOP and wait for human approval** before closing issues or proceeding
+> 4. Only after explicit approval: close GitHub issues, update phase status, proceed to next phase
+
 ## Quick Reference
 
 | Phase | Focus | Issues | Status |
 |-------|-------|--------|--------|
-| 1 | Critical Fixes | B1, B2 | Not Started |
+| 1 | Critical Fixes | B1, B2 | In Progress |
 | 2 | Backend Optimization | B3-B8 | Not Started |
 | 3 | Frontend + Testing | F0-F4, T1-T2 | Not Started |
 | 4 | Polish + Knowledge | F3-F4, K1-K2, T3 | Not Started |
@@ -27,9 +33,13 @@
   - Delete `worker/llm/prompts.ts`
   - Verify no broken imports
 
-- [ ] **Verify Build**
+- [ ] **Verify Build & Manual Testing**
   - Run `npm run typecheck` and `npm run build`
-  - Ensure CI passes
+  - Start dev server with `npm run dev`
+  - **STOP HERE**: Provide preview URL to user (typically `http://localhost:5173`)
+  - Wait for human approval before proceeding
+  - Test: Verify beginner tone uses simpler language and avoids banned phrases
+  - Only after approval: Close issues, update status, proceed to next phase
 
 ---
 

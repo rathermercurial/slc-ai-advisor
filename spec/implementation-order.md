@@ -50,9 +50,10 @@
 **Prerequisite:** Phase 1 complete
 
 - [ ] [#87 - B3: Agent Behaviour Design](https://github.com/rathermercurial/slc-ai-advisor/issues/87)
-  - Create `knowledge/instructions/tone.md`
-  - Create `knowledge/instructions/behavior.md`
-  - Create `knowledge/programs/generic/pedagogy.md`
+  - Create `knowledge/instructions/tone.md` (beginner vs experienced guidelines)
+  - Create `knowledge/instructions/behavior.md` (session flow, tool usage decisions)
+  - Create `knowledge/programs/generic/pedagogy.md` (learning sequence, section progression)
+  - **Foundational for K1/K2** - these docs inform how methodology content should be structured
 
 - [ ] [#91 - B4: Token Optimization with Context Windowing](https://github.com/rathermercurial/slc-ai-advisor/issues/91)
   - Skip empty sections in canvas context
@@ -133,13 +134,19 @@
 
 ### Knowledge Base
 
+**Builds on B3 outputs:** Use `knowledge/instructions/tone.md`, `behavior.md`, and `pedagogy.md` as guides for content structure and tone.
+
 - [ ] [#101 - K1: Strengthen Methodology Content](https://github.com/rathermercurial/slc-ai-advisor/issues/101)
-  - Add "how to" guidance to each methodology file
-  - Verify frontmatter tags
+  - Files: `knowledge/programs/generic/content/*.md` (modules 0.0-5.0)
+  - Add "how to" guidance following pedagogy.md learning sequence
+  - Ensure content matches tone.md guidelines (beginner-friendly)
+  - Verify frontmatter tags for RAG indexing
 
 - [ ] [#102 - K2: Add More Venture Examples](https://github.com/rathermercurial/slc-ai-advisor/issues/102)
+  - Files: `knowledge/programs/generic/examples/` (new subdirectories)
   - Add 3-5 examples covering underrepresented dimensions
   - Focus on idea-stage and early-stage ventures
+  - Follow pattern from `examples/patagonia/patagonia-slc.md`
 
 ### Testing
 
@@ -187,8 +194,8 @@ Phase 3 (Frontend + Testing) ←────────────────
 Phase 4 (Polish) ←─────────────────────────────────┤
 ├── F3: Document Viewer                            │
 ├── F4: Status Indicators                          │
-├── K1: Methodology Content (needs B5 for testing) │
-├── K2: More Examples                              │
+├── K1: Methodology Content (needs B3 guidelines)  │
+├── K2: More Examples (needs B3 guidelines)        │
 └── T3: Model Manager Tests                        │
                                                    │
 Phase 5 (Advanced) ←───────────────────────────────┘

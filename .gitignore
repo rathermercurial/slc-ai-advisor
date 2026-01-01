@@ -43,3 +43,4 @@ tmp/
 # Claude Code
 .claude/settings.local.json
 .claude/temp/
+tmp/

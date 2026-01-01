@@ -199,15 +199,41 @@ Phase 5 (Advanced) ←───────────────────�
 
 ## How to Update This Document
 
-### When starting an issue:
-1. Assign yourself on GitHub: `gh issue edit <number> --add-assignee @me`
-2. Create a branch: `git checkout -b fix/issue-<number>-short-description`
+### Git Workflow (Feature Branch per Phase)
 
-### When completing an issue:
+**IMPORTANT:** Never commit directly to main. Each phase gets its own feature branch.
+
+```bash
+# Starting a new phase
+git checkout main
+git pull origin main
+git checkout -b fix/phase<N>-short-description   # e.g., fix/phase2-backend-optimization
+
+# Work on issues within the phase...
+
+# When phase is complete and tested
+git push -u origin fix/phase<N>-short-description
+gh pr create --title "Phase N: Description" --body "Closes #X, closes #Y, closes #Z"
+
+# After PR review and merge
+git checkout main
+git pull origin main
+```
+
+### When starting a phase:
+1. Create a feature branch from main: `git checkout -b fix/phaseN-description`
+2. Assign issues on GitHub: `gh issue edit <number> --add-assignee @me`
+
+### When completing an issue within a phase:
 1. Check off the item in this document: `- [x]`
-2. Close the GitHub issue: `gh issue close <number>`
-3. Update the Phase status in the Quick Reference table
-4. Commit this file with your PR
+2. Commit changes to the feature branch (do NOT close issues yet)
+
+### When completing a phase:
+1. Run `npm run typecheck` and `npm run build`
+2. Start dev server, provide URL, wait for human approval
+3. Push branch and create PR
+4. PR description should include `Closes #X` for each issue
+5. After merge: update Phase status in Quick Reference table
 
 ### Status values for Quick Reference table:
 - `Not Started` - No work begun

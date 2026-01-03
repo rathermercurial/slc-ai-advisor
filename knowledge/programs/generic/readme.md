@@ -20,6 +20,8 @@ The Generic program serves ventures across all sectors, stages, and legal struct
 | **The Social Lean Canvas** | 2.0-3.2 | Create first draft canvas        | Complete 11-section canvas mapping venture        |
 | **Build**                  | 4.0-5.3 | Improve model & develop strategy | Strengthened business model + executable strategy |
 
+
+
 ## Two-Part Program Structure
 
 ### 1. The Social Lean Canvas (Modules 2.0-3.2)

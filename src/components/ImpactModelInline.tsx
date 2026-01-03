@@ -22,7 +22,6 @@ const FIELD_TAB_ORDER: ImpactModelField[] = [
   'issue',
   'participants',
   'activities',
-  'outputs',
   'shortTermOutcomes',
   'mediumTermOutcomes',
   'longTermOutcomes',
@@ -30,16 +29,16 @@ const FIELD_TAB_ORDER: ImpactModelField[] = [
 ];
 
 /**
- * Inline Impact Model display with 2 rows of 4 fields.
- * Shows the causality chain: Issue → Participants → Activities → Outputs
- *                            Short-term → Medium-term → Long-term → Impact
+ * Inline Impact Model display with 2 rows.
+ * Row 1: Issue → Participants → Activities (3 fields)
+ * Row 2: Short-term → Medium-term → Long-term → Impact (4 fields, reversed for boustrophedon)
  */
 export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlighted, autoFocusFirst, onHoverChange }: ImpactModelInlineProps) {
   const [editingField, setEditingField] = useState<ImpactModelField | null>(null);
   const [draft, setDraft] = useState<ImpactModel>(impactModel);
 
   // Row definitions - row 2 is reversed for boustrophedon flow (right, then down, then left)
-  const row1: ImpactModelField[] = ['issue', 'participants', 'activities', 'outputs'];
+  const row1: ImpactModelField[] = ['issue', 'participants', 'activities'];
   const row2: ImpactModelField[] = ['impact', 'longTermOutcomes', 'mediumTermOutcomes', 'shortTermOutcomes'];
 
   // Track if auto-focus has already been applied
@@ -222,7 +221,6 @@ function getPlaceholder(field: ImpactModelField): string {
     issue: 'What problem?',
     participants: 'Who is affected?',
     activities: 'What do you do?',
-    outputs: 'What do you deliver?',
     shortTermOutcomes: '0-1 year changes',
     mediumTermOutcomes: '1-3 year changes',
     longTermOutcomes: '3+ year changes',

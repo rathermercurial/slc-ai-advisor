@@ -177,13 +177,12 @@ export interface EconomicModelData extends ModelData {
 }
 
 /**
- * Impact Model data structure (8-field causality chain)
+ * Impact Model data structure (7-field causality chain)
  */
 export interface ImpactModelData extends ModelData {
   issue: string;
   participants: string;
   activities: string;
-  outputs: string;
   shortTermOutcomes: string;
   mediumTermOutcomes: string;
   longTermOutcomes: string;

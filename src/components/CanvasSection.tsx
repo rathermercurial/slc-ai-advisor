@@ -5,6 +5,7 @@ import {
   CANVAS_SECTION_NUMBER,
   SECTION_TO_MODEL,
 } from '../types/canvas';
+import { RichTextEditor, type RichTextEditorRef } from './RichTextEditor';
 
 /** Save state for tracking async save operations */
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -60,6 +61,7 @@ export function CanvasSection({
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const richTextRef = useRef<RichTextEditorRef>(null);
 
   // Track mounted state to prevent state updates after unmount
   const mountedRef = useRef(true);
@@ -274,19 +276,17 @@ export function CanvasSection({
 
       {isEditing ? (
         <>
-          <textarea
-            ref={textareaRef}
-            className="canvas-section-edit"
-            value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              autoResize();
-            }}
-            onKeyDown={handleKeyDown}
-            onBlur={saveState !== 'saving' ? handleSave : undefined}
-            placeholder={helperText || `Enter ${label.toLowerCase()}...`}
-            disabled={saveState === 'saving'}
-          />
+          <div className="canvas-section-edit rich-text-wrapper" onKeyDown={handleKeyDown}>
+            <RichTextEditor
+              ref={richTextRef}
+              content={draft}
+              onChange={setDraft}
+              onBlur={saveState !== 'saving' ? handleSave : undefined}
+              placeholder={helperText || `Enter ${label.toLowerCase()}...`}
+              disabled={saveState === 'saving'}
+              autoFocus
+            />
+          </div>
           <div className="canvas-section-actions">
             <button
               type="button"
@@ -314,8 +314,11 @@ export function CanvasSection({
       ) : (
         <div
           className={`canvas-section-content ${isEmpty ? 'helper' : ''} ${shouldTruncate ? 'truncated' : ''}`}
+          dangerouslySetInnerHTML={
+            isEmpty ? undefined : { __html: displayContent }
+          }
         >
-          {isEmpty ? helperText : displayContent}
+          {isEmpty ? helperText : null}
         </div>
       )}
 

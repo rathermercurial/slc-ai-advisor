@@ -100,7 +100,7 @@ export const ANTHROPIC_TOOLS: Anthropic.Tool[] = [
   {
     name: 'update_impact_field',
     description:
-      'Update an Impact Model field in the causality chain. The chain flows: issue -> participants -> activities -> outputs -> shortTermOutcomes -> mediumTermOutcomes -> longTermOutcomes -> impact.',
+      'Update an Impact Model field in the causality chain. The chain flows: issue -> participants -> activities -> shortTermOutcomes -> mediumTermOutcomes -> longTermOutcomes -> impact.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -110,7 +110,6 @@ export const ANTHROPIC_TOOLS: Anthropic.Tool[] = [
             'issue',
             'participants',
             'activities',
-            'outputs',
             'shortTermOutcomes',
             'mediumTermOutcomes',
             'longTermOutcomes',
@@ -326,7 +325,6 @@ export async function executeTool(
           | 'issue'
           | 'participants'
           | 'activities'
-          | 'outputs'
           | 'shortTermOutcomes'
           | 'mediumTermOutcomes'
           | 'longTermOutcomes'

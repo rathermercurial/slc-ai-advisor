@@ -29,8 +29,8 @@ The canvas has 11 sections organized into 3 models:
 - Costs: What are your major expenses?
 - Advantage: What makes you hard to copy?
 
-**Impact Model (8-field causality chain):**
-Issue → Participants → Activities → Outputs → Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact
+**Impact Model (7-field causality chain):**
+Issue → Participants → Activities → Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact
 
 **Cross-cutting Sections:**
 - Purpose: Why does your venture exist? (Complete first)
@@ -66,7 +66,6 @@ export function formatCanvasContext(canvas: {
     issue?: string;
     participants?: string;
     activities?: string;
-    outputs?: string;
     shortTermOutcomes?: string;
     mediumTermOutcomes?: string;
     longTermOutcomes?: string;
@@ -94,7 +93,6 @@ export function formatCanvasContext(canvas: {
     canvas.impactModel.issue,
     canvas.impactModel.participants,
     canvas.impactModel.activities,
-    canvas.impactModel.outputs,
     canvas.impactModel.shortTermOutcomes,
     canvas.impactModel.mediumTermOutcomes,
     canvas.impactModel.longTermOutcomes,
@@ -148,7 +146,6 @@ Start with a natural, friendly conversation. Do NOT list all the sections or ove
       im.issue ? `- Issue: ${im.issue}` : '- Issue: (empty)',
       im.participants ? `- Participants: ${im.participants}` : '- Participants: (empty)',
       im.activities ? `- Activities: ${im.activities}` : '- Activities: (empty)',
-      im.outputs ? `- Outputs: ${im.outputs}` : '- Outputs: (empty)',
       im.shortTermOutcomes ? `- Short-term Outcomes: ${im.shortTermOutcomes}` : '- Short-term Outcomes: (empty)',
       im.mediumTermOutcomes ? `- Medium-term Outcomes: ${im.mediumTermOutcomes}` : '- Medium-term Outcomes: (empty)',
       im.longTermOutcomes ? `- Long-term Outcomes: ${im.longTermOutcomes}` : '- Long-term Outcomes: (empty)',

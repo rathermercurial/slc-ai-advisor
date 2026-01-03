@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Undo2, Redo2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Undo2, Redo2, User, FolderOpen, MessageSquare } from 'lucide-react';
 import { Canvas, Chat, ConnectionStatus, ExportMenu, Resizer, Sidebar, ThemeToggle, Toast, VentureHeader, VentureProfile } from './components';
 import type { Theme } from './components/ThemeToggle';
 import type { ToastType } from './components/Toast';
@@ -131,6 +131,12 @@ function AppContent({
     return saved === 'true';
   });
 
+  // Sidebar collapsed state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved === 'true';
+  });
+
   // Profile panel visibility
   const [showProfile, setShowProfile] = useState(false);
 
@@ -193,6 +199,15 @@ function AppContent({
     });
   }, []);
 
+  // Toggle sidebar panel
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebarCollapsed', String(next));
+      return next;
+    });
+  }, []);
+
   // Toggle profile panel
   const handleProfileClick = useCallback(() => {
     setShowProfile((prev) => !prev);
@@ -212,7 +227,7 @@ function AppContent({
       }
     }
     // Add impact model fields
-    const impactFields = ['issue', 'participants', 'activities', 'outputs',
+    const impactFields = ['issue', 'participants', 'activities',
       'shortTermOutcomes', 'mediumTermOutcomes', 'longTermOutcomes', 'impact'] as const;
     let impactFilled = 0;
     for (const field of impactFields) {
@@ -220,7 +235,7 @@ function AppContent({
         impactFilled++;
       }
     }
-    // Total: 10 sections + 8 impact fields = 18 total
+    // Total: 10 sections + 7 impact fields = 17 total
     const total = sectionKeys.length + impactFields.length;
     return Math.round(((filled + impactFilled) / total) * 100);
   }, [canvas]);
@@ -342,6 +357,40 @@ function AppContent({
           {/* VentureHeader moved to layout-canvas for proper centering with canvas */}
         </div>
         <div className="app-header-right">
+          {/* Panel toggle buttons */}
+          <div className="header-toggles">
+            <button
+              className={`header-icon-btn toggle-btn ${showProfile ? 'active' : ''}`}
+              onClick={handleProfileClick}
+              onMouseEnter={() => setHelperText('Toggle Venture Profile')}
+              onMouseLeave={() => setHelperText(null)}
+              aria-label="Toggle Venture Profile"
+              aria-pressed={showProfile}
+            >
+              <User size={18} />
+            </button>
+            <button
+              className={`header-icon-btn toggle-btn ${!sidebarCollapsed ? 'active' : ''}`}
+              onClick={handleSidebarToggle}
+              onMouseEnter={() => setHelperText('Toggle File Browser')}
+              onMouseLeave={() => setHelperText(null)}
+              aria-label="Toggle File Browser"
+              aria-pressed={!sidebarCollapsed}
+            >
+              <FolderOpen size={18} />
+            </button>
+            <button
+              className={`header-icon-btn toggle-btn ${!chatCollapsed ? 'active' : ''}`}
+              onClick={handleChatToggle}
+              onMouseEnter={() => setHelperText('Toggle Chat Panel')}
+              onMouseLeave={() => setHelperText(null)}
+              aria-label="Toggle Chat Panel"
+              aria-pressed={!chatCollapsed}
+            >
+              <MessageSquare size={18} />
+            </button>
+          </div>
+          <span className="header-divider" />
           <button
             className="header-icon-btn"
             onClick={undo}
@@ -386,16 +435,18 @@ function AppContent({
       </header>
 
       <main className="app-main">
-        <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
-          <Sidebar onHoverChange={setHelperText} />
-          <Resizer
-            direction="horizontal"
-            onResize={handleSidebarResize}
-            pixelMode
-            minPixels={180}
-            maxPixels={400}
-          />
-        </div>
+        {!sidebarCollapsed && (
+          <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
+            <Sidebar onHoverChange={setHelperText} />
+            <Resizer
+              direction="horizontal"
+              onResize={handleSidebarResize}
+              pixelMode
+              minPixels={180}
+              maxPixels={400}
+            />
+          </div>
+        )}
         <div className="layout-content">
           <div className="layout-canvas" style={{ flex: chatCollapsed ? 1 : `0 0 ${splitPercentage}%` }}>
             <VentureHeader

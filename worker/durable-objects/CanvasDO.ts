@@ -8,7 +8,7 @@
  * - Standalone sections: purpose, keyMetrics (stored directly)
  * - Customer Model: customers, jobsToBeDone, valueProposition, solution
  * - Economic Model: channels, revenue, costs, advantage
- * - Impact Model: 8-field causality chain (impact section)
+ * - Impact Model: 7-field causality chain (impact section)
  * - Venture Profile: 7-dimensional Selection Matrix data
  * - Chat Threads: Multiple chat threads per canvas (max 100)
  */
@@ -144,14 +144,13 @@ export class CanvasDO extends DurableObject<Env> {
       )
     `);
 
-    // Impact model (8-field causality chain)
+    // Impact model (7-field causality chain)
     sql.exec(`
       CREATE TABLE IF NOT EXISTS impact_model (
         id TEXT PRIMARY KEY DEFAULT 'impact',
         issue TEXT NOT NULL DEFAULT '',
         participants TEXT NOT NULL DEFAULT '',
         activities TEXT NOT NULL DEFAULT '',
-        outputs TEXT NOT NULL DEFAULT '',
         short_term_outcomes TEXT NOT NULL DEFAULT '',
         medium_term_outcomes TEXT NOT NULL DEFAULT '',
         long_term_outcomes TEXT NOT NULL DEFAULT '',
@@ -210,8 +209,8 @@ export class CanvasDO extends DurableObject<Env> {
 
     if (!impactExists) {
       sql.exec(
-        `INSERT INTO impact_model (id, issue, participants, activities, outputs, short_term_outcomes, medium_term_outcomes, long_term_outcomes, impact, is_complete, updated_at)
-         VALUES ('impact', '', '', '', '', '', '', '', '', 0, ?)`,
+        `INSERT INTO impact_model (id, issue, participants, activities, short_term_outcomes, medium_term_outcomes, long_term_outcomes, impact, is_complete, updated_at)
+         VALUES ('impact', '', '', '', '', '', '', '', 0, ?)`,
         now
       );
     }
@@ -327,7 +326,6 @@ export class CanvasDO extends DurableObject<Env> {
         issue: string;
         participants: string;
         activities: string;
-        outputs: string;
         short_term_outcomes: string;
         medium_term_outcomes: string;
         long_term_outcomes: string;
@@ -342,7 +340,6 @@ export class CanvasDO extends DurableObject<Env> {
       issue: impactRow.issue,
       participants: impactRow.participants,
       activities: impactRow.activities,
-      outputs: impactRow.outputs,
       shortTermOutcomes: impactRow.short_term_outcomes,
       mediumTermOutcomes: impactRow.medium_term_outcomes,
       longTermOutcomes: impactRow.long_term_outcomes,
@@ -496,7 +493,7 @@ export class CanvasDO extends DurableObject<Env> {
    * Update an Impact Model field directly
    *
    * Routes to ImpactModelManager for field updates.
-   * Fields: issue, participants, activities, outputs,
+   * Fields: issue, participants, activities,
    * shortTermOutcomes, mediumTermOutcomes, longTermOutcomes, impact
    */
   async updateImpactField(
@@ -591,7 +588,7 @@ export class CanvasDO extends DurableObject<Env> {
   }
 
   /**
-   * Update the full Impact Model (all 8 fields)
+   * Update the full Impact Model (all 7 fields)
    * Used by the ImpactPanel for bulk saves
    */
   async updateFullImpactModel(impactModel: ImpactModel): Promise<UpdateResult> {
@@ -604,7 +601,6 @@ export class CanvasDO extends DurableObject<Env> {
       impactModel.issue,
       impactModel.participants,
       impactModel.activities,
-      impactModel.outputs,
       impactModel.shortTermOutcomes,
       impactModel.mediumTermOutcomes,
       impactModel.longTermOutcomes,
@@ -616,7 +612,6 @@ export class CanvasDO extends DurableObject<Env> {
         issue = ?,
         participants = ?,
         activities = ?,
-        outputs = ?,
         short_term_outcomes = ?,
         medium_term_outcomes = ?,
         long_term_outcomes = ?,
@@ -627,7 +622,6 @@ export class CanvasDO extends DurableObject<Env> {
       impactModel.issue || '',
       impactModel.participants || '',
       impactModel.activities || '',
-      impactModel.outputs || '',
       impactModel.shortTermOutcomes || '',
       impactModel.mediumTermOutcomes || '',
       impactModel.longTermOutcomes || '',

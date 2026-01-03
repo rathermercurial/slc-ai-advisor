@@ -1,8 +1,8 @@
 /**
  * Impact Model Manager
  *
- * Manages the 8-field causality chain of the Impact Model:
- * issue → participants → activities → outputs →
+ * Manages the 7-field causality chain of the Impact Model:
+ * issue → participants → activities →
  * shortTermOutcomes → mediumTermOutcomes → longTermOutcomes → impact
  *
  * Key features:
@@ -51,11 +51,6 @@ const FIELD_PROMPTS: Record<ImpactModelField, string[]> = {
     'What programs or services will you deliver?',
     'How will you engage participants?',
   ],
-  outputs: [
-    'What direct deliverables will your activities produce?',
-    'How many people will you reach or serve?',
-    'What products, events, or services will you create?',
-  ],
   shortTermOutcomes: [
     'What immediate changes will occur (0-1 year)?',
     'What awareness, knowledge, or skills will participants gain?',
@@ -94,7 +89,6 @@ export class ImpactModelManager implements IModelManager<ImpactModelData> {
         issue: string;
         participants: string;
         activities: string;
-        outputs: string;
         short_term_outcomes: string;
         medium_term_outcomes: string;
         long_term_outcomes: string;
@@ -108,7 +102,6 @@ export class ImpactModelManager implements IModelManager<ImpactModelData> {
         issue: '',
         participants: '',
         activities: '',
-        outputs: '',
         shortTermOutcomes: '',
         mediumTermOutcomes: '',
         longTermOutcomes: '',
@@ -120,7 +113,6 @@ export class ImpactModelManager implements IModelManager<ImpactModelData> {
       issue: row.issue ?? '',
       participants: row.participants ?? '',
       activities: row.activities ?? '',
-      outputs: row.outputs ?? '',
       shortTermOutcomes: row.short_term_outcomes ?? '',
       mediumTermOutcomes: row.medium_term_outcomes ?? '',
       longTermOutcomes: row.long_term_outcomes ?? '',
@@ -188,9 +180,6 @@ export class ImpactModelManager implements IModelManager<ImpactModelData> {
         break;
       case 'activities':
         this.sql.exec(`UPDATE impact_model SET activities = ?, updated_at = ? WHERE id = 'impact'`, content, now);
-        break;
-      case 'outputs':
-        this.sql.exec(`UPDATE impact_model SET outputs = ?, updated_at = ? WHERE id = 'impact'`, content, now);
         break;
       case 'shortTermOutcomes':
         this.sql.exec(`UPDATE impact_model SET short_term_outcomes = ?, updated_at = ? WHERE id = 'impact'`, content, now);
@@ -330,9 +319,6 @@ ${model.participants || '_Not yet defined_'}
 
 ## ${IMPACT_MODEL_LABELS.activities}
 ${model.activities || '_Not yet defined_'}
-
-## ${IMPACT_MODEL_LABELS.outputs}
-${model.outputs || '_Not yet defined_'}
 
 ## ${IMPACT_MODEL_LABELS.shortTermOutcomes}
 ${model.shortTermOutcomes || '_Not yet defined_'}

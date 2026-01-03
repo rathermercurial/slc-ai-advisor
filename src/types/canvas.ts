@@ -6,7 +6,7 @@
  *
  * Storage:
  * - Standard sections: Stored in canvas_section table (simple string content)
- * - Impact section: Stored in impact_model table (8-field causality chain)
+ * - Impact section: Stored in impact_model table (7-field causality chain)
  *
  * The Impact Model's final 'impact' field IS the impact section's content - they stay in sync.
  */
@@ -145,9 +145,6 @@ export interface ImpactModel {
   /** What the venture does (interventions/programs) */
   activities: string;
 
-  /** Direct deliverables (products, services, events) */
-  outputs: string;
-
   /** Short-term changes (0-1 year): awareness, skills, access */
   shortTermOutcomes: string;
 
@@ -174,7 +171,6 @@ export const IMPACT_MODEL_FIELDS = [
   'issue',
   'participants',
   'activities',
-  'outputs',
   'shortTermOutcomes',
   'mediumTermOutcomes',
   'longTermOutcomes',
@@ -190,7 +186,6 @@ export const IMPACT_MODEL_LABELS: Record<ImpactModelField, string> = {
   issue: 'Issue',
   participants: 'Participants',
   activities: 'Activities',
-  outputs: 'Outputs',
   shortTermOutcomes: 'Short-term Outcomes',
   mediumTermOutcomes: 'Medium-term Outcomes',
   longTermOutcomes: 'Long-term Outcomes',
@@ -245,7 +240,6 @@ export function createEmptyImpactModel(sessionId: string): ImpactModel {
     issue: '',
     participants: '',
     activities: '',
-    outputs: '',
     shortTermOutcomes: '',
     mediumTermOutcomes: '',
     longTermOutcomes: '',

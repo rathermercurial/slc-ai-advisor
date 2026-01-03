@@ -99,7 +99,6 @@ function getPlaceholder(field: ImpactModelField): string {
     issue: 'What social/environmental issue are you addressing?',
     participants: 'Who experiences this issue? Who are your stakeholders?',
     activities: 'What does your venture do to address this?',
-    outputs: 'What tangible deliverables do you produce?',
     shortTermOutcomes: 'What changes happen in 0-1 year?',
     mediumTermOutcomes: 'What changes happen in 1-3 years?',
     longTermOutcomes: 'What changes happen in 3+ years?',

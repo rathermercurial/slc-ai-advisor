@@ -137,7 +137,6 @@ export function canvasToJSON(data: ExportCanvasData): string {
       issue: data.impactModel.issue || '',
       participants: data.impactModel.participants || '',
       activities: data.impactModel.activities || '',
-      outputs: data.impactModel.outputs || '',
       shortTermOutcomes: data.impactModel.shortTermOutcomes || '',
       mediumTermOutcomes: data.impactModel.mediumTermOutcomes || '',
       longTermOutcomes: data.impactModel.longTermOutcomes || '',

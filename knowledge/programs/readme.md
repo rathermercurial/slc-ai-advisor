@@ -15,8 +15,6 @@ Learning programs for the Social Lean Canvas. Each program becomes a **Vectorize
 programs/
 ├── generic/
 │   ├── content/              # Video scripts by module
-│   │   ├── 0.0 program-outline/
-│   │   ├── 1.0 trailer/
 │   │   ├── 2.0 intro/
 │   │   ├── 3.0 business-model-design/
 │   │   │   ├── 3.1 understanding-business-model-design/

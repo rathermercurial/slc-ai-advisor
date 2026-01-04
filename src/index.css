@@ -2740,15 +2740,16 @@ code, .mono {
 /* Sidebar expand toggle (shown when sidebar is fully hidden) */
 .sidebar-expand-toggle {
   position: relative;
-  width: 24px;
+  width: 1.5rem;
   flex-shrink: 0;
   background: var(--bg-secondary);
   border: none;
   border-right: 1px solid var(--border-primary);
   cursor: pointer;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 1rem;
   color: var(--text-tertiary);
   transition: all var(--transition-fast);
 }

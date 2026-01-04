@@ -572,7 +572,7 @@ code, .mono {
 }
 
 .slc-row-top {
-  height: 8.75rem; /* ~140px at 16px base */
+  min-height: 8.75rem; /* ~140px at 16px base - can grow */
 }
 
 .slc-row-middle {
@@ -580,30 +580,12 @@ code, .mono {
 }
 
 .slc-row-bottom {
-  height: 8.75rem; /* ~140px at 16px base */
+  min-height: 8.75rem; /* ~140px at 16px base - can grow */
 }
 
-/* Top/bottom row sections fill their fixed-height row */
-.slc-row-top .canvas-section,
-.slc-row-bottom .canvas-section {
-  overflow: hidden;
-}
-
-/* Allow overflow when editing so bubble menu can appear */
-.slc-row-top .canvas-section.editing,
-.slc-row-bottom .canvas-section.editing,
+/* Allow overflow when editing so format icons can appear */
 .canvas-section.editing {
   overflow: visible;
-}
-
-/* Content area within top/bottom sections should scroll if needed */
-.slc-row-top .canvas-section-content,
-.slc-row-bottom .canvas-section-content,
-.slc-row-top .canvas-section-edit,
-.slc-row-bottom .canvas-section-edit {
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
 }
 
 /* Impact toggle button in top row */
@@ -2450,9 +2432,9 @@ code, .mono {
     font-size: 0.75rem;
   }
 
-  /* Reduce row heights on mobile */
+  /* Reduce row min-heights on mobile */
   .slc-row-top {
-    height: 6.25rem; /* ~100px */
+    min-height: 6.25rem; /* ~100px - can grow */
   }
 
   .slc-row-middle {
@@ -2460,7 +2442,7 @@ code, .mono {
   }
 
   .slc-row-bottom {
-    height: 6.25rem; /* ~100px */
+    min-height: 6.25rem; /* ~100px - can grow */
   }
 
   /* Chat adjustments */

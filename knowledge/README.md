@@ -23,7 +23,7 @@ Learning journeys that become Vectorize namespaces:
 - **generic/** - Core SLC methodology (default for all users)
   - `content/` - Video scripts organized by module (0.0 through 5.0)
   - `examples/` - Venture examples (Patagonia, Toast Ale, Too Good To Go, etc.)
-- **p2p/** - Person-to-Person program (extends generic)
+- **p2p/** - Pivot-to-Purpose program (extends generic)
   - `content/` - P2P-specific learning modules
   - `examples/` - P2P venture examples (Ridwell, Ness Labs, Plausible, etc.)
 

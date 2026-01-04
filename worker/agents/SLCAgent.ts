@@ -276,7 +276,7 @@ export class SLCAgent extends AIChatAgent<Env, AgentState> {
               // Create streaming response with tools
               const stream = client.messages.stream({
                 model: 'claude-sonnet-4-20250514',
-                max_tokens: 8192,
+                max_tokens: 16384,
                 system: systemPrompt,
                 messages: currentMessages,
                 tools: ANTHROPIC_TOOLS,

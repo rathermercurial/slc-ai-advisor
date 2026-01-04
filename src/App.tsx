@@ -435,7 +435,16 @@ function AppContent({
       </header>
 
       <main className="app-main">
-        {!sidebarCollapsed && (
+        {sidebarCollapsed ? (
+          <button
+            className="sidebar-expand-toggle"
+            onClick={handleSidebarToggle}
+            title="Expand file browser"
+            aria-label="Expand file browser"
+          >
+            <ChevronRight size={16} />
+          </button>
+        ) : (
           <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
             <Sidebar onHoverChange={setHelperText} />
             <Resizer

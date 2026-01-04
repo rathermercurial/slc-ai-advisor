@@ -578,15 +578,15 @@ code, .mono {
 }
 
 .slc-row-top {
-  min-height: 10em;
+  min-height: 140px;
 }
 
 .slc-row-middle {
-  min-height: 15em;
+  min-height: 240px;
 }
 
 .slc-row-bottom {
-  min-height: 10em;
+  min-height: 140px;
 }
 
 /* Ensure top/bottom row sections fill their row and handle overflow */
@@ -742,82 +742,48 @@ code, .mono {
 }
 
 /* Impact section - special delightful hover hint */
+/* Impact section hover hint - overlay appears inside the box */
 .canvas-section[data-model="impact"].read-only {
   cursor: pointer;
   position: relative;
 }
 
 .canvas-section[data-model="impact"].read-only::after {
-  content: '✨ Click to explore your Impact Model';
+  content: '✨ Click to explore';
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.85), rgba(124, 58, 237, 0.9));
   color: white;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-  border-radius: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  border-radius: inherit;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  transition: opacity 0.25s ease;
+  z-index: 10;
   pointer-events: none;
-}
-
-.canvas-section[data-model="impact"].read-only::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  border: 6px solid transparent;
-  border-top-color: #a855f7;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-  z-index: 101;
 }
 
 .canvas-section[data-model="impact"].read-only:hover::after,
 .canvas-section[data-model="impact"].read-only:focus::after {
   opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(-4px);
 }
 
-.canvas-section[data-model="impact"].read-only:hover::before,
-.canvas-section[data-model="impact"].read-only:focus::before {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(4px);
-}
-
-/* Shimmer/glow effect on hover */
+/* Subtle border glow on hover */
 .canvas-section[data-model="impact"].read-only:hover {
-  animation: impactGlow 1.5s ease-in-out infinite;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5), 0 4px 12px rgba(168, 85, 247, 0.2);
 }
 
-@keyframes impactGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
-  }
-}
-
-/* When impact model is expanded, show a subtle indicator */
+/* When impact model is expanded, show indicator */
 .canvas-section[data-model="impact"].read-only.impact-expanded {
   border: 2px solid #a855f7;
 }
 
 .canvas-section[data-model="impact"].read-only.impact-expanded::after {
-  content: '✨ Impact Model is open below';
+  content: '✨ Open below';
 }
 
 .canvas-section:not([data-model]):hover {
@@ -1822,13 +1788,24 @@ code, .mono {
     gap: 0.5rem;
   }
 
+  /* On mobile, reverse the second row back to correct order (short→medium→long→impact) */
+  .impact-inline-row.row-reversed {
+    flex-direction: column-reverse;
+  }
+
   .impact-inline-field-wrapper {
     flex-direction: column;
   }
 
+  /* Hide horizontal arrows on mobile, show vertical ones via CSS */
   .impact-inline-arrow {
     transform: rotate(90deg);
     padding: 0.25rem 0;
+  }
+
+  /* Fix left arrows on mobile - rotate them to point down, not up */
+  .impact-inline-row.row-reversed .impact-inline-arrow {
+    transform: rotate(-90deg);
   }
 
   .impact-inline-field {
@@ -2395,15 +2372,15 @@ code, .mono {
 
   /* Reduce row heights on mobile */
   .slc-row-top {
-    min-height: 8em;
+    min-height: 100px;
   }
 
   .slc-row-middle {
-    min-height: 12em;
+    min-height: 180px;
   }
 
   .slc-row-bottom {
-    min-height: 8em;
+    min-height: 100px;
   }
 
   /* Chat adjustments */
@@ -2758,6 +2735,27 @@ code, .mono {
 /* When sidebar is collapsed, override the inline width so main content expands */
 .sidebar-wrapper:has(.sidebar-collapsed) {
   width: 32px !important;
+}
+
+/* Sidebar expand toggle (shown when sidebar is fully hidden) */
+.sidebar-expand-toggle {
+  position: relative;
+  width: 24px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border: none;
+  border-right: 1px solid var(--border-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-expand-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .sidebar {

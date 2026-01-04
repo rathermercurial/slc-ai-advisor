@@ -62,9 +62,12 @@ export function CanvasSection({
   const [draft, setDraft] = useState(content);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const richTextRef = useRef<RichTextEditorRef>(null);
+
+  // Get editor from ref (always current instance)
+  const getEditor = () => richTextRef.current?.getEditor() ?? null;
 
   // Track mounted state to prevent state updates after unmount
   const mountedRef = useRef(true);
@@ -127,8 +130,8 @@ export function CanvasSection({
   }, [forceEdit, isEditing, readOnly, onFocus]);
 
   // Handle editor ready callback
-  const handleEditorReady = useCallback((editorInstance: Editor) => {
-    setEditor(editorInstance);
+  const handleEditorReady = useCallback((_editorInstance: Editor) => {
+    setEditorReady(true);
   }, []);
 
   const handleClick = () => {
@@ -151,7 +154,7 @@ export function CanvasSection({
 
     if (draft === content) {
       setIsEditing(false);
-      setEditor(null);
+      setEditorReady(false);
       return;
     }
 
@@ -166,7 +169,7 @@ export function CanvasSection({
     if (result.success) {
       setSaveState('saved');
       setIsEditing(false);
-      setEditor(null);
+      setEditorReady(false);
     } else {
       setSaveState('error');
       setSaveError(result.errors?.[0] || 'Failed to save');
@@ -177,7 +180,7 @@ export function CanvasSection({
   const handleCancel = () => {
     setDraft(content);
     setIsEditing(false);
-    setEditor(null);
+    setEditorReady(false);
     setSaveError(null);
     setSaveState('idle');
   };
@@ -211,7 +214,7 @@ export function CanvasSection({
         }
       }
       setIsEditing(false);
-      setEditor(null);
+      setEditorReady(false);
       // Navigate to next/prev field
       if (e.shiftKey) {
         onTabPrev?.();
@@ -274,13 +277,13 @@ export function CanvasSection({
         <span className="canvas-section-title">{label.toUpperCase()}</span>
 
         {/* Formatting icons - shown when editing */}
-        {isEditing && editor && (
+        {isEditing && editorReady && (
           <div className="canvas-section-format-icons" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleBold().run(); }}
-              className={editor.isActive('bold') ? 'active' : ''}
+              onClick={(e) => { e.stopPropagation(); getEditor()?.chain().focus().toggleBold().run(); }}
+              className={getEditor()?.isActive('bold') ? 'active' : ''}
               title="Bold (Cmd+B)"
               aria-label="Bold"
             >
@@ -289,8 +292,8 @@ export function CanvasSection({
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleItalic().run(); }}
-              className={editor.isActive('italic') ? 'active' : ''}
+              onClick={(e) => { e.stopPropagation(); getEditor()?.chain().focus().toggleItalic().run(); }}
+              className={getEditor()?.isActive('italic') ? 'active' : ''}
               title="Italic (Cmd+I)"
               aria-label="Italic"
             >
@@ -299,8 +302,8 @@ export function CanvasSection({
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleUnderline().run(); }}
-              className={editor.isActive('underline') ? 'active' : ''}
+              onClick={(e) => { e.stopPropagation(); getEditor()?.chain().focus().toggleUnderline().run(); }}
+              className={getEditor()?.isActive('underline') ? 'active' : ''}
               title="Underline (Cmd+U)"
               aria-label="Underline"
             >
@@ -309,8 +312,8 @@ export function CanvasSection({
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }}
-              className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
+              onClick={(e) => { e.stopPropagation(); getEditor()?.chain().focus().toggleHeading({ level: 2 }).run(); }}
+              className={getEditor()?.isActive('heading', { level: 2 }) ? 'active' : ''}
               title="Heading"
               aria-label="Heading"
             >
@@ -319,8 +322,8 @@ export function CanvasSection({
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleBulletList().run(); }}
-              className={editor.isActive('bulletList') ? 'active' : ''}
+              onClick={(e) => { e.stopPropagation(); getEditor()?.chain().focus().toggleBulletList().run(); }}
+              className={getEditor()?.isActive('bulletList') ? 'active' : ''}
               title="Bullet list"
               aria-label="Bullet list"
             >
@@ -329,8 +332,8 @@ export function CanvasSection({
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleOrderedList().run(); }}
-              className={editor.isActive('orderedList') ? 'active' : ''}
+              onClick={(e) => { e.stopPropagation(); getEditor()?.chain().focus().toggleOrderedList().run(); }}
+              className={getEditor()?.isActive('orderedList') ? 'active' : ''}
               title="Numbered list"
               aria-label="Numbered list"
             >

@@ -13,7 +13,17 @@ AI advisor for social entrepreneurs using the Social Lean Canvas methodology. Fi
 - **11 Canvas Sections**: Purpose, Customers, Jobs To Be Done, Value Proposition, Solution, Channels, Revenue, Costs, Key Metrics, Advantage, Impact
 - **3 Models**: Customer (customers, jobsToBeDone, valueProposition, solution), Economic (channels, revenue, costs, advantage), Impact (impact)
 - **7 Dimensions**: Stage, impact area, mechanism, legal structure, revenue source, funding source, industry
-- **Impact Model**: The impact section contains 8-field causality chain (issue → participants → activities → outputs → outcomes → impact)
+- **Impact Model**: The impact section contains 7-field causality chain (issue → participants → activities → short/medium/long-term outcomes → impact)
+
+## Design Standards
+
+### CSS Units
+**Use em/rem exclusively. Never use px for sizing.**
+- `rem` - For global spacing, font sizes, and layout dimensions
+- `em` - For component-relative sizing (padding, margins within components)
+- Exceptions: `1px` borders, box-shadows where precise pixel control is needed
+
+This ensures accessibility (respects user font size preferences) and consistent scaling.
 
 ## Architecture
 

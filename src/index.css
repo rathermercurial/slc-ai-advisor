@@ -589,6 +589,13 @@ code, .mono {
   overflow: hidden;
 }
 
+/* Allow overflow when editing so bubble menu can appear */
+.slc-row-top .canvas-section.editing,
+.slc-row-bottom .canvas-section.editing,
+.canvas-section.editing {
+  overflow: visible;
+}
+
 /* Content area within top/bottom sections should scroll if needed */
 .slc-row-top .canvas-section-content,
 .slc-row-bottom .canvas-section-content,

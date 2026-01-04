@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Bold, Italic, Underline, Heading2, List, ListOrdered } from 'lucide-react';
+import type { Editor } from '@tiptap/react';
 import {
   type CanvasSectionId,
   CANVAS_SECTION_LABELS,
@@ -60,6 +62,7 @@ export function CanvasSection({
   const [draft, setDraft] = useState(content);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const richTextRef = useRef<RichTextEditorRef>(null);
 
@@ -123,6 +126,11 @@ export function CanvasSection({
     }
   }, [forceEdit, isEditing, readOnly, onFocus]);
 
+  // Handle editor ready callback
+  const handleEditorReady = useCallback((editorInstance: Editor) => {
+    setEditor(editorInstance);
+  }, []);
+
   const handleClick = () => {
     if (readOnly) {
       onClick?.();
@@ -143,6 +151,7 @@ export function CanvasSection({
 
     if (draft === content) {
       setIsEditing(false);
+      setEditor(null);
       return;
     }
 
@@ -157,6 +166,7 @@ export function CanvasSection({
     if (result.success) {
       setSaveState('saved');
       setIsEditing(false);
+      setEditor(null);
     } else {
       setSaveState('error');
       setSaveError(result.errors?.[0] || 'Failed to save');
@@ -167,6 +177,7 @@ export function CanvasSection({
   const handleCancel = () => {
     setDraft(content);
     setIsEditing(false);
+    setEditor(null);
     setSaveError(null);
     setSaveState('idle');
   };
@@ -200,6 +211,7 @@ export function CanvasSection({
         }
       }
       setIsEditing(false);
+      setEditor(null);
       // Navigate to next/prev field
       if (e.shiftKey) {
         onTabPrev?.();
@@ -260,6 +272,73 @@ export function CanvasSection({
     >
       <div className="canvas-section-header">
         <span className="canvas-section-title">{label.toUpperCase()}</span>
+
+        {/* Formatting icons - shown when editing */}
+        {isEditing && editor && (
+          <div className="canvas-section-format-icons">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={editor.isActive('bold') ? 'active' : ''}
+              title="Bold (Cmd+B)"
+              aria-label="Bold"
+            >
+              <Bold size={14} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={editor.isActive('italic') ? 'active' : ''}
+              title="Italic (Cmd+I)"
+              aria-label="Italic"
+            >
+              <Italic size={14} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={editor.isActive('underline') ? 'active' : ''}
+              title="Underline (Cmd+U)"
+              aria-label="Underline"
+            >
+              <Underline size={14} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
+              title="Heading"
+              aria-label="Heading"
+            >
+              <Heading2 size={14} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={editor.isActive('bulletList') ? 'active' : ''}
+              title="Bullet list"
+              aria-label="Bullet list"
+            >
+              <List size={14} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={editor.isActive('orderedList') ? 'active' : ''}
+              title="Numbered list"
+              aria-label="Numbered list"
+            >
+              <ListOrdered size={14} />
+            </button>
+          </div>
+        )}
+
         {statusIndicator && (
           <span className={`canvas-section-status ${statusClass}`}>
             {statusIndicator}
@@ -284,6 +363,7 @@ export function CanvasSection({
               onBlur={saveState !== 'saving' ? handleSave : undefined}
               placeholder={helperText || `Enter ${label.toLowerCase()}...`}
               disabled={saveState === 'saving'}
+              onEditorReady={handleEditorReady}
               autoFocus
             />
           </div>

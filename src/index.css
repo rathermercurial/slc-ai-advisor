@@ -950,6 +950,36 @@ code, .mono {
   gap: 0.5rem;
 }
 
+.canvas-section-format-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.canvas-section-format-icons button {
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+}
+
+.canvas-section-format-icons button:hover {
+  opacity: 1;
+}
+
+.canvas-section-format-icons button.active {
+  opacity: 1;
+  color: var(--accent-primary);
+}
+
 .canvas-section-number {
   position: absolute;
   bottom: 0.5rem;
@@ -2386,6 +2416,19 @@ code, .mono {
   .canvas-section-header {
     gap: 0.25rem;
     font-size: 0.65rem;
+  }
+
+  .canvas-section-format-icons {
+    gap: 0.125rem;
+  }
+
+  .canvas-section-format-icons button {
+    padding: 0.125rem;
+  }
+
+  .canvas-section-format-icons button svg {
+    width: 0.75rem;
+    height: 0.75rem;
   }
 
   .canvas-section-number {

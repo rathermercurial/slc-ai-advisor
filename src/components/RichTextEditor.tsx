@@ -1,16 +1,15 @@
 /**
  * Rich Text Editor Component
  *
- * Tiptap-based rich text editor with:
- * - Floating toolbar on text selection
- * - Keyboard shortcuts (Cmd+B, Cmd+I, Cmd+U, etc.)
+ * Tiptap-based rich text editor with keyboard shortcuts.
+ * Formatting toolbar is rendered by parent component.
  */
 
 import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
-import { useEffect, useImperativeHandle, forwardRef, useCallback, useState } from 'react';
-import { Bold, Italic, Underline as UnderlineIcon, Heading2, List, ListOrdered } from 'lucide-react';
+import { useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -19,23 +18,18 @@ interface RichTextEditorProps {
   placeholder?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  /** Callback to expose editor instance to parent */
+  onEditorReady?: (editor: Editor) => void;
 }
 
 export interface RichTextEditorRef {
   focus: () => void;
   getHTML: () => string;
-}
-
-interface MenuPosition {
-  top: number;
-  left: number;
+  getEditor: () => Editor | null;
 }
 
 export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
-  ({ content, onChange, onBlur, placeholder, disabled = false, autoFocus = false }, ref) => {
-    const [menuVisible, setMenuVisible] = useState(false);
-    const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 0, left: 0 });
-
+  ({ content, onChange, onBlur, placeholder, disabled = false, autoFocus = false, onEditorReady }, ref) => {
     const editor = useEditor({
       extensions: [
         StarterKit.configure({
@@ -52,32 +46,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         onChange(editor.getHTML());
       },
       onBlur: () => {
-        // Small delay to allow button clicks to register
-        setTimeout(() => {
-          setMenuVisible(false);
-          onBlur?.();
-        }, 150);
+        onBlur?.();
       },
-      onSelectionUpdate: ({ editor }) => {
-        const { from, to } = editor.state.selection;
-        const hasSelection = from !== to;
-
-        if (hasSelection && editor.isEditable) {
-          // Get selection coordinates
-          const { view } = editor;
-          const start = view.coordsAtPos(from);
-          const end = view.coordsAtPos(to);
-
-          // Position menu above selection
-          const editorRect = view.dom.getBoundingClientRect();
-          setMenuPosition({
-            top: start.top - editorRect.top - 45,
-            left: (start.left + end.left) / 2 - editorRect.left,
-          });
-          setMenuVisible(true);
-        } else {
-          setMenuVisible(false);
-        }
+      onCreate: ({ editor }) => {
+        onEditorReady?.(editor);
       },
       editorProps: {
         attributes: {
@@ -87,10 +59,18 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       },
     });
 
+    // Notify parent when editor is ready
+    useEffect(() => {
+      if (editor) {
+        onEditorReady?.(editor);
+      }
+    }, [editor, onEditorReady]);
+
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       focus: () => editor?.chain().focus().run(),
       getHTML: () => editor?.getHTML() || '',
+      getEditor: () => editor,
     }), [editor]);
 
     // Sync content changes from parent
@@ -138,81 +118,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
     return (
       <div className="rich-text-editor" onKeyDown={handleKeyDown}>
-        {/* Floating toolbar - appears on text selection */}
-        {menuVisible && (
-          <div
-            className="bubble-menu"
-            style={{
-              top: menuPosition.top,
-              left: menuPosition.left,
-              transform: 'translateX(-50%)',
-            }}
-          >
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={editor.isActive('bold') ? 'active' : ''}
-              title="Bold (Cmd+B)"
-              aria-label="Toggle bold"
-            >
-              <Bold size={16} />
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={editor.isActive('italic') ? 'active' : ''}
-              title="Italic (Cmd+I)"
-              aria-label="Toggle italic"
-            >
-              <Italic size={16} />
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={editor.isActive('underline') ? 'active' : ''}
-              title="Underline (Cmd+U)"
-              aria-label="Toggle underline"
-            >
-              <UnderlineIcon size={16} />
-            </button>
-            <span className="bubble-menu-divider" />
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
-              title="Heading (Cmd+Shift+H)"
-              aria-label="Toggle heading"
-            >
-              <Heading2 size={16} />
-            </button>
-            <span className="bubble-menu-divider" />
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={editor.isActive('bulletList') ? 'active' : ''}
-              title="Bullet List (Cmd+Shift+8)"
-              aria-label="Toggle bullet list"
-            >
-              <List size={16} />
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={editor.isActive('orderedList') ? 'active' : ''}
-              title="Numbered List (Cmd+Shift+7)"
-              aria-label="Toggle numbered list"
-            >
-              <ListOrdered size={16} />
-            </button>
-          </div>
-        )}
-
         <EditorContent editor={editor} />
       </div>
     );

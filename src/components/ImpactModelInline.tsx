@@ -202,7 +202,7 @@ export function ImpactModelInline({ impactModel, onSave, isUpdating, isHighlight
         <div className="impact-inline-row">
           {row1.map((field, i) => renderField(field, i === 0, i === row1.length - 1, 'right'))}
         </div>
-        {/* Arrow connecting Outputs (box 4) to Short-term Outcomes (box 5) */}
+        {/* Arrow connecting Activities (box 3) to Short-term Outcomes (box 4) */}
         <div className="impact-inline-connector">
           <span className="impact-inline-arrow vertical">
             <ArrowDown size={16} />

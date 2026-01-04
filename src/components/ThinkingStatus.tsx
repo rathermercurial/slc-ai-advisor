@@ -40,7 +40,6 @@ const TOOL_STATUS_LABELS: Record<string, string> = {
   'Updating impact issue': 'Updating Impact Issue...',
   'Updating impact participants': 'Updating Participants...',
   'Updating impact activities': 'Updating Activities...',
-  'Updating impact outputs': 'Updating Outputs...',
   'Updating impact shortTermOutcomes': 'Updating Short-term Outcomes...',
   'Updating impact mediumTermOutcomes': 'Updating Medium-term Outcomes...',
   'Updating impact longTermOutcomes': 'Updating Long-term Outcomes...',

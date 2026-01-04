@@ -30,7 +30,7 @@ How value translates to financial sustainability:
 
 ### Impact Model
 How the venture creates social/environmental change:
-- **Impact**: The 8-field causality chain (Issue → Participants → Activities → Outputs → Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact)
+- **Impact**: The 7-field causality chain (Issue → Participants → Activities → Short-term Outcomes → Medium-term Outcomes → Long-term Outcomes → Impact)
 
 ### Standalone Sections
 - **Purpose**: Why the venture exists (foundational)

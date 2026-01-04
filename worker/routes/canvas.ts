@@ -290,7 +290,6 @@ export async function handleCanvasRoute(
         issue?: string;
         participants?: string;
         activities?: string;
-        outputs?: string;
         shortTermOutcomes?: string;
         mediumTermOutcomes?: string;
         longTermOutcomes?: string;
@@ -303,7 +302,6 @@ export async function handleCanvasRoute(
         issue: body.issue || '',
         participants: body.participants || '',
         activities: body.activities || '',
-        outputs: body.outputs || '',
         shortTermOutcomes: body.shortTermOutcomes || '',
         mediumTermOutcomes: body.mediumTermOutcomes || '',
         longTermOutcomes: body.longTermOutcomes || '',

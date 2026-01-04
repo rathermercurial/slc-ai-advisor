@@ -963,8 +963,8 @@ code, .mono {
   padding: 0.25rem;
   cursor: pointer;
   color: var(--text-secondary);
-  opacity: 0.6;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  opacity: 0.5;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -973,11 +973,15 @@ code, .mono {
 
 .canvas-section-format-icons button:hover {
   opacity: 1;
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  transform: scale(1.2);
 }
 
 .canvas-section-format-icons button.active {
   opacity: 1;
   color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
 }
 
 .canvas-section-number {

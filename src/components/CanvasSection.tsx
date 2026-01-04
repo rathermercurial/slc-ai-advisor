@@ -275,11 +275,11 @@ export function CanvasSection({
 
         {/* Formatting icons - shown when editing */}
         {isEditing && editor && (
-          <div className="canvas-section-format-icons">
+          <div className="canvas-section-format-icons" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBold().run()}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleBold().run(); }}
               className={editor.isActive('bold') ? 'active' : ''}
               title="Bold (Cmd+B)"
               aria-label="Bold"
@@ -288,8 +288,8 @@ export function CanvasSection({
             </button>
             <button
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleItalic().run()}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleItalic().run(); }}
               className={editor.isActive('italic') ? 'active' : ''}
               title="Italic (Cmd+I)"
               aria-label="Italic"
@@ -298,8 +298,8 @@ export function CanvasSection({
             </button>
             <button
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleUnderline().run(); }}
               className={editor.isActive('underline') ? 'active' : ''}
               title="Underline (Cmd+U)"
               aria-label="Underline"
@@ -308,8 +308,8 @@ export function CanvasSection({
             </button>
             <button
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }}
               className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
               title="Heading"
               aria-label="Heading"
@@ -318,8 +318,8 @@ export function CanvasSection({
             </button>
             <button
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleBulletList().run(); }}
               className={editor.isActive('bulletList') ? 'active' : ''}
               title="Bullet list"
               aria-label="Bullet list"
@@ -328,8 +328,8 @@ export function CanvasSection({
             </button>
             <button
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); editor.chain().focus().toggleOrderedList().run(); }}
               className={editor.isActive('orderedList') ? 'active' : ''}
               title="Numbered list"
               aria-label="Numbered list"
